@@ -2,16 +2,16 @@
 
 - Extension Name: ai4pb-orchestrator
 - Version: 0.0.4
-- Publisher: local
+- Publisher: derekhu
 - VSIX Path: D:\projects\vscode-extension\ai4pb-orchestrator\release\ai4pb-orchestrator-0.0.4.vsix
-- Release Time (Local): 2026-03-01 11:15:55 +08:00
-- Release Time (UTC): 2026-03-01 03:15:55
+- Release Time (Local): 2026-03-01 17:47:58 +08:00
+- Release Time (UTC): 2026-03-01 09:47:58
 - Version Bump Mode: none
 
 ## Git Metadata
 
-- Commit (Full): 518e043f1cf2308b6aaded42632976902858d544
-- Commit (Short): 518e043
+- Commit (Full): 1d094950d83eeee2658e7b4395eba0a5bc1951a3
+- Commit (Short): 1d09495
 - Branch: main
 - Working Tree: dirty
 
