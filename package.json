@@ -36,6 +36,10 @@
     },
     "commands": [
       {
+        "command": "ai4pb.initializeFromTemplate",
+        "title": "AI4PB: Initialize EA Template"
+      },
+      {
         "command": "ai4pb.refreshArchitectureContext",
         "title": "AI4PB: Refresh Architecture Context"
       },

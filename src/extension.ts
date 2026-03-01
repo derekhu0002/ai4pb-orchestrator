@@ -26,6 +26,7 @@ const RELATIVE_PATHS = {
 };
 
 const BUNDLED_PATHS = {
+  eaTemplate: 'EA-model-template/EA-model-template.feap',
   initialPrompt: 'workprompt/initial-prompt.md',
   wrapPrompt: 'workprompt/Wrap-up Prompt.md',
   reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
@@ -51,6 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     output,
     vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider),
+    vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate),
     vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext),
     vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel),
     vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment),
@@ -367,6 +369,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   <div id="statusGrid" class="status"></div>
   <p class="desc">Run each phase in order for model-driven delivery.</p>
   <div class="steps">
+    <button data-cmd="ai4pb.initializeFromTemplate"><span class="label">0) Initialize EA Template</span><span class="hint">Copy EA template to workspace root and name it by project</span></button>
     <button data-cmd="ai4pb.runGuidedWorkflow"><span class="label">▶ Run All (Guided)</span><span class="hint">Stop on error, execute end-to-end flow</span></button>
     <button data-cmd="ai4pb.refreshArchitectureContext"><span class="label">1) Refresh Context</span><span class="hint">Check model JSON, prompts, docs</span></button>
     <button data-cmd="ai4pb.openNextAction"><span class="label">2) Open Next Action</span><span class="hint">Auto-decide what to do now</span></button>
@@ -669,6 +672,57 @@ async function refreshArchitectureContext(): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`AI4PB refresh failed: ${message}`);
+  }
+}
+
+async function initializeFromTemplate(): Promise<void> {
+  try {
+    const root = getWorkspaceRoot();
+    const templatePath = resolveExtensionPath(BUNDLED_PATHS.eaTemplate);
+
+    if (!exists(templatePath)) {
+      void vscode.window.showErrorMessage(`Bundled EA template not found: ${templatePath}`);
+      return;
+    }
+
+    const workspaceName = path.basename(root);
+    const targetFileName = workspaceName && workspaceName.trim().length > 0 ? `${workspaceName}.feap` : 'EA-model-template.feap';
+    const targetPath = path.join(root, targetFileName);
+
+    if (exists(targetPath)) {
+      const choice = await vscode.window.showWarningMessage(
+        `Target file already exists: ${targetFileName}`,
+        { modal: true },
+        'Overwrite',
+        'Open Existing'
+      );
+
+      if (choice === 'Open Existing') {
+        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetPath));
+        return;
+      }
+
+      if (choice !== 'Overwrite') {
+        return;
+      }
+    }
+
+    fs.copyFileSync(templatePath, targetPath);
+
+    output.appendLine(`[AI4PB] EA template initialized: ${targetPath}`);
+    output.show(true);
+
+    const openChoice = await vscode.window.showInformationMessage(
+      `EA template created: ${targetFileName}`,
+      'Reveal in Explorer'
+    );
+
+    if (openChoice === 'Reveal in Explorer') {
+      await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetPath));
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(`AI4PB initialize failed: ${message}`);
   }
 }
 
