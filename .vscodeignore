@@ -3,3 +3,5 @@ tsconfig.json
 .vscode/**
 **/*.map
 node_modules/**/.cache/**
+*.feap
+**/*.feap
