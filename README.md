@@ -119,14 +119,8 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 
 - 先在 EA 中通过右键菜单重新执行导出
 - 确认 `design/KG/SystemArchitecture.json` 时间戳已更新
-- 在 VS Code 执行 `AI4PB: Refresh Architecture Context`
 
 ### Q2：Prompt 缺失怎么办？
 
 - 检查 `workprompt/` 下核心文件是否存在
 - 使用侧边栏 `Prompt Set` 直接打开并补齐
-
-### Q3：如何快速跑完整流程？
-
-- 使用 `AI4PB: Run All (Guided)`
-- 或按本 README 的“侧边栏 3 步 + 高级命令 5 步”顺序执行
