@@ -2,3 +2,5 @@
 .obsidian/app.json
 .obsidian/
 node_modules/
+.trash/
+.vscode/
