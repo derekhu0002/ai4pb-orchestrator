@@ -182,14 +182,14 @@ class WorkflowViewProvider {
                 key: 'init',
                 label: 'Initialize EA Template',
                 state: 'ok',
-                detail: 'Copy an <a>EA template</a> to the workspace root and name it by project.',
+                detail: 'Copy EA template to workspace root and name it by project.',
                 actionLabel: 'Run'
             });
             items.push({
                 key: 'options',
-                label: 'Workflow Options',
+                label: 'Export Option',
                 state: exists(aiConfigPath) ? 'ok' : 'warn',
-                detail: `Review and configure <a>workflow options</a><br/>(mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}).`,
+                detail: `mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}, allMaintenance=${options.needallmaintenace ? 'on' : 'off'}`,
                 actionLabel: 'Select'
             });
             const promptPaths = getBundledPromptPaths();
@@ -198,7 +198,7 @@ class WorkflowViewProvider {
                 key: 'prompts',
                 label: 'Prompt Set',
                 state: missingPrompts === 0 ? 'ok' : missingPrompts === promptPaths.length ? 'error' : 'warn',
-                detail: `Ensure your <a>prompts</a> are prepared for instructions.<br/><span style="opacity:0.8;font-size:12px;">Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'} | Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'} | Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}</span>`,
+                detail: `Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'} | Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'} | Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}`,
                 actionLabel: 'Open'
             });
         }
@@ -268,24 +268,22 @@ class WorkflowViewProvider {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { 
       font-family: var(--vscode-font-family); 
-      padding: 16px; 
+      padding: 14px 12px;
       color: var(--vscode-foreground); 
       background-color: var(--vscode-editor-background); 
     }
-    .header { 
-      display: none; /* Hide header if adhering strictly to the clean look */
-    }
+    .header { display: none; }
     
     .grid-container { 
       display: flex; 
       flex-direction: column; 
-      gap: 32px; /* Increased separation distance */
-      margin-bottom: 24px; 
+      gap: 36px;
+      margin-bottom: 24px;
       width: 100%;
     }
     
@@ -297,55 +295,40 @@ class WorkflowViewProvider {
 
     .info-text {
       font-size: 13px;
-      line-height: 1.4;
-      margin-bottom: 12px; /* A bit more space before the button */
+      line-height: 1.45;
+      margin-bottom: 12px;
       color: var(--vscode-foreground);
-    }
-    
-    .info-text a {
-      color: var(--vscode-textLink-foreground, #3794ff);
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .info-text a:hover {
-      text-decoration: underline;
+      text-align: left;
     }
     
     .call-to-action-btn {
-      position: relative;
-      background-color: var(--vscode-button-background, #0e639c);
-      color: var(--vscode-button-foreground, #ffffff);
-      border: none;
-      border-radius: 2px;
+      background-color: var(--vscode-button-background, #0e639c) !important;
+      color: var(--vscode-button-foreground, #ffffff) !important;
+      border: none !important;
+      border-radius: 3px;
       padding: 6px 12px;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%; /* Force all buttons to exactly match width */
-      max-width: 100%;
+      display: block;
+      width: 100% !important;
       box-sizing: border-box;
       font-size: 13px;
-      font-weight: 400; /* Regular weight, like native VS Code buttons */
-      min-height: 28px;
+      font-weight: 500;
+      min-height: 30px;
+      text-align: center;
     }
     .call-to-action-btn:hover {
-      background-color: var(--vscode-button-hoverBackground, #1177bb);
+      background-color: var(--vscode-button-hoverBackground, #1177bb) !important;
     }
     
     .block-container {
       display: flex;
       flex-direction: column;
-      align-items: stretch; /* Ensures button stretches to full width */
-      width: 100%;
+      align-items: stretch;
+      width: min(360px, calc(100% - 8px));
+      margin: 0 auto;
       box-sizing: border-box;
     }
 
-    .dot { font-size: 10px; }
-    .dot.ok { color: var(--vscode-charts-green); }
-    .dot.warn { color: var(--vscode-charts-yellow); }
-    .dot.error { color: var(--vscode-charts-red); }
-    
     .stamp { 
       font-size: 10px; 
       opacity: 0.5; 
@@ -355,10 +338,6 @@ class WorkflowViewProvider {
   </style>
 </head>
 <body>
-  <div class="header">
-    <h3>AI4PB Studio</h3>
-  </div>
-  
   <div class="grid-container" id="statusGrid">
     <!-- Dynamic cards injected here -->
   </div>
@@ -382,17 +361,18 @@ class WorkflowViewProvider {
       payload.items.forEach((item) => {
         const block = document.createElement('div');
         block.className = 'block-container';
-        
-        let textContent = item.detail;
-        if (item.key === 'prompts') {
-          textContent = 'Check your prompt sets. ' + item.detail;
-        }
 
-        block.innerHTML =
-          '<div class="info-text">' + textContent + '</div>' + 
-          '<button class="call-to-action-btn" data-action-key="' + item.key + '">' + 
-          item.label + ' <span class="dot ' + item.state + '">●</span>' +
-          '</button>';
+        const infoText = document.createElement('div');
+        infoText.className = 'info-text';
+        infoText.textContent = item.detail;
+
+        const actionButton = document.createElement('button');
+        actionButton.className = 'call-to-action-btn';
+        actionButton.setAttribute('data-action-key', item.key);
+        actionButton.textContent = item.label;
+
+        block.appendChild(infoText);
+        block.appendChild(actionButton);
           
         statusGrid.appendChild(block);
       });
