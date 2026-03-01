@@ -3,7 +3,7 @@
   "displayName": "AI4PB Orchestrator DEV",
   "description": "Orchestrate EA export, architecture context refresh, prompt flow, and reporting for AI-For-Project-Building.",
   "version": "0.0.4",
-  "publisher": "local",
+  "publisher": "derekhu",
   "engines": {
     "vscode": "^1.95.0"
   },
