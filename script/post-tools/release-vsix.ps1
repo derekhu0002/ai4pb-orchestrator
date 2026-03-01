@@ -1,6 +1,8 @@
 param(
     [ValidateSet('patch','minor','major','none')]
-    [string]$Bump = 'patch'
+    [string]$Bump = 'patch',
+
+    [string]$MarketplaceReadme = 'MARKETPLACE.md'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,8 +59,33 @@ if (-not (Test-Path $releaseDir)) {
 
 $vsixPath = Join-Path $releaseDir ("{0}-{1}.vsix" -f $extensionName, $extensionVersion)
 
-Write-Host "Packaging VSIX: $vsixPath"
-npx @vscode/vsce package --out $vsixPath --allow-missing-repository --skip-license
+$readmePath = Join-Path $PWD 'README.md'
+$marketplaceReadmePath = Join-Path $PWD $MarketplaceReadme
+$shouldSwapReadme = (Test-Path $readmePath) -and (Test-Path $marketplaceReadmePath)
+$originalReadmeContent = $null
+
+if ($shouldSwapReadme) {
+    Write-Host "Marketplace README detected. Temporarily using: $marketplaceReadmePath"
+    $originalReadmeContent = Get-Content -LiteralPath $readmePath -Raw
+}
+else {
+    Write-Host "Marketplace README not found. Using current README.md"
+}
+
+try {
+    if ($shouldSwapReadme) {
+        Set-Content -LiteralPath $readmePath -Value (Get-Content -LiteralPath $marketplaceReadmePath -Raw) -Encoding UTF8
+    }
+
+    Write-Host "Packaging VSIX: $vsixPath"
+    npx @vscode/vsce package --out $vsixPath --allow-missing-repository --skip-license
+}
+finally {
+    if ($shouldSwapReadme -and $null -ne $originalReadmeContent) {
+        Set-Content -LiteralPath $readmePath -Value $originalReadmeContent -Encoding UTF8
+        Write-Host "README.md restored after packaging."
+    }
+}
 
 $nowLocal = Get-Date
 $nowUtc = (Get-Date).ToUniversalTime()
