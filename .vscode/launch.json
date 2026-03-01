@@ -6,10 +6,11 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=d:/projects/AI-For-Project-Building/vscode-extension/ai4pb-orchestrator",
+        "--extensionDevelopmentPath=${workspaceFolder}",
         "--disable-extensions",
         "--user-data-dir=${workspaceFolder}/.vscode/devhost/user-data",
-        "--extensions-dir=${workspaceFolder}/.vscode/devhost/extensions"
+        "--extensions-dir=${workspaceFolder}/.vscode/devhost/extensions",
+        "${workspaceFolder}"
       ],
       "outFiles": [
         "${workspaceFolder}/out/**/*.js"
