@@ -66,7 +66,7 @@ $originalReadmeContent = $null
 
 if ($shouldSwapReadme) {
     Write-Host "Marketplace README detected. Temporarily using: $marketplaceReadmePath"
-    $originalReadmeContent = Get-Content -LiteralPath $readmePath -Raw
+    $originalReadmeContent = Get-Content -LiteralPath $readmePath -Raw -Encoding UTF8
 }
 else {
     Write-Host "Marketplace README not found. Using current README.md"
@@ -74,7 +74,8 @@ else {
 
 try {
     if ($shouldSwapReadme) {
-        Set-Content -LiteralPath $readmePath -Value (Get-Content -LiteralPath $marketplaceReadmePath -Raw) -Encoding UTF8
+        $marketplaceReadmeContent = Get-Content -LiteralPath $marketplaceReadmePath -Raw -Encoding UTF8
+        Set-Content -LiteralPath $readmePath -Value $marketplaceReadmeContent -Encoding UTF8
     }
 
     Write-Host "Packaging VSIX: $vsixPath"
