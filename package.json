@@ -29,6 +29,7 @@
         {
           "id": "ai4pb.workflowView",
           "name": "Workflow",
+          "type": "webview",
           "icon": "media/ai4pb.svg"
         }
       ]

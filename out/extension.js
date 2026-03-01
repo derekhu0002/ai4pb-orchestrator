@@ -40,14 +40,28 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const RELATIVE_PATHS = {
     architectureJson: 'design/KG/SystemArchitecture.json',
-    aiConfig: '.aicodingconfig',
+    aiConfig: '.aicodingconfig'
+};
+const BUNDLED_PATHS = {
     initialPrompt: 'workprompt/initial-prompt.md',
     wrapPrompt: 'workprompt/Wrap-up Prompt.md',
     reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
-    guidanceDoc: 'docs/system-engineer-guidance.md'
+    guidanceDoc: 'docs/system-engineer-guidance.md',
+    eaSharedScript: 'script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js',
+    eaBootstrapScript: 'script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js'
+};
+const GUIDED_DEFAULTS = {
+    needCode: false,
+    needContent: true,
+    needdoc: false,
+    needallmaintenace: false,
+    needbrowserlocation: true,
+    maintenacetype: 'forllm'
 };
 let output;
+let extensionInstallRoot = '';
 function activate(context) {
+    extensionInstallRoot = context.extensionUri.fsPath;
     output = vscode.window.createOutputChannel('AI4PB Orchestrator');
     output.appendLine('AI4PB Orchestrator activated.');
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
@@ -107,11 +121,7 @@ class WorkflowViewProvider {
             const root = getWorkspaceRoot();
             const archPath = getArchitectureJsonPath(root);
             const aiConfigPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
-            const promptPaths = [
-                resolvePath(root, RELATIVE_PATHS.initialPrompt),
-                resolvePath(root, RELATIVE_PATHS.wrapPrompt),
-                resolvePath(root, RELATIVE_PATHS.reversePrompt)
-            ];
+            const promptPaths = getBundledPromptPaths();
             if (key === 'architecture') {
                 if (exists(archPath)) {
                     await openFileIfExists(archPath);
@@ -123,20 +133,8 @@ class WorkflowViewProvider {
                 return;
             }
             if (key === 'aicodingconfig') {
-                if (!exists(aiConfigPath)) {
-                    const template = {
-                        EA_AUTOGEN_CONFIG: {
-                            sharedScriptPath: 'D:\\projects\\AI-For-Project-Building\\script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js',
-                            needCode: false,
-                            needContent: true,
-                            needdoc: false,
-                            needallmaintenace: false,
-                            needbrowserlocation: true,
-                            maintenacetype: 'forllm'
-                        }
-                    };
-                    fs.writeFileSync(aiConfigPath, JSON.stringify(template, null, 2), 'utf-8');
-                }
+                ensureGuidedAiConfig(root);
+                ensureProjectEaScripts(root);
                 await openFileIfExists(aiConfigPath);
                 return;
             }
@@ -149,7 +147,7 @@ class WorkflowViewProvider {
                     }
                 }
                 if (opened === 0) {
-                    void vscode.window.showWarningMessage('No prompt files found in workprompt/.');
+                    void vscode.window.showWarningMessage('No bundled prompt files found in extension workprompt/.');
                 }
                 return;
             }
@@ -204,11 +202,7 @@ class WorkflowViewProvider {
                 detail: exists(aiConfigPath) ? 'Found' : 'Missing',
                 actionLabel: exists(aiConfigPath) ? 'Open' : 'Create'
             });
-            const promptPaths = [
-                resolvePath(root, RELATIVE_PATHS.initialPrompt),
-                resolvePath(root, RELATIVE_PATHS.wrapPrompt),
-                resolvePath(root, RELATIVE_PATHS.reversePrompt)
-            ];
+            const promptPaths = getBundledPromptPaths();
             const missingPrompts = promptPaths.filter((promptPath) => !exists(promptPath)).length;
             items.push({
                 key: 'prompts',
@@ -424,6 +418,68 @@ function getWorkspaceRoot() {
 function resolvePath(root, relativePath) {
     return path.join(root, ...relativePath.split('/'));
 }
+function resolveExtensionPath(relativePath) {
+    if (!extensionInstallRoot) {
+        throw new Error('Extension root not initialized.');
+    }
+    return path.join(extensionInstallRoot, ...relativePath.split('/'));
+}
+function getBundledPromptPaths() {
+    return [
+        resolveExtensionPath(BUNDLED_PATHS.initialPrompt),
+        resolveExtensionPath(BUNDLED_PATHS.wrapPrompt),
+        resolveExtensionPath(BUNDLED_PATHS.reversePrompt)
+    ];
+}
+function buildGuidedAiConfig(existing) {
+    const existingAutoGen = existing?.EA_AUTOGEN_CONFIG;
+    return {
+        EA_AUTOGEN_CONFIG: {
+            needCode: GUIDED_DEFAULTS.needCode,
+            needContent: GUIDED_DEFAULTS.needContent,
+            needdoc: GUIDED_DEFAULTS.needdoc,
+            needallmaintenace: GUIDED_DEFAULTS.needallmaintenace,
+            needbrowserlocation: GUIDED_DEFAULTS.needbrowserlocation,
+            maintenacetype: GUIDED_DEFAULTS.maintenacetype,
+            ...(existingAutoGen?.architectureJsonPath ? { architectureJsonPath: existingAutoGen.architectureJsonPath } : {})
+        }
+    };
+}
+function ensureGuidedAiConfig(root) {
+    const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+    let existing;
+    if (exists(configPath)) {
+        try {
+            existing = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        }
+        catch {
+            existing = undefined;
+        }
+    }
+    const normalized = buildGuidedAiConfig(existing);
+    fs.writeFileSync(configPath, JSON.stringify(normalized, null, 2), 'utf-8');
+    return normalized;
+}
+function ensureProjectEaScripts(root) {
+    const targetDir = resolvePath(root, 'script/EA-jsscript');
+    fs.mkdirSync(targetDir, { recursive: true });
+    const sharedSource = resolveExtensionPath(BUNDLED_PATHS.eaSharedScript);
+    const bootstrapSource = resolveExtensionPath(BUNDLED_PATHS.eaBootstrapScript);
+    if (!exists(sharedSource)) {
+        throw new Error(`Bundled EA shared script not found: ${sharedSource}`);
+    }
+    if (!exists(bootstrapSource)) {
+        throw new Error(`Bundled EA bootstrap script not found: ${bootstrapSource}`);
+    }
+    const sharedTarget = path.join(targetDir, 'project_auto_gen_suitable_for_LLM-V2.js');
+    const bootstrapTarget = path.join(targetDir, 'project_auto_gen_suitable_for_LLM-V2-bootstrap.js');
+    fs.copyFileSync(sharedSource, sharedTarget);
+    fs.copyFileSync(bootstrapSource, bootstrapTarget);
+    return {
+        sharedPath: sharedTarget,
+        bootstrapPath: bootstrapTarget
+    };
+}
 function exists(filePath) {
     return fs.existsSync(filePath);
 }
@@ -462,15 +518,19 @@ async function openFileIfExists(filePath) {
 async function refreshArchitectureContext() {
     try {
         const root = getWorkspaceRoot();
+        ensureGuidedAiConfig(root);
+        const projectEaScripts = ensureProjectEaScripts(root);
         const archPath = getArchitectureJsonPath(root);
         const checks = [
             { label: 'Architecture JSON', filePath: archPath },
             { label: '.aicodingconfig', filePath: resolvePath(root, RELATIVE_PATHS.aiConfig) },
-            { label: 'Initial Prompt', filePath: resolvePath(root, RELATIVE_PATHS.initialPrompt) },
-            { label: 'Wrap-up Prompt', filePath: resolvePath(root, RELATIVE_PATHS.wrapPrompt) },
-            { label: 'Reverse Prompt', filePath: resolvePath(root, RELATIVE_PATHS.reversePrompt) },
-            { label: 'Guidance Doc', filePath: resolvePath(root, RELATIVE_PATHS.guidanceDoc) }
+            { label: 'Initial Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.initialPrompt) },
+            { label: 'Wrap-up Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.wrapPrompt) },
+            { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) },
+            { label: 'Guidance Doc', filePath: resolveExtensionPath(BUNDLED_PATHS.guidanceDoc) }
         ];
+        checks.push({ label: 'EA Shared Script (Project)', filePath: projectEaScripts.sharedPath });
+        checks.push({ label: 'EA Bootstrap Script (Project)', filePath: projectEaScripts.bootstrapPath });
         output.clear();
         output.appendLine('[AI4PB] Refresh Architecture Context');
         output.appendLine(`Workspace: ${root}`);
@@ -500,7 +560,7 @@ async function startIterationFromModel() {
     try {
         const root = getWorkspaceRoot();
         const archPath = getArchitectureJsonPath(root);
-        const initialPromptPath = resolvePath(root, RELATIVE_PATHS.initialPrompt);
+        const initialPromptPath = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
         if (!exists(archPath)) {
             void vscode.window.showErrorMessage(`Architecture JSON not found: ${archPath}`);
             return;
@@ -533,10 +593,10 @@ async function runDesignCodeAlignment() {
         const reportDir = resolvePath(root, 'TEMP');
         fs.mkdirSync(reportDir, { recursive: true });
         const archPath = getArchitectureJsonPath(root);
-        const guidancePath = resolvePath(root, RELATIVE_PATHS.guidanceDoc);
-        const initPrompt = resolvePath(root, RELATIVE_PATHS.initialPrompt);
-        const wrapPrompt = resolvePath(root, RELATIVE_PATHS.wrapPrompt);
-        const reversePrompt = resolvePath(root, RELATIVE_PATHS.reversePrompt);
+        const guidancePath = resolveExtensionPath(BUNDLED_PATHS.guidanceDoc);
+        const initPrompt = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
+        const wrapPrompt = resolveExtensionPath(BUNDLED_PATHS.wrapPrompt);
+        const reversePrompt = resolveExtensionPath(BUNDLED_PATHS.reversePrompt);
         const reportPath = path.join(reportDir, `design-code-alignment-${stamp}.md`);
         const lines = [
             '# Design-Code Alignment Report',
@@ -603,7 +663,7 @@ async function generateWrapUpReport() {
             '- '
         ].join('\n');
         fs.writeFileSync(reportPath, content, 'utf-8');
-        await openFileIfExists(resolvePath(root, RELATIVE_PATHS.wrapPrompt));
+        await openFileIfExists(resolveExtensionPath(BUNDLED_PATHS.wrapPrompt));
         await openFileIfExists(reportPath);
         output.appendLine(`[AI4PB] Wrap-up report created: ${reportPath}`);
         output.show(true);
@@ -648,11 +708,7 @@ function getGuidedPrecheck(root) {
             errors.push(`Architecture JSON stale: ${Math.floor(ageHours)}h old`);
         }
     }
-    const requiredPrompts = [
-        resolvePath(root, RELATIVE_PATHS.initialPrompt),
-        resolvePath(root, RELATIVE_PATHS.wrapPrompt),
-        resolvePath(root, RELATIVE_PATHS.reversePrompt)
-    ];
+    const requiredPrompts = getBundledPromptPaths();
     for (const promptPath of requiredPrompts) {
         if (!exists(promptPath)) {
             errors.push(`Missing prompt file: ${promptPath}`);

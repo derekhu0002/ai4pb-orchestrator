@@ -7,8 +7,8 @@
  *          so future updates only happen in one place.
  */
 
-var SHARED_SCRIPT_PATH = "D:\\projects\\AI-For-Project-Building\\script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js";
-var SHARED_SCRIPT_LOCAL_FALLBACK_PATH = "D:\\projects\\AI-For-Project-Building\\script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js";
+var SHARED_SCRIPT_PATH = "";
+var SHARED_SCRIPT_LOCAL_FALLBACK_PATH = "";
 var PROJECT_CONFIG_FILE_PATH = ""; // Optional absolute path. If empty, use <projectPath>\\.aicodingconfig
 
 // Per-model config (edit only this block for each EA repository)
@@ -263,8 +263,9 @@ function applyExternalConfig(overrides) {
 		return;
 	}
 
-	if (typeof overrides.sharedScriptPath != "undefined") SHARED_SCRIPT_PATH = overrides.sharedScriptPath;
-	if (typeof overrides.sharedScriptLocalFallbackPath != "undefined") SHARED_SCRIPT_LOCAL_FALLBACK_PATH = overrides.sharedScriptLocalFallbackPath;
+	if (typeof overrides.sharedScriptPath != "undefined" || typeof overrides.sharedScriptLocalFallbackPath != "undefined") {
+		Session.Output("INFO: sharedScriptPath/sharedScriptLocalFallbackPath in .aicodingconfig is ignored. Using bootstrap local resolution.");
+	}
 
 	if (typeof overrides.needCode != "undefined") EA_AUTOGEN_CONFIG.needCode = overrides.needCode;
 	if (typeof overrides.needContent != "undefined") EA_AUTOGEN_CONFIG.needContent = overrides.needContent;
@@ -295,7 +296,7 @@ function sanitizeForEval(scriptText) {
 function mainBootstrap() {
 	Repository.EnsureOutputVisible("Script");
 	Session.Output("Loading shared exporter script...");
-	Session.Output("Path: " + SHARED_SCRIPT_PATH);
+	Session.Output("Primary path: " + (trimString(SHARED_SCRIPT_PATH) != "" ? SHARED_SCRIPT_PATH : "<auto>"));
 
 	var autoProjectPath = resolveProjectPathFromCurrentModel();
 	if (autoProjectPath != "") {
