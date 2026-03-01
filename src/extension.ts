@@ -414,7 +414,6 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 <body>
   <div class="header">
     <h3>AI4PB Studio</h3>
-    <button class="tiny-btn" id="refreshStatusBtn">Refresh</button>
   </div>
   
   <div class="grid-container" id="statusGrid">
@@ -428,7 +427,6 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     const statusGrid = document.getElementById('statusGrid');
     const statusStamp = document.getElementById('statusStamp');
-    const refreshStatusBtn = document.getElementById('refreshStatusBtn');
 
     function renderStatus(payload) {
       if (!payload || !payload.items) {
@@ -460,10 +458,6 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         });
       });
     }
-
-    refreshStatusBtn.addEventListener('click', () => {
-      vscode.postMessage({ type: 'refreshStatus' });
-    });
 
     document.querySelectorAll('button[data-cmd]').forEach((btn) => {
       btn.addEventListener('click', () => {
