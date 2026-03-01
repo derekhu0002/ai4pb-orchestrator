@@ -127,6 +127,10 @@ class WorkflowViewProvider {
                 }
                 return;
             }
+            if (key === 'init') {
+                await vscode.commands.executeCommand('ai4pb.initializeFromTemplate');
+                return;
+            }
             if (key === 'options') {
                 await configureGuidedOptions(root);
                 return;
@@ -172,22 +176,14 @@ class WorkflowViewProvider {
         const items = [];
         try {
             const root = getWorkspaceRoot();
-            const archPath = getArchitectureJsonPath(root);
             const aiConfigPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
             const options = getEffectiveGuidedOptions(loadAiConfig(root));
-            const archExists = exists(archPath);
-            const archMtime = archExists ? fileMtime(archPath) : undefined;
-            const archHours = archMtime ? (Date.now() - archMtime.getTime()) / (1000 * 60 * 60) : Number.POSITIVE_INFINITY;
             items.push({
-                key: 'architecture',
-                label: 'Architecture JSON',
-                state: !archExists ? 'error' : archHours > 24 ? 'warn' : 'ok',
-                detail: !archExists
-                    ? 'Missing'
-                    : archHours > 24
-                        ? `Stale (${Math.floor(archHours)}h old)`
-                        : `Fresh (${toIsoLocal(archMtime)})`,
-                actionLabel: archExists ? 'Open' : 'Refresh'
+                key: 'init',
+                label: 'Initialize EA Template',
+                state: 'ok',
+                detail: 'Copy EA template to workspace root and name it by project',
+                actionLabel: 'Run'
             });
             items.push({
                 key: 'options',
@@ -202,17 +198,8 @@ class WorkflowViewProvider {
                 key: 'prompts',
                 label: 'Prompt Set',
                 state: missingPrompts === 0 ? 'ok' : missingPrompts === promptPaths.length ? 'error' : 'warn',
-                detail: missingPrompts === 0 ? 'All present' : `${missingPrompts}/${promptPaths.length} missing`,
+                detail: `Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'}<br/>Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'}<br/>Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}`,
                 actionLabel: 'Open'
-            });
-            const tempDir = resolvePath(root, 'TEMP');
-            const latestReport = this.findLatestReportMtime(tempDir);
-            items.push({
-                key: 'reports',
-                label: 'Latest Report',
-                state: latestReport ? 'ok' : 'warn',
-                detail: latestReport ? toIsoLocal(latestReport) : 'No alignment/wrap-up report yet',
-                actionLabel: latestReport ? 'Open' : 'Generate'
             });
         }
         catch (error) {
@@ -284,61 +271,120 @@ class WorkflowViewProvider {
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: var(--vscode-font-family); padding: 8px; color: var(--vscode-foreground); }
-    h3 { margin: 8px 0 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; opacity: .85; }
-    .desc { margin: 0 0 10px; font-size: 12px; opacity: .85; }
-    .header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .tiny-btn { border: 1px solid var(--vscode-panel-border); border-radius: 4px; background: transparent; color: var(--vscode-foreground); padding: 2px 6px; cursor: pointer; font-size: 11px; }
-    .tiny-btn:hover { background: var(--vscode-toolbar-hoverBackground); }
-    .status { margin: 0 0 12px; display: grid; gap: 6px; }
-    .status-item { border: 1px solid var(--vscode-panel-border); border-radius: 6px; padding: 6px; }
-    .status-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .status-label { font-size: 12px; font-weight: 600; }
-    .status-detail { font-size: 11px; opacity: .85; margin-top: 2px; }
-    .status-actions { margin-top: 6px; display: flex; justify-content: flex-end; }
-    .action-btn {
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 4px;
-      background: transparent;
-      color: var(--vscode-foreground);
-      padding: 2px 6px;
+    body { 
+      font-family: var(--vscode-font-family); 
+      padding: 16px 12px; 
+      color: var(--vscode-foreground); 
+      background-color: var(--vscode-editor-background); 
+    }
+    .header { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      margin-bottom: 20px; 
+    }
+    h3 { 
+      margin: 0; 
+      font-size: 13px; 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px; 
+      opacity: 0.9; 
+    }
+    .tiny-btn { 
+      border: 1px solid var(--vscode-panel-border); 
+      border-radius: 4px; 
+      background: transparent; 
+      color: var(--vscode-foreground); 
+      padding: 4px 8px; 
+      cursor: pointer; 
+      font-size: 11px; 
+      transition: all 0.2s; 
+    }
+    .tiny-btn:hover { 
+      background: var(--vscode-toolbar-hoverBackground); 
+    }
+    
+    .grid-container { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      margin-bottom: 16px; 
+    }
+    
+    button { 
+      outline: none; 
+      font-family: inherit; 
+    }
+    
+    .glass-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+      background: var(--vscode-editorWidget-background);
+      border-radius: 6px;
+      padding: 12px 14px;
       cursor: pointer;
-      font-size: 11px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      box-sizing: border-box;
+      color: var(--vscode-foreground);
     }
-    .action-btn:hover { background: var(--vscode-toolbar-hoverBackground); }
+    .glass-card:hover {
+      background: var(--vscode-list-hoverBackground);
+      border-color: var(--vscode-focusBorder);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+    .glass-card:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-top { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      margin-bottom: 4px; 
+      width: 100%; 
+    }
+    .card-label { 
+      font-size: 13px; 
+      font-weight: 600; 
+    }
+    .card-detail { 
+      font-size: 12px; 
+      opacity: 0.8; 
+      line-height: 1.4; 
+    }
+    
     .dot { font-size: 12px; }
-    .dot.ok { color: var(--vscode-charts-green); }
-    .dot.warn { color: var(--vscode-charts-yellow); }
-    .dot.error { color: var(--vscode-charts-red); }
-    .stamp { font-size: 10px; opacity: .7; margin: 0 0 8px; }
-    .steps { display: grid; gap: 8px; }
-    button {
-      width: 100%; text-align: left; border: 1px solid var(--vscode-panel-border);
-      background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground);
-      padding: 8px; border-radius: 6px; cursor: pointer;
+    .dot.ok { color: var(--vscode-testing-iconPassed); }
+    .dot.warn { color: var(--vscode-editorWarning-foreground); }
+    .dot.error { color: var(--vscode-editorError-foreground); }
+    
+    .stamp { 
+      font-size: 10px; 
+      opacity: 0.5; 
+      margin-top: 20px; 
+      text-align: right; 
     }
-    button:hover { background: var(--vscode-button-secondaryHoverBackground); }
-    .label { display: block; font-weight: 600; font-size: 12px; }
-    .hint { display: block; margin-top: 2px; font-size: 11px; opacity: .8; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h3>AI4PB Workflow</h3>
+    <h3>AI4PB Studio</h3>
     <button class="tiny-btn" id="refreshStatusBtn">Refresh</button>
   </div>
-  <p id="statusStamp" class="stamp">Status: loading...</p>
-  <div id="statusGrid" class="status"></div>
-  <p class="desc">Run each phase in order for model-driven delivery.</p>
-  <div class="steps">
-    <button data-cmd="ai4pb.initializeFromTemplate"><span class="label">0) Initialize EA Template</span><span class="hint">Copy EA template to workspace root and name it by project</span></button>
-    <button data-cmd="ai4pb.runGuidedWorkflow"><span class="label">▶ Run All (Guided)</span><span class="hint">Stop on error, execute end-to-end flow</span></button>
-    <button data-cmd="ai4pb.refreshArchitectureContext"><span class="label">1) Refresh Context</span><span class="hint">Check model JSON, prompts, docs</span></button>
-    <button data-cmd="ai4pb.openNextAction"><span class="label">2) Open Next Action</span><span class="hint">Auto-decide what to do now</span></button>
-    <button data-cmd="ai4pb.startIterationFromModel"><span class="label">3) Start Iteration</span><span class="hint">Open architecture + initial prompt</span></button>
-    <button data-cmd="ai4pb.runDesignCodeAlignment"><span class="label">4) Run Alignment</span><span class="hint">Generate design-code checklist report</span></button>
-    <button data-cmd="ai4pb.generateWrapUpReport"><span class="label">5) Generate Wrap-up</span><span class="hint">Create iteration wrap-up template</span></button>
+  
+  <div class="grid-container" id="statusGrid">
+    <!-- Dynamic cards injected here -->
   </div>
+  
+  <p id="statusStamp" class="stamp">Status: loading...</p>
 
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
@@ -352,25 +398,25 @@ class WorkflowViewProvider {
         return;
       }
 
-      statusStamp.textContent = 'Status: ' + payload.generatedAt;
+      statusStamp.textContent = 'Updated: ' + payload.generatedAt;
       statusGrid.innerHTML = '';
 
       payload.items.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'status-item';
+        const card = document.createElement('button');
+        card.className = 'glass-card';
+        card.setAttribute('data-action-key', item.key);
+        
         card.innerHTML =
-          '<div class="status-top">' +
-          '<span class="status-label">' + item.label + '</span>' +
+          '<div class="card-top">' +
+          '<span class="card-label">' + item.label + '</span>' +
           '<span class="dot ' + item.state + '">●</span>' +
           '</div>' +
-          '<div class="status-detail">' + item.detail + '</div>' +
-          '<div class="status-actions">' +
-          '<button class="action-btn" data-action-key="' + item.key + '">' + item.actionLabel + '</button>' +
-          '</div>';
+          '<div class="card-detail">' + item.detail + '</div>';
+          
         statusGrid.appendChild(card);
       });
 
-      statusGrid.querySelectorAll('button[data-action-key]').forEach((btn) => {
+      statusGrid.querySelectorAll('.glass-card').forEach((btn) => {
         btn.addEventListener('click', () => {
           const key = btn.getAttribute('data-action-key');
           vscode.postMessage({ type: 'statusAction', key });
