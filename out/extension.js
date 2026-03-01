@@ -308,60 +308,63 @@ class WorkflowViewProvider {
     .grid-container { 
       display: flex; 
       flex-direction: column; 
-      gap: 12px; 
+      gap: 0; 
       margin-bottom: 16px; 
     }
     
     button { 
       outline: none; 
       font-family: inherit; 
+      text-align: center;
     }
     
     .glass-card {
       position: relative;
       display: flex;
       flex-direction: column;
-      text-align: left;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
       background: var(--vscode-editorWidget-background);
-      border-radius: 6px;
-      padding: 12px 14px;
+      border-radius: 0;
+      padding: 8px 12px;
       cursor: pointer;
-      transition: all 0.15s ease;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
       width: 100%;
       box-sizing: border-box;
       color: var(--vscode-foreground);
+      margin-top: -1px;
+    }
+    .glass-card:first-child {
+      margin-top: 0;
     }
     .glass-card:hover {
       background: var(--vscode-list-hoverBackground);
       border-color: var(--vscode-focusBorder);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+      z-index: 1;
     }
     .glass-card:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      background: var(--vscode-list-activeSelectionBackground);
+      color: var(--vscode-list-activeSelectionForeground);
     }
     
     .card-top { 
       display: flex; 
       align-items: center; 
-      justify-content: space-between; 
-      margin-bottom: 4px; 
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 2px; 
       width: 100%; 
     }
     .card-label { 
       font-size: 13px; 
-      font-weight: 600; 
     }
     .card-detail { 
-      font-size: 12px; 
-      opacity: 0.8; 
-      line-height: 1.4; 
+      font-size: 13px; 
+      line-height: 1.3; 
     }
     
-    .dot { font-size: 12px; }
+    .dot { font-size: 13px; }
     .dot.ok { color: var(--vscode-testing-iconPassed); }
     .dot.warn { color: var(--vscode-editorWarning-foreground); }
     .dot.error { color: var(--vscode-editorError-foreground); }
