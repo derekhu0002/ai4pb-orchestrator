@@ -31,7 +31,8 @@ AI4PB Orchestrator 是面向系统工程师的工作流插件，用于将 EA 架
 
 1. 打开 EA 图
 2. 右键打开弹出菜单
-3. 选择对应导出菜单执行
+3. 选择对应导出菜单执行 (图中第一个菜单)
+![[Pasted image 20260301235317.png]]
 4. 确认架构 JSON 已更新
 
 ### 第二步：在 AI4PB 侧边栏执行 3 个主步骤
@@ -40,31 +41,14 @@ AI4PB Orchestrator 是面向系统工程师的工作流插件，用于将 EA 架
 2. **Export Option**：设置导出相关选项（mode / browserPath / allMaintenance）
 3. **Prompt Set**：打开并使用提示词集合
 
-### 第三步：按需执行高级命令
-
-可在命令面板继续执行：
-
-- `AI4PB: Refresh Architecture Context`
-- `AI4PB: Open Next Action`
-- `AI4PB: Start Iteration from Model`
-- `AI4PB: Run Design-Code Alignment`
-- `AI4PB: Generate Wrap-up Report`
-- `AI4PB: Run All (Guided)`
-
 ## 常见使用问题
 
 ### 为什么看不到最新架构内容？
 
 - 回到 EA 重新执行右键导出
 - 确认架构 JSON 时间戳已更新
-- 在 VS Code 执行 `AI4PB: Refresh Architecture Context`
 
 ### Prompt Set 打开后缺少内容怎么办？
 
 - 检查项目中的 Prompt 文件是否完整
 - 重新通过 **Prompt Set** 入口打开
-
-### 不确定下一步做什么？
-
-- 使用 `AI4PB: Open Next Action` 自动定位下一步
-- 或直接使用 `AI4PB: Run All (Guided)` 顺序执行
