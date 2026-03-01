@@ -203,7 +203,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         key: 'init',
         label: 'Initialize EA Template',
         state: 'ok',
-        detail: 'Copy EA template to workspace root and name it by project',
+        detail: 'Copy an <a>EA template</a> to the workspace root and name it by project.',
         actionLabel: 'Run'
       });
 
@@ -211,7 +211,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         key: 'options',
         label: 'Workflow Options',
         state: exists(aiConfigPath) ? 'ok' : 'warn',
-        detail: `mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}, allMaintenance=${options.needallmaintenace ? 'on' : 'off'}`,
+        detail: `Review and configure <a>workflow options</a><br/>(mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}).`,
         actionLabel: 'Select'
       });
 
@@ -222,7 +222,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         key: 'prompts',
         label: 'Prompt Set',
         state: missingPrompts === 0 ? 'ok' : missingPrompts === promptPaths.length ? 'error' : 'warn',
-        detail: `Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'}<br/>Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'}<br/>Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}`,
+        detail: `Ensure your <a>prompts</a> are prepared for instructions.<br/><span style="opacity:0.8;font-size:12px;">Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'} | Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'} | Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}</span>`,
         actionLabel: 'Open'
       });
     } catch (error) {
@@ -310,43 +310,20 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   <style>
     body { 
       font-family: var(--vscode-font-family); 
-      padding: 16px 12px; 
+      padding: 16px; 
       color: var(--vscode-foreground); 
       background-color: var(--vscode-editor-background); 
     }
     .header { 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      margin-bottom: 20px; 
-    }
-    h3 { 
-      margin: 0; 
-      font-size: 13px; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      letter-spacing: 0.5px; 
-      opacity: 0.9; 
-    }
-    .tiny-btn { 
-      border: 1px solid var(--vscode-panel-border); 
-      border-radius: 4px; 
-      background: transparent; 
-      color: var(--vscode-foreground); 
-      padding: 4px 8px; 
-      cursor: pointer; 
-      font-size: 11px; 
-      transition: all 0.2s; 
-    }
-    .tiny-btn:hover { 
-      background: var(--vscode-toolbar-hoverBackground); 
+      display: none; /* Hide header if adhering strictly to the clean look */
     }
     
     .grid-container { 
       display: flex; 
       flex-direction: column; 
-      gap: 0; 
-      margin-bottom: 16px; 
+      gap: 32px; /* Increased separation distance */
+      margin-bottom: 24px; 
+      width: 100%;
     }
     
     button { 
@@ -354,57 +331,57 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       font-family: inherit; 
       text-align: center;
     }
+
+    .info-text {
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 12px; /* A bit more space before the button */
+      color: var(--vscode-foreground);
+    }
     
-    .glass-card {
+    .info-text a {
+      color: var(--vscode-textLink-foreground, #3794ff);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .info-text a:hover {
+      text-decoration: underline;
+    }
+    
+    .call-to-action-btn {
       position: relative;
+      background-color: var(--vscode-button-background, #0e639c);
+      color: var(--vscode-button-foreground, #ffffff);
+      border: none;
+      border-radius: 2px;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%; /* Force all buttons to exactly match width */
+      max-width: 100%;
+      box-sizing: border-box;
+      font-size: 13px;
+      font-weight: 400; /* Regular weight, like native VS Code buttons */
+      min-height: 28px;
+    }
+    .call-to-action-btn:hover {
+      background-color: var(--vscode-button-hoverBackground, #1177bb);
+    }
+    
+    .block-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-      background: var(--vscode-editorWidget-background);
-      border-radius: 0;
-      padding: 8px 12px;
-      cursor: pointer;
+      align-items: stretch; /* Ensures button stretches to full width */
       width: 100%;
       box-sizing: border-box;
-      color: var(--vscode-foreground);
-      margin-top: -1px;
     }
-    .glass-card:first-child {
-      margin-top: 0;
-    }
-    .glass-card:hover {
-      background: var(--vscode-list-hoverBackground);
-      border-color: var(--vscode-focusBorder);
-      z-index: 1;
-    }
-    .glass-card:active {
-      background: var(--vscode-list-activeSelectionBackground);
-      color: var(--vscode-list-activeSelectionForeground);
-    }
-    
-    .card-top { 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      gap: 4px;
-      margin-bottom: 2px; 
-      width: 100%; 
-    }
-    .card-label { 
-      font-size: 13px; 
-    }
-    .card-detail { 
-      font-size: 13px; 
-      line-height: 1.3; 
-    }
-    
-    .dot { font-size: 13px; }
-    .dot.ok { color: var(--vscode-testing-iconPassed); }
-    .dot.warn { color: var(--vscode-editorWarning-foreground); }
-    .dot.error { color: var(--vscode-editorError-foreground); }
+
+    .dot { font-size: 10px; }
+    .dot.ok { color: var(--vscode-charts-green); }
+    .dot.warn { color: var(--vscode-charts-yellow); }
+    .dot.error { color: var(--vscode-charts-red); }
     
     .stamp { 
       font-size: 10px; 
@@ -440,21 +417,24 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       statusGrid.innerHTML = '';
 
       payload.items.forEach((item) => {
-        const card = document.createElement('button');
-        card.className = 'glass-card';
-        card.setAttribute('data-action-key', item.key);
+        const block = document.createElement('div');
+        block.className = 'block-container';
         
-        card.innerHTML =
-          '<div class="card-top">' +
-          '<span class="card-label">' + item.label + '</span>' +
-          '<span class="dot ' + item.state + '">●</span>' +
-          '</div>' +
-          '<div class="card-detail">' + item.detail + '</div>';
+        let textContent = item.detail;
+        if (item.key === 'prompts') {
+          textContent = 'Check your prompt sets. ' + item.detail;
+        }
+
+        block.innerHTML =
+          '<div class="info-text">' + textContent + '</div>' + 
+          '<button class="call-to-action-btn" data-action-key="' + item.key + '">' + 
+          item.label + ' <span class="dot ' + item.state + '">●</span>' +
+          '</button>';
           
-        statusGrid.appendChild(card);
+        statusGrid.appendChild(block);
       });
 
-      statusGrid.querySelectorAll('.glass-card').forEach((btn) => {
+      statusGrid.querySelectorAll('.call-to-action-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
           const key = btn.getAttribute('data-action-key');
           vscode.postMessage({ type: 'statusAction', key });
