@@ -115,7 +115,6 @@ class WorkflowViewProvider {
         try {
             const root = getWorkspaceRoot();
             const archPath = getArchitectureJsonPath(root);
-            const aiConfigPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
             const promptPaths = getBundledPromptPaths();
             if (key === 'architecture') {
                 if (exists(archPath)) {
@@ -127,9 +126,8 @@ class WorkflowViewProvider {
                 }
                 return;
             }
-            if (key === 'aicodingconfig') {
-                ensureGuidedAiConfig(root);
-                await openFileIfExists(aiConfigPath);
+            if (key === 'options') {
+                await configureGuidedOptions(root);
                 return;
             }
             if (key === 'prompts') {
@@ -175,6 +173,7 @@ class WorkflowViewProvider {
             const root = getWorkspaceRoot();
             const archPath = getArchitectureJsonPath(root);
             const aiConfigPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+            const options = getEffectiveGuidedOptions(loadAiConfig(root));
             const archExists = exists(archPath);
             const archMtime = archExists ? fileMtime(archPath) : undefined;
             const archHours = archMtime ? (Date.now() - archMtime.getTime()) / (1000 * 60 * 60) : Number.POSITIVE_INFINITY;
@@ -190,11 +189,11 @@ class WorkflowViewProvider {
                 actionLabel: archExists ? 'Open' : 'Refresh'
             });
             items.push({
-                key: 'aicodingconfig',
-                label: '.aicodingconfig',
+                key: 'options',
+                label: 'Workflow Options',
                 state: exists(aiConfigPath) ? 'ok' : 'warn',
-                detail: exists(aiConfigPath) ? 'Found' : 'Missing',
-                actionLabel: exists(aiConfigPath) ? 'Open' : 'Create'
+                detail: `mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}, allMaintenance=${options.needallmaintenace ? 'on' : 'off'}`,
+                actionLabel: 'Select'
             });
             const promptPaths = getBundledPromptPaths();
             const missingPrompts = promptPaths.filter((promptPath) => !exists(promptPath)).length;
@@ -425,18 +424,42 @@ function getBundledPromptPaths() {
         resolveExtensionPath(BUNDLED_PATHS.reversePrompt)
     ];
 }
-function buildGuidedAiConfig(existing) {
+function getEffectiveGuidedOptions(config) {
+    const existingAutoGen = config?.EA_AUTOGEN_CONFIG;
+    return {
+        needallmaintenace: typeof existingAutoGen?.needallmaintenace === 'boolean'
+            ? existingAutoGen.needallmaintenace
+            : GUIDED_DEFAULTS.needallmaintenace,
+        needbrowserlocation: typeof existingAutoGen?.needbrowserlocation === 'boolean'
+            ? existingAutoGen.needbrowserlocation
+            : GUIDED_DEFAULTS.needbrowserlocation,
+        maintenacetype: typeof existingAutoGen?.maintenacetype === 'string' && existingAutoGen.maintenacetype.trim().length > 0
+            ? existingAutoGen.maintenacetype
+            : GUIDED_DEFAULTS.maintenacetype
+    };
+}
+function buildGuidedAiConfig(existing, overrides) {
     const existingAutoGen = existing?.EA_AUTOGEN_CONFIG;
+    const effectiveOptions = getEffectiveGuidedOptions(existing);
+    if (typeof overrides?.needallmaintenace === 'boolean') {
+        effectiveOptions.needallmaintenace = overrides.needallmaintenace;
+    }
+    if (typeof overrides?.needbrowserlocation === 'boolean') {
+        effectiveOptions.needbrowserlocation = overrides.needbrowserlocation;
+    }
+    if (typeof overrides?.maintenacetype === 'string' && overrides.maintenacetype.trim().length > 0) {
+        effectiveOptions.maintenacetype = overrides.maintenacetype;
+    }
     return {
         EA_AUTOGEN_CONFIG: {
-            needallmaintenace: GUIDED_DEFAULTS.needallmaintenace,
-            needbrowserlocation: GUIDED_DEFAULTS.needbrowserlocation,
-            maintenacetype: GUIDED_DEFAULTS.maintenacetype,
+            needallmaintenace: effectiveOptions.needallmaintenace,
+            needbrowserlocation: effectiveOptions.needbrowserlocation,
+            maintenacetype: effectiveOptions.maintenacetype,
             ...(existingAutoGen?.architectureJsonPath ? { architectureJsonPath: existingAutoGen.architectureJsonPath } : {})
         }
     };
 }
-function ensureGuidedAiConfig(root) {
+function ensureGuidedAiConfig(root, overrides) {
     const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
     let existing;
     if (exists(configPath)) {
@@ -447,9 +470,51 @@ function ensureGuidedAiConfig(root) {
             existing = undefined;
         }
     }
-    const normalized = buildGuidedAiConfig(existing);
+    const normalized = buildGuidedAiConfig(existing, overrides);
     fs.writeFileSync(configPath, JSON.stringify(normalized, null, 2), 'utf-8');
     return normalized;
+}
+async function configureGuidedOptions(root) {
+    const current = getEffectiveGuidedOptions(loadAiConfig(root));
+    const modePick = await vscode.window.showQuickPick([
+        { label: 'forllm', description: 'AI-first maintenance mode', value: 'forllm' },
+        { label: 'forproject', description: 'Project-driven maintenance mode', value: 'forproject' }
+    ], {
+        title: 'AI4PB: Select maintenance type',
+        placeHolder: `Current: ${current.maintenacetype}`,
+        ignoreFocusOut: true
+    });
+    if (!modePick) {
+        return;
+    }
+    const browserPathPick = await vscode.window.showQuickPick([
+        { label: 'On', description: 'Include browser path in exports', value: true },
+        { label: 'Off', description: 'Do not include browser path', value: false }
+    ], {
+        title: 'AI4PB: Include browser path',
+        placeHolder: `Current: ${current.needbrowserlocation ? 'On' : 'Off'}`,
+        ignoreFocusOut: true
+    });
+    if (!browserPathPick) {
+        return;
+    }
+    const allMaintenancePick = await vscode.window.showQuickPick([
+        { label: 'On', description: 'Enable all maintenance', value: true },
+        { label: 'Off', description: 'Disable all maintenance', value: false }
+    ], {
+        title: 'AI4PB: Enable all maintenance',
+        placeHolder: `Current: ${current.needallmaintenace ? 'On' : 'Off'}`,
+        ignoreFocusOut: true
+    });
+    if (!allMaintenancePick) {
+        return;
+    }
+    ensureGuidedAiConfig(root, {
+        maintenacetype: modePick.value,
+        needbrowserlocation: browserPathPick.value,
+        needallmaintenace: allMaintenancePick.value
+    });
+    void vscode.window.showInformationMessage('AI4PB options updated. Configuration is maintained in background.');
 }
 function exists(filePath) {
     return fs.existsSync(filePath);
@@ -493,7 +558,7 @@ async function refreshArchitectureContext() {
         const archPath = getArchitectureJsonPath(root);
         const checks = [
             { label: 'Architecture JSON', filePath: archPath },
-            { label: '.aicodingconfig', filePath: resolvePath(root, RELATIVE_PATHS.aiConfig) },
+            { label: 'Managed Options Config', filePath: resolvePath(root, RELATIVE_PATHS.aiConfig) },
             { label: 'Initial Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.initialPrompt) },
             { label: 'Wrap-up Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.wrapPrompt) },
             { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) },
@@ -575,7 +640,7 @@ async function runDesignCodeAlignment() {
             '## Artifact Checks',
             '',
             `- Architecture JSON: ${exists(archPath) ? 'OK' : 'MISSING'} (${archPath})`,
-            `- .aicodingconfig: ${exists(resolvePath(root, RELATIVE_PATHS.aiConfig)) ? 'OK' : 'MISSING'}`,
+            `- Managed Options Config: ${exists(resolvePath(root, RELATIVE_PATHS.aiConfig)) ? 'OK' : 'MISSING'}`,
             `- Guidance Doc: ${exists(guidancePath) ? 'OK' : 'MISSING'} (${guidancePath})`,
             `- Initial Prompt: ${exists(initPrompt) ? 'OK' : 'MISSING'}`,
             `- Wrap-up Prompt: ${exists(wrapPrompt) ? 'OK' : 'MISSING'}`,
