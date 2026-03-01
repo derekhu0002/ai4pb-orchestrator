@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run AI4PB Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=d:/projects/AI-For-Project-Building/vscode-extension/ai4pb-orchestrator",
+        "--disable-extensions",
+        "--user-data-dir=${workspaceFolder}/.vscode/devhost/user-data",
+        "--extensions-dir=${workspaceFolder}/.vscode/devhost/extensions"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    }
+  ]
+}

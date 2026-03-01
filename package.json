@@ -1,0 +1,72 @@
+{
+  "name": "ai4pb-orchestrator",
+  "displayName": "AI4PB Orchestrator DEV",
+  "description": "Orchestrate EA export, architecture context refresh, prompt flow, and reporting for AI-For-Project-Building.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai4pb",
+          "title": "AI4PB DEV",
+          "icon": "media/ai4pb.svg"
+        }
+      ]
+    },
+    "views": {
+      "ai4pb": [
+        {
+          "id": "ai4pb.workflowView",
+          "name": "Workflow",
+          "icon": "media/ai4pb.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ai4pb.refreshArchitectureContext",
+        "title": "AI4PB: Refresh Architecture Context"
+      },
+      {
+        "command": "ai4pb.startIterationFromModel",
+        "title": "AI4PB: Start Iteration from Model"
+      },
+      {
+        "command": "ai4pb.runDesignCodeAlignment",
+        "title": "AI4PB: Run Design-Code Alignment"
+      },
+      {
+        "command": "ai4pb.generateWrapUpReport",
+        "title": "AI4PB: Generate Wrap-up Report"
+      },
+      {
+        "command": "ai4pb.openNextAction",
+        "title": "AI4PB: Open Next Action"
+      },
+      {
+        "command": "ai4pb.runGuidedWorkflow",
+        "title": "AI4PB: Run All (Guided)"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.0",
+    "@types/vscode": "^1.95.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "EA_AUTOGEN_CONFIG": {
+    "sharedScriptPath": "D:\\projects\\AI-For-Project-Building\\script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js",
+    "needCode": false,
+    "needContent": true,
+    "needdoc": false,
+    "needallmaintenace": false,
+    "needbrowserlocation": true,
+    "maintenacetype": "forllm"
+  }
+}
