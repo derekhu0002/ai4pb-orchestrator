@@ -1,158 +1,132 @@
-# AI4PB Orchestrator（VS Code 扩展）
+# AI4PB Orchestrator
 
-本项目是一套面向系统工程师的 **模型驱动开发（MDD）协作方案**：
-
-- 使用 EA（ArchiMate）维护架构模型与任务
-- 通过导出 JSON 作为 AI 实现约束
-- 在 VS Code 中由 AI4PB Orchestrator + Copilot 驱动实现、对齐与收敛
-
-该 README 合并了原有总览文档与系统工程师实操指南，作为统一入口。
+AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 EA（ArchiMate）模型与 AI 实现流程连接起来，形成“建模 → 导出约束 → 实现 → 对齐审计 → 迭代收敛”的工程闭环。
 
 ---
 
-## 1. 核心理念
+## 1. 扩展定位
 
-AI4PB 的目标不是“只生成代码”，而是建立一个可追踪、可验证、可回环的工程闭环：
+适用场景：
 
-1. 原始需求 → 架构建模
-2. 架构模型 → 结构化 JSON 约束
-3. JSON 约束 → AI 实现与测试
-4. 审计与差距分析 → 反馈回架构模型
+- 在 EA 中维护架构元素与任务
+- 将架构导出为 JSON 作为 AI 开发约束
+- 在 VS Code 中执行实现、审计、总结
 
-通过这个闭环，系统工程师与 AI 能持续协同，保证设计与实现一致。
+核心价值：
 
----
-
-## 2. 插件能力概览
-
-### 命令清单
-
-- `AI4PB: Refresh Architecture Context`
-- `AI4PB: Start Iteration from Model`
-- `AI4PB: Run Design-Code Alignment`
-- `AI4PB: Generate Wrap-up Report`
-- `AI4PB: Open Next Action`
-- `AI4PB: Run All (Guided)`
-
-### 主要能力
-
-- 检查关键工件是否齐全（架构 JSON、Prompt、指南、`.aicodingconfig`）
-- 一键打开架构与 Prompt，启动迭代
-- 自动生成对齐报告与 wrap-up 报告（输出到 `TEMP/`）
-- 在侧边栏提供状态卡片与快捷动作
-
-### 侧边栏工作流
-
-在 Activity Bar 打开 `AI4PB`：
-
-- 状态卡片：架构新鲜度、配置存在性、Prompt 完整性、最新报告
-- 快捷动作：Open / Refresh / Create / Generate
-- 手动刷新 + 每 15 秒自动刷新
-
-推荐执行顺序：
-
-0. Run All (Guided)
-1. Refresh Context
-2. Open Next Action
-3. Start Iteration
-4. Run Alignment
-5. Generate Wrap-up
+- 以模型驱动代码实现，减少设计与实现偏差
+- 通过工作流按钮降低操作门槛
+- 沉淀可追溯的对齐与总结报告
 
 ---
 
-## 3. 系统工程师标准流程（EA + VS Code + Copilot）
+## 2. 用户界面（与当前侧边栏一致）
 
-### Phase 1：建模与任务创建（EA）
+当前侧边栏主按钮为以下 3 项：
+
+1. `Initialize EA Template`
+2. `Export Option`
+3. `Prompt Set`
+
+说明：README 中所有流程顺序与操作说明均以这 3 个 UI 按钮为主入口。
+
+---
+
+## 3. 命令与按钮映射
+
+### 3.1 侧边栏按钮（推荐）
+
+- `Initialize EA Template`：初始化 EA 模板到工作区
+- `Export Option`：设置导出相关选项（mode / browserPath / allMaintenance）
+- `Prompt Set`：打开提示词集合（Init Session / Wrap Up / Design Audit）
+
+---
+
+## 4. 标准工作流程（系统工程师）
+
+### Phase 1：EA 建模与任务维护
 
 1. 在 EA 中维护业务/应用/技术架构元素
-2. 在相关元素里维护 `project_info.tasks`
-3. 为任务设置状态、负责人（AI 任务可设为 `llm`）、优先级、时间等
-4. 保存模型并执行导出
+2. 在相关元素中维护 `project_info.tasks`
+3. 为任务设置状态、负责人（AI 任务可设为 `llm`）、优先级与时间信息
 
-### Phase 2：导出架构约束（EA Bootstrap）
+### Phase 2：在 EA 中执行导出
 
-在 EA 中运行：
+当前推荐方式：
 
-- `script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js`
+- 在 EA 图中右键，使用弹出菜单选择对应导出菜单执行
+- 导出完成后确认 `design/KG/SystemArchitecture.json` 已更新
 
-导出后确认：
+> 不要求最终用户直接运行脚本路径；以 EA 菜单操作为准。
 
-- `design/KG/SystemArchitecture.json` 已更新
+### Phase 3：在 VS Code 中执行 AI 迭代
 
-说明（当前约定）：
+先使用侧边栏 3 个主按钮（与 UI 对齐）：
 
-- 不需要在 `.aicodingconfig` 中设置 `sharedScriptPath`
-- bootstrap 会自动发现共享脚本（优先项目内候选路径，其次本机 `ai4pb-orchestrator` 路径与 VS Code 扩展目录）
+1. `Initialize EA Template`
+2. `Export Option`
+3. `Prompt Set`
 
-### Phase 3：AI 实现（VS Code）
+### Phase 4：验证与回写
 
-1. 打开工作区，确认架构 JSON 为最新
-2. 按阶段使用 Prompt：
-   - `workprompt/initial-prompt.md`
-   - `workprompt/reverse-engineer-WHOLE.md`
-   - `workprompt/Wrap-up Prompt.md`
-3. 结合插件命令完成实现、修复、对齐与总结
-
-### Phase 4：验证与审计
-
-1. 测试工程师执行验证，发现问题进入 Issue 回路
-2. 使用对齐报告 + reverse-engineering 做设计-代码差距分析
-3. 审计结果反馈到 EA，进入下一迭代
+1. 执行测试与验证，识别偏差
+2. 使用对齐报告进行设计-代码差距分析
+3. 将审计结果回写到 EA，进入下一轮迭代
 
 ---
 
-## 4. 关键资产与路径
+## 5. 关键路径与资产
 
-| 资产 | 路径 | 用途 |
-|---|---|---|
-| 架构 JSON | `design/KG/SystemArchitecture.json` | AI 实现约束 |
-| EA Bootstrap | `script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js` | EA 导出入口 |
-| 共享导出脚本 | `script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js` | EA → JSON 逻辑 |
-| 插件逻辑 | `src/extension.ts` | 工作流编排与状态视图 |
-| Prompt 集 | `workprompt/*.md` | 初始化、审计、总结 |
-| 系统工程指南 | `docs/system-engineer-guidance.md` | 实操参考 |
+| 资产       | 路径                                  | 用途               |
+| -------- | ----------------------------------- | ---------------- |
+| 架构 JSON  | `design/KG/SystemArchitecture.json` | AI 实现约束          |
+| 扩展主逻辑    | `src/extension.ts`                  | 工作流编排与侧边栏视图      |
+| Prompt 集 | `workprompt/*.md`                   | 迭代启动、审计、总结       |
+| 报告输出目录   | `TEMP/`                             | 对齐报告与 Wrap-up 输出 |
 
 ---
 
-## 5. `.aicodingconfig`（最小示例）
+## 6. 安装与运行
 
-```json
-{
-  "EA_AUTOGEN_CONFIG": {
-    "needallmaintenace": false,
-    "needbrowserlocation": true,
-    "maintenacetype": "forllm"
-  }
-}
-```
-
-可选覆盖项：
-
-- `architectureJsonPath`（若不使用默认 `design/KG/SystemArchitecture.json`）
-
----
-
-## 6. 本地开发与运行
+### 本地开发
 
 1. 安装依赖：`npm install`
-2. 编译：`npm run compile`
-3. 在扩展工程目录按 `F5` 启动 Extension Development Host
-4. 在新窗口通过命令面板运行 AI4PB 命令
+2. 编译扩展：`npm run compile`
+3. 按 `F5` 启动 Extension Development Host
+4. 在新窗口打开 AI4PB 侧边栏并执行按钮/命令
 
----
-
-## 7. 打包与发布
-
-### 本地分发（推荐起步）
+### 安装 VSIX（本地分发）
 
 1. 打包：`npx @vscode/vsce package`
 2. 安装：`code --install-extension <your-vsix-file>`
 
-### Marketplace 发布
+---
 
-1. 创建 Publisher 与 PAT
-2. 更新 `package.json` 中 `publisher` / `version`
+## 7. 发布到 Marketplace
+
+1. 创建 Publisher
+2. 更新 `package.json` 的 `publisher`、`version`
 3. 登录：`npx @vscode/vsce login <publisher>`
 4. 发布：`npx @vscode/vsce publish`
 
-说明：`.vscodeignore` 已配置排除 `.feap` 文件，不会进入 VSIX。
+说明：`.vscodeignore` 已排除 `.feap` 文件，避免进入 VSIX。
+
+---
+
+## 8. 常见问题（FAQ）
+
+### Q1：为什么看不到最新架构内容？
+
+- 先在 EA 中通过右键菜单重新执行导出
+- 确认 `design/KG/SystemArchitecture.json` 时间戳已更新
+- 在 VS Code 执行 `AI4PB: Refresh Architecture Context`
+
+### Q2：Prompt 缺失怎么办？
+
+- 检查 `workprompt/` 下核心文件是否存在
+- 使用侧边栏 `Prompt Set` 直接打开并补齐
+
+### Q3：如何快速跑完整流程？
+
+- 使用 `AI4PB: Run All (Guided)`
+- 或按本 README 的“侧边栏 3 步 + 高级命令 5 步”顺序执行
