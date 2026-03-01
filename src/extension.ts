@@ -27,9 +27,6 @@ const BUNDLED_PATHS = {
 };
 
 const GUIDED_DEFAULTS = {
-  needCode: false,
-  needContent: true,
-  needdoc: false,
   needallmaintenace: false,
   needbrowserlocation: true,
   maintenacetype: 'forllm'
@@ -468,9 +465,6 @@ function buildGuidedAiConfig(existing?: AiConfig): AiConfig {
 
   return {
     EA_AUTOGEN_CONFIG: {
-      needCode: GUIDED_DEFAULTS.needCode,
-      needContent: GUIDED_DEFAULTS.needContent,
-      needdoc: GUIDED_DEFAULTS.needdoc,
       needallmaintenace: GUIDED_DEFAULTS.needallmaintenace,
       needbrowserlocation: GUIDED_DEFAULTS.needbrowserlocation,
       maintenacetype: GUIDED_DEFAULTS.maintenacetype,

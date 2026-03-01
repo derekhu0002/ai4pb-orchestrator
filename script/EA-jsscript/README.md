@@ -35,9 +35,6 @@
 ```json
 {
   "EA_AUTOGEN_CONFIG": {
-    "needCode": false,
-    "needContent": true,
-    "needdoc": false,
     "needallmaintenace": false,
     "needbrowserlocation": true,
     "maintenacetype": "forllm"

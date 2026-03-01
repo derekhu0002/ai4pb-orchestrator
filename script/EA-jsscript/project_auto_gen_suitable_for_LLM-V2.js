@@ -736,10 +736,28 @@ function isRtfEmpty(rtfContent) {
     return s.length === 0;
 }
 
+function logGlobalRuntimeConfig() {
+	Session.Output("==== EA_AUTOGEN Global Vars ====");
+	Session.Output("projectPath=" + projectPath);
+	Session.Output("needCode=" + needCode);
+	Session.Output("needContent=" + needContent);
+	Session.Output("needdoc=" + needdoc);
+	Session.Output("needallmaintenace=" + needallmaintenace);
+	Session.Output("needbrowserlocation=" + needbrowserlocation);
+	Session.Output("maintenacetype=" + maintenacetype);
+	if (typeof EA_AUTOGEN_CONFIG != "undefined" && EA_AUTOGEN_CONFIG != null) {
+		Session.Output("EA_AUTOGEN_CONFIG=present");
+	} else {
+		Session.Output("EA_AUTOGEN_CONFIG=missing");
+	}
+	Session.Output("===============================");
+}
+
 function main() {
     // Show the script output window
     Repository.EnsureOutputVisible("Script");
     Session.Output("Starting diagram to JSON export...");
+	logGlobalRuntimeConfig();
 
     // Get the currently open diagram
     var currentDiagram as EA.Diagram;

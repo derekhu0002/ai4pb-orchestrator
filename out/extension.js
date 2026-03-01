@@ -49,9 +49,6 @@ const BUNDLED_PATHS = {
     guidanceDoc: 'docs/system-engineer-guidance.md'
 };
 const GUIDED_DEFAULTS = {
-    needCode: false,
-    needContent: true,
-    needdoc: false,
     needallmaintenace: false,
     needbrowserlocation: true,
     maintenacetype: 'forllm'
@@ -432,9 +429,6 @@ function buildGuidedAiConfig(existing) {
     const existingAutoGen = existing?.EA_AUTOGEN_CONFIG;
     return {
         EA_AUTOGEN_CONFIG: {
-            needCode: GUIDED_DEFAULTS.needCode,
-            needContent: GUIDED_DEFAULTS.needContent,
-            needdoc: GUIDED_DEFAULTS.needdoc,
             needallmaintenace: GUIDED_DEFAULTS.needallmaintenace,
             needbrowserlocation: GUIDED_DEFAULTS.needbrowserlocation,
             maintenacetype: GUIDED_DEFAULTS.maintenacetype,
