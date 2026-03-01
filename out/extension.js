@@ -46,9 +46,7 @@ const BUNDLED_PATHS = {
     initialPrompt: 'workprompt/initial-prompt.md',
     wrapPrompt: 'workprompt/Wrap-up Prompt.md',
     reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
-    guidanceDoc: 'docs/system-engineer-guidance.md',
-    eaSharedScript: 'script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js',
-    eaBootstrapScript: 'script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js'
+    guidanceDoc: 'docs/system-engineer-guidance.md'
 };
 const GUIDED_DEFAULTS = {
     needCode: false,
@@ -134,7 +132,6 @@ class WorkflowViewProvider {
             }
             if (key === 'aicodingconfig') {
                 ensureGuidedAiConfig(root);
-                ensureProjectEaScripts(root);
                 await openFileIfExists(aiConfigPath);
                 return;
             }
@@ -460,26 +457,6 @@ function ensureGuidedAiConfig(root) {
     fs.writeFileSync(configPath, JSON.stringify(normalized, null, 2), 'utf-8');
     return normalized;
 }
-function ensureProjectEaScripts(root) {
-    const targetDir = resolvePath(root, 'script/EA-jsscript');
-    fs.mkdirSync(targetDir, { recursive: true });
-    const sharedSource = resolveExtensionPath(BUNDLED_PATHS.eaSharedScript);
-    const bootstrapSource = resolveExtensionPath(BUNDLED_PATHS.eaBootstrapScript);
-    if (!exists(sharedSource)) {
-        throw new Error(`Bundled EA shared script not found: ${sharedSource}`);
-    }
-    if (!exists(bootstrapSource)) {
-        throw new Error(`Bundled EA bootstrap script not found: ${bootstrapSource}`);
-    }
-    const sharedTarget = path.join(targetDir, 'project_auto_gen_suitable_for_LLM-V2.js');
-    const bootstrapTarget = path.join(targetDir, 'project_auto_gen_suitable_for_LLM-V2-bootstrap.js');
-    fs.copyFileSync(sharedSource, sharedTarget);
-    fs.copyFileSync(bootstrapSource, bootstrapTarget);
-    return {
-        sharedPath: sharedTarget,
-        bootstrapPath: bootstrapTarget
-    };
-}
 function exists(filePath) {
     return fs.existsSync(filePath);
 }
@@ -519,7 +496,6 @@ async function refreshArchitectureContext() {
     try {
         const root = getWorkspaceRoot();
         ensureGuidedAiConfig(root);
-        const projectEaScripts = ensureProjectEaScripts(root);
         const archPath = getArchitectureJsonPath(root);
         const checks = [
             { label: 'Architecture JSON', filePath: archPath },
@@ -529,8 +505,6 @@ async function refreshArchitectureContext() {
             { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) },
             { label: 'Guidance Doc', filePath: resolveExtensionPath(BUNDLED_PATHS.guidanceDoc) }
         ];
-        checks.push({ label: 'EA Shared Script (Project)', filePath: projectEaScripts.sharedPath });
-        checks.push({ label: 'EA Bootstrap Script (Project)', filePath: projectEaScripts.bootstrapPath });
         output.clear();
         output.appendLine('[AI4PB] Refresh Architecture Context');
         output.appendLine(`Workspace: ${root}`);

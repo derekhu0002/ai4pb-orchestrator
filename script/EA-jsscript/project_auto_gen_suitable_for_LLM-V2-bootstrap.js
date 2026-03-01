@@ -153,6 +153,87 @@ function fileExists(filePath) {
 	}
 }
 
+function appendUniquePath(list, filePath) {
+	var p = trimString(filePath);
+	if (p == "") {
+		return;
+	}
+
+	for (var i = 0; i < list.length; i++) {
+		if (("" + list[i]).toLowerCase() == p.toLowerCase()) {
+			return;
+		}
+	}
+
+	list.push(p);
+}
+
+function getParentFolderPath(folderPath) {
+	try {
+		var fso = new ActiveXObject("Scripting.FileSystemObject");
+		return trimString(fso.GetParentFolderName(trimString(folderPath)));
+	} catch (e) {
+		return "";
+	}
+}
+
+function getVsCodeExtensionRootCandidates() {
+	var roots = [];
+	try {
+		var shell = new ActiveXObject("WScript.Shell");
+		var userProfile = trimString(shell.ExpandEnvironmentStrings("%USERPROFILE%"));
+		if (userProfile != "" && userProfile.indexOf("%USERPROFILE%") < 0) {
+			appendUniquePath(roots, userProfile + "\\.vscode\\extensions");
+			appendUniquePath(roots, userProfile + "\\.vscode-insiders\\extensions");
+		}
+	} catch (e) {
+		// ignore
+	}
+
+	return roots;
+}
+
+function getPluginManagedSharedScriptCandidates() {
+	var candidates = [];
+	var rel = "script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js";
+
+	if (EA_AUTOGEN_CONFIG.projectPath != null && trimString(EA_AUTOGEN_CONFIG.projectPath) != "") {
+		var projectRoot = normalizeProjectPath(EA_AUTOGEN_CONFIG.projectPath);
+		var level1 = getParentFolderPath(projectRoot);
+		var level2 = getParentFolderPath(level1);
+
+		appendUniquePath(candidates, level1 + "\\ai4pb-orchestrator\\" + rel);
+		appendUniquePath(candidates, level1 + "\\vscode-extension\\ai4pb-orchestrator\\" + rel);
+		appendUniquePath(candidates, level2 + "\\ai4pb-orchestrator\\" + rel);
+		appendUniquePath(candidates, level2 + "\\vscode-extension\\ai4pb-orchestrator\\" + rel);
+	}
+
+	try {
+		var fso = new ActiveXObject("Scripting.FileSystemObject");
+		var extRoots = getVsCodeExtensionRootCandidates();
+		for (var i = 0; i < extRoots.length; i++) {
+			var extRoot = extRoots[i];
+			if (!fso.FolderExists(extRoot)) {
+				continue;
+			}
+
+			var folder = fso.GetFolder(extRoot);
+			var subfolders = new Enumerator(folder.SubFolders);
+			for (; !subfolders.atEnd(); subfolders.moveNext()) {
+				var sub = subfolders.item();
+				var folderName = ("" + sub.Name).toLowerCase();
+				if (folderName.indexOf("ai4pb-orchestrator") >= 0) {
+					appendUniquePath(candidates, sub.Path + "\\" + rel);
+				}
+			}
+		}
+	} catch (e) {
+		// ignore
+	}
+
+	return candidates;
+}
+
 function getLocalSharedScriptCandidates() {
 	var candidates = [];
 
@@ -164,6 +245,11 @@ function getLocalSharedScriptCandidates() {
 		var projectRoot = normalizeProjectPath(EA_AUTOGEN_CONFIG.projectPath);
 		candidates.push(projectRoot + "script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js");
 		candidates.push(projectRoot + "tools\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js");
+	}
+
+	var pluginManaged = getPluginManagedSharedScriptCandidates();
+	for (var k = 0; k < pluginManaged.length; k++) {
+		candidates.push(pluginManaged[k]);
 	}
 
 	var unique = [];
@@ -263,9 +349,8 @@ function applyExternalConfig(overrides) {
 		return;
 	}
 
-	if (typeof overrides.sharedScriptPath != "undefined" || typeof overrides.sharedScriptLocalFallbackPath != "undefined") {
-		Session.Output("INFO: sharedScriptPath/sharedScriptLocalFallbackPath in .aicodingconfig is ignored. Using bootstrap local resolution.");
-	}
+	if (typeof overrides.sharedScriptPath != "undefined") SHARED_SCRIPT_PATH = overrides.sharedScriptPath;
+	if (typeof overrides.sharedScriptLocalFallbackPath != "undefined") SHARED_SCRIPT_LOCAL_FALLBACK_PATH = overrides.sharedScriptLocalFallbackPath;
 
 	if (typeof overrides.needCode != "undefined") EA_AUTOGEN_CONFIG.needCode = overrides.needCode;
 	if (typeof overrides.needContent != "undefined") EA_AUTOGEN_CONFIG.needContent = overrides.needContent;
