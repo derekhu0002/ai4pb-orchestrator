@@ -125,3 +125,5 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 - 检查 `workprompt/` 下核心文件是否存在
 - 使用侧边栏 `Prompt Set` 直接打开并补齐
 
+
+
