@@ -34,6 +34,7 @@ AI4PB Orchestrator 是面向系统工程师的工作流插件，用于将 EA 架
 3. 选择对应导出菜单执行 (图中第一个菜单)
 ![alt text](image.png)
 4. 确认架构 JSON 已更新
+
 ![alt text](image-1.png)
 
 ### 第二步：在 AI4PB 侧边栏执行 3 个主步骤
