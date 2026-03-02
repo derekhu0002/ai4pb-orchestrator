@@ -85,6 +85,7 @@ Reorganize the architecture structure proposal using **Progressive Disclosure** 
     *   **[VIEW - MERGE]** when redundant Views should be consolidated.
     *   **[ELEMENT - MOVE]** when browser path/location should change for ownership clarity.
     *   **[RELATIONSHIP - MOVE]** when a relationship should be shown in a different View for readability.
+    *   **[VIEW BROWSER LOCATION - STRICT]:** Every View action above MUST include explicit browser location using `browser_path` style paths. If proposing a new View, provide its exact target browser path. If modifying/splitting/merging, provide both current and target browser paths.
 
 *   **Constraint:**
     *   Do not delete information solely for simplification.
@@ -147,6 +148,7 @@ Please use this exact format for easy parsing:
 
 ### [VIEW - ADD]
 *   **View Name:** `New View Name`
+*   **Target Browser Path:** `Model/.../.../New View Name`
 *   **Purpose:** `Single concern this view explains`
 *   **Description:** `Must include Stakeholders / Concerns / Purpose / Scope in plain text`
 *   **Included Elements:** `["id1", "id2", ...]`
@@ -155,6 +157,8 @@ Please use this exact format for easy parsing:
 
 ### [VIEW - MODIFY]
 *   **View Name:** `Existing View Name`
+*   **Current Browser Path:** `Model/.../.../Existing View Name`
+*   **Target Browser Path:** `Model/.../.../Updated View Name`
 *   **Change:** `Rename / Narrow Scope / Re-layout`
 *   **Before Scope:** `Current concern mix`
 *   **After Scope:** `New focused concern`
@@ -162,13 +166,17 @@ Please use this exact format for easy parsing:
 
 ### [VIEW - SPLIT]
 *   **Source View:** `Existing overloaded View`
+*   **Source Browser Path:** `Model/.../.../Existing overloaded View`
 *   **New Views:** `["View A", "View B", ...]`
+*   **Target Browser Paths:** `["Model/.../.../View A", "Model/.../.../View B", ...]`
 *   **Split Logic:** `Concern boundaries used for split`
 *   **Description Requirement:** `For each new View, include Stakeholders / Concerns / Purpose / Scope in its description`
 
 ### [VIEW - MERGE]
 *   **Source Views:** `["View A", "View B"]`
+*   **Source Browser Paths:** `["Model/.../.../View A", "Model/.../.../View B"]`
 *   **Target View:** `Merged View Name`
+*   **Target Browser Path:** `Model/.../.../Merged View Name`
 *   **Merge Logic:** `Why these views are redundant`
 *   **Description Requirement:** `Merged target View description must include Stakeholders / Concerns / Purpose / Scope`
 
