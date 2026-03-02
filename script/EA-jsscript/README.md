@@ -70,7 +70,6 @@ var EA_AUTOGEN_CONFIG = {
 | `project_auto_gen_suitable_for_LLM.js` | 面向 LLM 的导出版本（字段更规范） | 当前图/包 | 更易消费 JSON + 可能的 PDF |
 | `project_auto_gen_suitable_for_LLM-V2.js` | LLM 导出增强版（含 browser_path、任务过滤等） | 当前图/包 | 增强 JSON + 可能的 PDF |
 | `PUT-all-elements-on-diagram.js` | 将选中包内元素放到当前图（不递归） | 当前图 + 选中包 | 图中新增元素 |
-| `PUT-all-elements-under-directory-recursively-on-diagram.js` | 将选中目录及子目录元素递归放到当前图 | 当前图 + 选中包 | 图中新增元素 |
 
 ---
 
@@ -151,23 +150,11 @@ var EA_AUTOGEN_CONFIG = {
   - 若元素已在图上：输出日志并跳过
 - **日志示例**：`SKIP (already on diagram): <Name> [ElementID=<id>]`
 
-### 10) `PUT-all-elements-under-directory-recursively-on-diagram.js`
-- **用途**：将选中对象下的元素递归添加到当前图（支持“包”或“元素”作为入口）。
-- **前置条件**：
-  - 已打开目标图
--  - Project Browser 中选中目录（包）或某个元素
-- **关键行为**：
-  - 若选中包：递归收集包及子包中的元素，并继续下钻元素的子元素
-  - 若选中元素：递归收集该元素及其子元素
-  - 网格布局放置
-  - 已存在元素输出日志并跳过
-- **适用场景**：一次性把某个架构分支（包层级或元素层级）完整铺到图上。
-
 ---
 
 ## 推荐使用顺序（常见）
 1. 若外部 JSON 入模：`schema_json_to_diagram.js` 或 `stix_to_ea.js`
-2. 若补图：`PUT-all-elements-on-diagram.js` / `PUT-all-elements-under-directory-recursively-on-diagram.js`
+2. 若补图：`PUT-all-elements-on-diagram.js`
 3. 若导出给 AI/报告流程：优先 `project_auto_gen_suitable_for_LLM-V2.js`
 4. 若需 STIX 回写：`ea_to_stix.js`
 
