@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.0.19
+
+### Features
+- Added AI4PB Copilot Agent tools for prompt retrieval (`#ai4pb-init`, `#ai4pb-wrapup`, `#ai4pb-audit`)
+- Added one-click Copilot entry actions for Init / Design Audit / Wrap-up flows in workflow panel
+- Expanded Chinese-localized workflow panel copy for core user-facing actions
+
+### Improvements
+- Improved Copilot handoff prompts to start execution-oriented workflows instead of only pasting prompt text
+- Refined panel action wording for clearer operational intent
+
+### Changes
+- Rolled back background FEAP auto-export pipeline and restored EA manual export workflow as default
+- Removed automatic diagram auto-selection extensions from exporter scripts and returned to current-open-diagram behavior
+
+---
+
 ## 0.0.7
 
 ### Improvements
