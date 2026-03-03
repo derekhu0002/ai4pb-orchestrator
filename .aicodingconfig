@@ -1,0 +1,7 @@
+{
+  "EA_AUTOGEN_CONFIG": {
+    "needallmaintenace": false,
+    "needbrowserlocation": true,
+    "maintenacetype": "forllm"
+  }
+}

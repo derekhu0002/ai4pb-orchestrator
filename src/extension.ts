@@ -33,6 +33,12 @@ const BUNDLED_PATHS = {
   guidanceDoc: 'docs/system-engineer-guidance.md'
 };
 
+const TOOL_NAMES = {
+  initPrompt: 'ai4pb_get_init_session_prompt',
+  wrapPrompt: 'ai4pb_get_wrap_up_prompt',
+  auditPrompt: 'ai4pb_get_design_audit_prompt'
+} as const;
+
 const GUIDED_DEFAULTS = {
   needallmaintenace: false,
   needbrowserlocation: true,
@@ -49,6 +55,8 @@ export function activate(context: vscode.ExtensionContext): void {
   void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
   const workflowViewProvider = new WorkflowViewProvider(context.extensionUri);
 
+  registerPromptTools(context);
+
   context.subscriptions.push(
     output,
     vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider),
@@ -58,12 +66,74 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment),
     vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport),
     vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction),
-    vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow)
+    vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt)
   );
 }
 
 export function deactivate(): void {
   output?.dispose();
+}
+
+type PromptToolInput = Record<string, never>;
+
+class PromptTemplateTool implements vscode.LanguageModelTool<PromptToolInput> {
+  constructor(
+    private readonly label: string,
+    private readonly promptRelativePath: string
+  ) {}
+
+  prepareInvocation(
+    _options: vscode.LanguageModelToolInvocationPrepareOptions<PromptToolInput>,
+    _token: vscode.CancellationToken
+  ): vscode.PreparedToolInvocation {
+    return {
+      invocationMessage: `Loading ${this.label} prompt template`
+    };
+  }
+
+  invoke(
+    _options: vscode.LanguageModelToolInvocationOptions<PromptToolInput>,
+    _token: vscode.CancellationToken
+  ): vscode.LanguageModelToolResult {
+    const promptPath = resolveExtensionPath(this.promptRelativePath);
+    if (!exists(promptPath)) {
+      throw new Error(`AI4PB prompt file not found: ${promptPath}`);
+    }
+
+    const content = fs.readFileSync(promptPath, 'utf-8').trim();
+    if (!content) {
+      throw new Error(`AI4PB prompt file is empty: ${promptPath}`);
+    }
+
+    const resultText = [
+      `AI4PB ${this.label} prompt template from ${this.promptRelativePath}:`,
+      '',
+      content
+    ].join('\n');
+
+    return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(resultText)]);
+  }
+}
+
+function registerPromptTools(context: vscode.ExtensionContext): void {
+  const toolDefinitions: Array<{ name: string; label: string; promptRelativePath: string }> = [
+    { name: TOOL_NAMES.initPrompt, label: 'Init Session', promptRelativePath: BUNDLED_PATHS.initialPrompt },
+    { name: TOOL_NAMES.wrapPrompt, label: 'Wrap-up', promptRelativePath: BUNDLED_PATHS.wrapPrompt },
+    { name: TOOL_NAMES.auditPrompt, label: 'Design Audit', promptRelativePath: BUNDLED_PATHS.reversePrompt }
+  ];
+
+  for (const tool of toolDefinitions) {
+    context.subscriptions.push(
+      vscode.lm.registerTool(
+        tool.name,
+        new PromptTemplateTool(tool.label, tool.promptRelativePath)
+      )
+    );
+    output.appendLine(`[AI4PB] Tool registered: ${tool.name}`);
+  }
 }
 
 class WorkflowViewProvider implements vscode.WebviewViewProvider {
@@ -164,6 +234,21 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         return;
       }
 
+      if (key === 'copilotInit') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithInitPrompt');
+        return;
+      }
+
+      if (key === 'copilotAudit') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithDesignAuditPrompt');
+        return;
+      }
+
+      if (key === 'copilotWrapUp') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithWrapUpPrompt');
+        return;
+      }
+
       if (key === 'reports') {
         const latestReportPath = this.findLatestReportPath(resolvePath(root, 'TEMP'));
         if (latestReportPath) {
@@ -201,18 +286,18 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       items.push({
         key: 'init',
-        label: 'Initialize EA Template',
+        label: '初始化 EA 模板',
         state: 'ok',
-        detail: 'Copy EA template to workspace root and name it by project.',
-        actionLabel: 'Run'
+        detail: '将 EA 模板复制到工作区根目录，并按项目名称命名。',
+        actionLabel: '执行'
       });
 
       items.push({
         key: 'options',
-        label: 'Export Option',
+        label: '导出选项',
         state: exists(aiConfigPath) ? 'ok' : 'warn',
-        detail: `mode=${options.maintenacetype}, browserPath=${options.needbrowserlocation ? 'on' : 'off'}, allMaintenance=${options.needallmaintenace ? 'on' : 'off'}`,
-        actionLabel: 'Select'
+        detail: `模式=${options.maintenacetype}，浏览器路径=${options.needbrowserlocation ? '开启' : '关闭'}，全量维护=${options.needallmaintenace ? '开启' : '关闭'}`,
+        actionLabel: '设置'
       });
 
       const promptPaths = getBundledPromptPaths();
@@ -220,19 +305,43 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       items.push({
         key: 'prompts',
-        label: 'Prompt Set',
+        label: '提示词集合',
         state: missingPrompts === 0 ? 'ok' : missingPrompts === promptPaths.length ? 'error' : 'warn',
-        detail: `Init Session: ${exists(promptPaths[0]) ? 'ok' : 'missing'} | Wrap Up: ${exists(promptPaths[1]) ? 'ok' : 'missing'} | Design Audit: ${exists(promptPaths[2]) ? 'ok' : 'missing'}`,
-        actionLabel: 'Open'
+        detail: `初始化会话：${exists(promptPaths[0]) ? '正常' : '缺失'} | 收尾总结：${exists(promptPaths[1]) ? '正常' : '缺失'} | 设计审计：${exists(promptPaths[2]) ? '正常' : '缺失'}`,
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotInit',
+        label: '打开 Copilot（Init Prompt）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-init。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotAudit',
+        label: '打开 Copilot（Design Audit）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-audit。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotWrapUp',
+        label: '打开 Copilot（Wrap-up）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-wrapup。',
+        actionLabel: '打开'
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       items.push({
         key: 'workspace',
-        label: 'Workspace',
+        label: '工作区',
         state: 'error',
         detail: message,
-        actionLabel: 'Refresh'
+        actionLabel: '刷新'
       });
     }
 
@@ -949,5 +1058,67 @@ async function runGuidedWorkflow(): Promise<void> {
     output.appendLine(`[AI4PB] Guided workflow failed: ${message}`);
     output.show(true);
     void vscode.window.showErrorMessage(`AI4PB Run All (Guided) failed: ${message}`);
+  }
+}
+
+async function openCopilotWithInitPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-init。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'init prompt workflow'
+  );
+}
+
+async function openCopilotWithDesignAuditPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-audit。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'design audit workflow'
+  );
+}
+
+async function openCopilotWithWrapUpPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-wrapup。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'wrap-up workflow'
+  );
+}
+
+async function openCopilotWithPromptReference(seedText: string, label: string): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('workbench.action.chat.open', { query: seedText });
+    await trySubmitCopilotChat();
+    output.appendLine(`[AI4PB] Opened Copilot chat with ${label} reference.`);
+    return;
+  } catch {
+    try {
+      await vscode.commands.executeCommand('workbench.action.chat.open');
+      await vscode.commands.executeCommand('workbench.action.chat.focusInput');
+      await vscode.commands.executeCommand('type', { text: seedText });
+      await trySubmitCopilotChat();
+      output.appendLine(`[AI4PB] Opened Copilot chat and inserted ${label} reference via fallback.`);
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      void vscode.window.showErrorMessage(`AI4PB failed to open Copilot chat: ${message}`);
+    }
+  }
+}
+
+async function trySubmitCopilotChat(): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('workbench.action.chat.submit');
+  } catch {
+    // Older VS Code builds may not expose submit command; ignore safely.
   }
 }

@@ -40,6 +40,25 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 - `Export Option`：设置导出相关选项（mode / browserPath / allMaintenance）
 - `Prompt Set`：打开提示词集合（Init Session / Wrap Up / Design Audit）
 
+### 3.2 Copilot Agent Skill（免手工拷贝 Prompt）
+
+扩展已提供 3 个 Language Model Tools（Agent Skill），可直接把主 Prompt 提供给 GitHub Copilot：
+
+- `#ai4pb-init`：Init Session Prompt（`workprompt/initial-prompt.md`）
+- `#ai4pb-wrapup`：Wrap-up Prompt（`workprompt/Wrap-up Prompt.md`）
+- `#ai4pb-audit`：Design Audit Prompt（`workprompt/reverse-engineer-WHOLE.md`）
+
+使用方式（Copilot Chat Agent 模式）：
+
+1. 在 Chat 输入中直接提问并附带 `#ai4pb-init` / `#ai4pb-wrapup` / `#ai4pb-audit`
+2. 或让 Agent 根据任务自动调用上述工具
+
+一键入口：
+
+- 命令面板执行 `AI4PB: Open Copilot with Init Prompt`，自动打开 Copilot Chat 并预填 `#ai4pb-init`
+
+这样无需用户手工打开文件并复制 Prompt 文本。
+
 ---
 
 ## 4. 标准工作流程（系统工程师）
@@ -124,6 +143,13 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 
 - 检查 `workprompt/` 下核心文件是否存在
 - 使用侧边栏 `Prompt Set` 直接打开并补齐
+
+
+
+
+
+
+
 
 
 

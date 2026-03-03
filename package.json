@@ -2,7 +2,7 @@
   "name": "ai4pb-orchestrator",
   "displayName": "AI4PB Orchestrator DEV",
   "description": "Orchestrate EA export, architecture context refresh, prompt flow, and reporting for AI-For-Project-Building.",
-  "version": "0.0.10",
+  "version": "0.0.17",
   "publisher": "derekhu",
   "repository": {
     "type": "git",
@@ -66,6 +66,59 @@
       {
         "command": "ai4pb.runGuidedWorkflow",
         "title": "AI4PB: Run All (Guided)"
+      },
+      {
+        "command": "ai4pb.openCopilotWithInitPrompt",
+        "title": "AI4PB: Open Copilot with Init Prompt"
+      },
+      {
+        "command": "ai4pb.openCopilotWithDesignAuditPrompt",
+        "title": "AI4PB: Open Copilot with Design Audit Prompt"
+      },
+      {
+        "command": "ai4pb.openCopilotWithWrapUpPrompt",
+        "title": "AI4PB: Open Copilot with Wrap-up Prompt"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "ai4pb_get_init_session_prompt",
+        "displayName": "AI4PB Init Session Prompt",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "ai4pb-init",
+        "userDescription": "Get the AI4PB init-session prompt template",
+        "modelDescription": "Returns the full AI4PB init-session prompt text from workprompt/initial-prompt.md. Use this when starting implementation from the architecture model and you need the exact prompt template without manual copy.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "ai4pb_get_wrap_up_prompt",
+        "displayName": "AI4PB Wrap-up Prompt",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "ai4pb-wrapup",
+        "userDescription": "Get the AI4PB wrap-up prompt template",
+        "modelDescription": "Returns the full AI4PB wrap-up prompt text from workprompt/Wrap-up Prompt.md. Use this when generating iteration summary and closure outputs.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "ai4pb_get_design_audit_prompt",
+        "displayName": "AI4PB Design Audit Prompt",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "ai4pb-audit",
+        "userDescription": "Get the AI4PB design-audit prompt template",
+        "modelDescription": "Returns the full AI4PB design-audit prompt text from workprompt/reverse-engineer-WHOLE.md. Use this for design-code alignment or reverse-engineering checks.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
       }
     ]
   },
