@@ -17,7 +17,7 @@ def scan_node(node):
     for task in tasks:
         status = task.get('status', 'Active')
         if status not in ['Done', 'Complete']:
-            print(f"- **[Node ID: {node_id}]** Task: \"{task.get('description', 'No description')}\" (Status: {status})")
+            print(f"- **[Node ID: {node_id}]** Task: \"{task.get('description', 'No description')}\" (status: {status})")
 
     for subgraph in node.get('subgraphs', []):
         for sub_node in subgraph.get('nodes', []):

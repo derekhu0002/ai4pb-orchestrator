@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.22
+
+### Improvements
+- Refreshed Marketplace documentation to align with current sidebar actions, Copilot Agent tools, and manual EA export workflow
+- Optimized VSIX packaging via `.vscodeignore` cleanup to reduce release artifact size by excluding local development/runtime-irrelevant directories
+
+### Changes
+- Continued with EA manual export as the default and supported production path
+- Kept Copilot one-click prompt entry actions and prompt tool integration aligned with current UX
+
+---
+
 ## 0.0.19
 
 ### Features

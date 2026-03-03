@@ -16,8 +16,8 @@ You operate in a strict Model-Driven Development (MDD) environment.
 **OUTPUT YOUR PLAN:**
 Before generating code, output a summary of the work you found in this format:
 > "I have scanned the Architecture. I found the following active tasks:"
-> - **[Element ID: 1135]** Task: "Implement retry logic" (Status: Active)
-> - **[Element ID: 1138]** Task: "Fix NullPointer" (Status: Proposed)
+> - **[Element ID: 1135]** Task: "Implement retry logic" (status: Active)
+> - **[Element ID: 1138]** Task: "Fix NullPointer" (status: Proposed)
 
 # PHASE 2: IMPLEMENTATION
 Execute the tasks identified above.

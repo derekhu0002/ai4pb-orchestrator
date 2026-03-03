@@ -128,7 +128,7 @@ function getProjectinfo(tele) {
 			}
 			
 			if (task.Status != "") {
-				statata += ',"Status": "' + jsonEscape(task.Status) + '"\n';
+				statata += ',"status": "' + jsonEscape(task.Status) + '"\n';
 			}
 			
 			if (task.Notes != "") {
