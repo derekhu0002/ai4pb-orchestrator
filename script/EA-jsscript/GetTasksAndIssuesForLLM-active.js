@@ -117,7 +117,7 @@ function runSqlFallbackSearch(searchTerm) {
         + "WHERE (t_objectproblems.ProblemType = 'ToDo' OR t_objectproblems.ProblemType = 'Issue') "
         + "AND t_objectproblems.Object_ID = t_object.Object_ID "
         + "AND t_objectproblems.ResolvedBy = 'llm' "
-        + "AND (t_objectproblems.Status = 'Active' OR t_objectproblems.Status = 'Verified') "
+        + "AND t_objectproblems.Status = 'Active' "
         + "ORDER BY t_objectproblems.ResolvedBy ASC";
 
     Session.Output("SQLQuery回退已启用：为兼容当前数据库驱动，已跳过日期宏过滤条件。");
@@ -148,7 +148,7 @@ function parseDaysFromSearchTerm(searchTerm) {
 }
 
 /*
- * 获取默认输出路径: 相对于EA文件所在目录的 ./debug/tasks/
+ * 获取默认输出路径: 相对于EA文件所在目录的 ./design/tasks/
  * @return 输出JSON文件的完整路径
  */
 function getDefaultOutputPath() {
@@ -160,7 +160,7 @@ function getDefaultOutputPath() {
     }
 
     var eaFolder = fso.GetParentFolderName(eaFilePath);
-    var outputFolder = fso.BuildPath(eaFolder, "debug");
+    var outputFolder = fso.BuildPath(eaFolder, "design");
     outputFolder = fso.BuildPath(outputFolder, "tasks");
 
     ensureFolderExists(fso, outputFolder);
