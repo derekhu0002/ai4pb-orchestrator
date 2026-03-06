@@ -32,13 +32,31 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 
 ---
 
-## 3. 命令与按钮映射
+## 3. Action → Command 映射
 
-### 3.1 侧边栏按钮（推荐）
+### 3.1 侧边栏动作与命令 ID
 
-- `Initialize EA Template`：初始化 EA 模板到工作区
-- `Export Option`：设置导出相关选项（mode / browserPath / allMaintenance）
-- `Prompt Set`：打开提示词集合（Init Session / Wrap Up / Design Audit）
+| 侧边栏动作（Workflow） | VS Code Command ID | 说明 |
+| --- | --- | --- |
+| Initialize EA Template / 初始化 EA 模板 | `ai4pb.initializeFromTemplate` | 复制 EA 模板到工作区根目录并命名为当前项目名 `.feap` |
+| Export Option / 导出选项 | （内部设置动作，无独立命令 ID） | 维护 `.aicodingconfig` 中的维护模式与导出选项 |
+| Prompt Set / 提示词集合 | （内部打开动作，无独立命令 ID） | 打开扩展内置 Prompt 文件 |
+| 打开 Copilot（Init Prompt） | `ai4pb.openCopilotWithInitPrompt` | 打开 Copilot Chat 并注入 `#ai4pb-init` |
+| 打开 Copilot（Design Audit） | `ai4pb.openCopilotWithDesignAuditPrompt` | 打开 Copilot Chat 并注入 `#ai4pb-audit` |
+| 打开 Copilot（Wrap-up） | `ai4pb.openCopilotWithWrapUpPrompt` | 打开 Copilot Chat 并注入 `#ai4pb-wrapup` |
+
+### 3.2 命令面板可直接执行的命令
+
+- `ai4pb.initializeFromTemplate`
+- `ai4pb.refreshArchitectureContext`
+- `ai4pb.startIterationFromModel`
+- `ai4pb.runDesignCodeAlignment`
+- `ai4pb.generateWrapUpReport`
+- `ai4pb.openNextAction`
+- `ai4pb.runGuidedWorkflow`
+- `ai4pb.openCopilotWithInitPrompt`
+- `ai4pb.openCopilotWithDesignAuditPrompt`
+- `ai4pb.openCopilotWithWrapUpPrompt`
 
 ### 3.2 Copilot Agent Skill（免手工拷贝 Prompt）
 
@@ -133,6 +151,18 @@ AI4PB Orchestrator 是一个面向系统工程师的 VS Code 扩展，用于把 
 | 扩展主逻辑    | `src/extension.ts`                  | 工作流编排与侧边栏视图      |
 | Prompt 集 | `workprompt/*.md`                   | 迭代启动、审计、总结       |
 | 报告输出目录   | `TEMP/`                             | 对齐报告与 Wrap-up 输出 |
+
+### 5.1 运行时生成物（精确文件名与位置）
+
+| 触发动作 / 命令 | 生成物文件名 | 位置 |
+| --- | --- | --- |
+| `ai4pb.initializeFromTemplate` | `<workspaceName>.feap` | 工作区根目录（例如：`./ai4pb-orchestrator.feap`） |
+| `ai4pb.startIterationFromModel` | `iteration-state.json` | `TEMP/iteration-state.json` |
+| `ai4pb.runDesignCodeAlignment` | `design-code-alignment-<ISO_TIMESTAMP>.md` | `TEMP/design-code-alignment-*.md` |
+| `ai4pb.generateWrapUpReport` | `wrap-up-<ISO_TIMESTAMP>.md` | `TEMP/wrap-up-*.md` |
+| 首次/更新导出选项（侧边栏 Export Option） | `.aicodingconfig` | 工作区根目录（`./.aicodingconfig`） |
+
+说明：`<ISO_TIMESTAMP>` 由运行时 `new Date().toISOString()` 生成并做文件名安全替换（`:`/`.` → `-`）。
 
 ---
 

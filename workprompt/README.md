@@ -9,6 +9,28 @@
 - 输出语言：除非 Prompt 另有说明，建议中文
 - 路径统一使用相对路径，便于在仓库内协作与追踪
 
+## 输出边界（必须区分）
+
+为避免混淆，本仓库存在两类输出：
+
+### A. LLM 内容输出（`implementation/*`）
+- 由 Prompt 驱动生成的业务/项目文档内容。
+- 典型文件：
+	- `implementation/task-list.md`
+	- `implementation/taskhelpinfos/*.md`
+	- `implementation/reports/*.md`
+
+### B. 扩展运行时输出（`TEMP/*`）
+- 由 VS Code 扩展命令自动生成的运行时工件，不属于 Prompt 业务文档产物。
+- 典型文件：
+	- `TEMP/iteration-state.json`
+	- `TEMP/design-code-alignment-*.md`
+	- `TEMP/wrap-up-*.md`
+
+### 结论
+- `implementation/*`：用于交付给团队阅读和执行的内容成果。
+- `TEMP/*`：用于扩展运行过程追踪、对齐检查和会话收尾的过程工件。
+
 ---
 
 ## 1) `weekly-report-prompt.md`

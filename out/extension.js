@@ -46,8 +46,7 @@ const BUNDLED_PATHS = {
     eaTemplate: 'EA-model-template/EA-model-template.feap',
     initialPrompt: 'workprompt/initial-prompt.md',
     wrapPrompt: 'workprompt/Wrap-up Prompt.md',
-    reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
-    guidanceDoc: 'docs/system-engineer-guidance.md'
+    reversePrompt: 'workprompt/reverse-engineer-WHOLE.md'
 };
 const TOOL_NAMES = {
     initPrompt: 'ai4pb_get_init_session_prompt',
@@ -643,8 +642,7 @@ async function refreshArchitectureContext() {
             { label: 'Managed Options Config', filePath: resolvePath(root, RELATIVE_PATHS.aiConfig) },
             { label: 'Initial Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.initialPrompt) },
             { label: 'Wrap-up Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.wrapPrompt) },
-            { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) },
-            { label: 'Guidance Doc', filePath: resolveExtensionPath(BUNDLED_PATHS.guidanceDoc) }
+            { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) }
         ];
         output.clear();
         output.appendLine('[AI4PB] Refresh Architecture Context');
@@ -742,7 +740,6 @@ async function runDesignCodeAlignment() {
         const reportDir = resolvePath(root, 'TEMP');
         fs.mkdirSync(reportDir, { recursive: true });
         const archPath = getArchitectureJsonPath(root);
-        const guidancePath = resolveExtensionPath(BUNDLED_PATHS.guidanceDoc);
         const initPrompt = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
         const wrapPrompt = resolveExtensionPath(BUNDLED_PATHS.wrapPrompt);
         const reversePrompt = resolveExtensionPath(BUNDLED_PATHS.reversePrompt);
@@ -757,7 +754,6 @@ async function runDesignCodeAlignment() {
             '',
             `- Architecture JSON: ${exists(archPath) ? 'OK' : 'MISSING'} (${archPath})`,
             `- Managed Options Config: ${exists(resolvePath(root, RELATIVE_PATHS.aiConfig)) ? 'OK' : 'MISSING'}`,
-            `- Guidance Doc: ${exists(guidancePath) ? 'OK' : 'MISSING'} (${guidancePath})`,
             `- Initial Prompt: ${exists(initPrompt) ? 'OK' : 'MISSING'}`,
             `- Wrap-up Prompt: ${exists(wrapPrompt) ? 'OK' : 'MISSING'}`,
             `- Reverse Prompt: ${exists(reversePrompt) ? 'OK' : 'MISSING'}`,
