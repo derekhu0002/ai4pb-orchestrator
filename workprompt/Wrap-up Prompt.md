@@ -1,12 +1,16 @@
 # SESSION WRAP-UP & SYNC
 
 ## Task Status Sync (Session Delta)
-Review the active `project_info.tasks` extracted from `design\KG\SystemArchitecture.json` identified at session start and assign one status per task:
+Re-scan `design\KG\SystemArchitecture.json` at wrap-up time and extract `project_info.tasks` again.
+
+Then focus on tasks whose current status is `VERIFIED` and evaluate delivery fulfillment for each such task. For every verified task, assign one conclusion:
 - **Done**: Fully implemented and validated.
 - **In Progress**: Partially implemented.
 - **Blocked**: Cannot complete due to constraints/dependencies.
 
-Include concise evidence for each task (changed files, verification notes, blockers).
+Include concise evidence for each verified task (changed files, verification notes, blockers).
+
+If no task is currently `VERIFIED`, explicitly state that no verified tasks were found in this wrap-up scan.
 
 ## Output Contract
-Produce one report with `Session task status updates`.
+Produce one report with `Session task status updates for verified tasks`.

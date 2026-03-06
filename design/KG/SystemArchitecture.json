@@ -19,20 +19,6 @@
 "name": "Application"
 ,"type": "Class"
 ,"browser_path": "Model/Application/Application"
-,"project_info": {
-"tasks": [
-{
-"name": "请帮我分析，我是否可以借助类似openclaw等应用来进一步减少人工参与，但是仍然不会在AI辅助编码过程中失去对整体项目的掌控？"
-,"type": "ToDo"
-,"status": "Active"
-,"start_date": "2026-2-27"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-}
-]
-}
 ,"subdiagram_views": [
 {
 "view_id": "152",
@@ -214,21 +200,6 @@
 ,"type": "ArchiMate_BusinessActor"
 ,"browser_path": "Model/Business/Business/SystemEngineer"
 ,"description": "currently a humanbeing.\r\nhe/she can select different prompt to drive copilot."
-,"project_info": {
-"tasks": [
-{
-"name": "提供一个系统工程师在本流程中使用EA和VS+COPILOT进行辅助编码的实操指导"
-,"type": "Issue"
-,"status": "Active"
-,"description": "比如现在EA中建模-&gt;在模型中对应的架构元素下添加TASK，并设置该TASK为active，并将责任人设置为llm。\r\n然后通过JS脚本到处JSON格式，说明该JSON文件在固定路径下。\r\n然后使用预置提示词告知COPILOT，然后OPILOT执行-&gt;和AI交互，多轮交互后，用wrapup提示词让AI进行总结和确认。\r\n另外，长时间未同步的情况下，现生产当前模型的JSON，然后选择提示词让AI进行设计和实现同步，然后工程师根据审计报告进行EA模型更新，这样达到架构模型更新和实现对齐的目的。"
-,"start_date": "2026-2-27"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-}
-]
-}
 },
 {
 "id": "1185",
@@ -255,6 +226,21 @@
 ,"description": "[\"package.json\", \"src/extension.ts\", \"workprompt/initial-prompt.md\", \"workprompt/reverse-engineer-WHOLE.md\", \"workprompt/Wrap-up Prompt.md\"]"
 }
 ]
+,"project_info": {
+"tasks": [
+{
+"name": "at the end of each interation ,the wrap-upping should be examing the fullfiment of each task whose status is verified."
+,"type": "ToDo"
+,"status": "Active"
+,"description": "in the wrap up prompt you need to tell llm to extract the tasks from the json model again, check each task whose status is verified."
+,"start_date": "2026-3-7"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 },
 {
 "id": "1189",
@@ -291,20 +277,6 @@
 "content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\workprompt\\\\reverse-engineer-WHOLE.md\n\n**Role:** Expert Software Architect and ArchiMate Modeler.\r\n\r\n**Context:**\r\nYou have just completed the coding implementation for **the system of this project**. I need you to audit the \"As-Built\" architecture against the provided \"As-Designed\" Knowledge Graph.\r\n\r\n**Input Data:**\r\n1.  **The Codebase:** The file structure, classes, API endpoints, database models, and configuration files you have just generated/analyzed.\r\n2.  **The Current Architecture:** **YOU MUST READ** the file `design\\KG\\SystemArchitecture.json` to understand the architecture.\r\n\r\n**Constraint:**\r\n**DO NOT** output the full JSON. Provide a structured **Audit & Change Report** in a temporary markdown file `design\\temp\\audit.md` only. I will use this report to manually update my modeling tool.\r\n\r\n**Task 1: Traceability Recovery & Architecture Audit (The \"Diff\" Report)**\r\nCompare the `design\\KG\\SystemArchitecture.json` content against your actual code implementation.\r\n\r\n*   **Traceability Recovery (CRITICAL):**\r\n    *   **Goal:** Every Application Component, Service, and Interface in the JSON *must* link to specific files in the codebase.\r\n    *   **Action:** Verify the `code_paths` attribute for every element. If it is missing, incorrect, or incomplete, you must flag it for update.\r\n    *   **Inclusion Rule (STRICT):** Only include elements in `[TRACEABILITY - UPDATE]` when a change is required (`code_paths` missing/incorrect/incomplete, or element metadata must be corrected). If an element is already aligned, do **not** include it in the report.\r\n    *   **Reverse Check:** Ensure no major code file is \"orphaned\" (not linked to an Architecture Element). If a file exists but has no corresponding element, it triggers an `[ELEMENT - ADD]` request.\r\n\r\n*   **Elements (Add):**\r\n    *   Identify major components (Python modules, Docker containers, React Contexts, Middleware) in the code that are currently missing from the graph.\r\n    *   **CRITICAL:** You MUST specify which **View** the new element belongs to (e.g., inside \"AI Security Orchestrator (Backend)\" or \"Technology Layer\").\r\n\r\n*   **Elements (Modify):**\r\n    *   **Description & Tech Stack:** If the code uses a different library (e.g., ChromaDB instead of Milvus) or a different logic flow, request a change to the `name` and `description`.\r\n    *   **Attributes:** Update `code_paths` and metadata.\r\n    *   **TOBE Content (MANDATORY):** Do not provide only suggestions. For every `[ELEMENT - MODIFY]`, you MUST provide complete target-state (`TOBE`) content for every changed field, including full replacement text for `description` and full replacement value for any changed attributes.\r\n    *   **Location:** Verify if the element is in the correct View. If the code suggests it belongs elsewhere (e.g., moved from \"Core\" to \"Utils\"), note this.\r\n\r\n*   **Elements (Delete vs. Future):**\r\n    *   **Delete:** If an element represents an abandoned approach or a library that was definitely *not* used.\r\n    *   **Mark as Future:** If an element (e.g., a specific Plugin) is in the design but **not yet implemented**, do not delete it. Recommend updating its description to start with \"[PROPOSED]\".\r\n\r\n*   **Relationships:**\r\n    *   Analyze imports, dependency injection, API calls, and TCP connections.\r\n    *   **View Placement (STRICT):** Every proposed relationship must specify where it should be modeled (the exact view name in the architecture JSON).\r\n    *   **Use precise ArchiMate logic:**\r\n        *   `ArchiMate_Realization` (Class implements Interface).\r\n        *   `ArchiMate_Serving` (Infrastructure hosts App).\r\n        *   `ArchiMate_Access` (App reads/writes DB).\r\n        *   `ArchiMate_Composition` (Parent module contains Sub-module).\r\n        *   `ArchiMate_Triggering` (Event triggers Task).\r\n\r\n**Task 2: Business Layer Consulting (Gap Analysis)**\r\nReview the `BusinessLayer` nodes in the JSON against your code.\r\n*   **Coverage:** Which business processes are successfully supported by the code?\r\n*   **Gaps:** Which business processes exist in the design but have *zero* code implementation?\r\n*   **Suggestions:** Specific technical recommendations to bridge the gaps.\r\n\r\n**Task 3: Comprehensive README & Documentation Update**\r\n*   **Scope:** Review **ALL** `README.md` files throughout the codebase (root and subdirectories).\r\n*   **Action:** Perform a **read-only discrepancy audit** against the current implementation and architecture graph. Do **not** modify README content.\r\n*   **Consistency:** Verify that README descriptions match component responsibilities defined in the architecture.\r\n*   **Output:** In the final report, list reviewed README files and document discrepancies, risks, and recommended wording updates (without applying them).\r\n\r\n**Task 4: Strategy & Architecture Compliance Review**\r\n*   **Goal:** Verify that the implementation obeys the high-level strategy and architecture principles.\r\n*   **Strategy Source:** Review the \"Strategy\" and \"Motivation\" layers in the provided KG.\r\n*   **Compliance Check:**\r\n    *   Are the key architectural principles (e.g., Separation of Concerns, Modularity, Security-First) respected in the code?\r\n    *   Does the implementation align with the strategic goals (e.g., Scalability, Extensibility)?\r\n*   **Reporting:** Highlight any deviations or violations of the strategy.\r\n\r\n**Task 5: Knowledge Graph Structure Reorganization (CRITICAL)**\r\nReorganize the architecture structure proposal using **Progressive Disclosure** and **Separation of Concerns** principles.\r\n\r\n*   **Progressive Disclosure Rules:**\r\n    *   Propose a layered reading path from high-level to detailed (e.g., Strategy → Business → Application → Technology).\r\n    *   Ensure each View is cognitively scoped (target 7-15 elements per View, avoid overloaded diagrams).\r\n    *   Split overloaded Views into focused Views by concern (e.g., runtime flow, data access, security controls, async processing).\r\n    *   Introduce drill-down structure: high-level overview Views plus detailed subordinate Views.\r\n    *   For **every View** (existing and newly proposed), include viewpoint fields directly inside that View's description using: `Stakeholders`, `Concerns`, `Purpose`, `Scope` as a separate standalone viewpoint section.\r\n\r\n*   **Separation of Concerns Rules:**\r\n    *   Separate capability concerns clearly (orchestration, plugin runtime, data governance, identity/access, observability, infrastructure).\r\n    *   Reduce mixed responsibilities inside single elements; recommend split/merge when needed.\r\n    *   Keep cross-layer relationships explicit and minimal per View; avoid relation clutter.\r\n    *   Ensure each element has one primary ownership location (browser path) and is referenced from Views by inclusion.\r\n\r\n*   **Required Reorganization Actions:**\r\n    *   **[VIEW - ADD]** when a new focused viewpoint is needed.\r\n    *   **[VIEW - MODIFY]** when an existing View should be narrowed, renamed, or re-scoped.\r\n    *   **[VIEW - SPLIT]** when one View should become multiple Views.\r\n    *   **[VIEW - MERGE]** when redundant Views should be consolidated.\r\n    *   **[ELEMENT - MOVE]** when browser path/location should change for ownership clarity.\r\n    *   **[RELATIONSHIP - MOVE]** when a relationship should be shown in a different View for readability.\r\n    *   **[VIEW BROWSER LOCATION - STRICT]:** Every View action above MUST include explicit browser location using `browser_path` style paths. If proposing a new View, provide its exact target browser path. If modifying/splitting/merging, provide both current and target browser paths.\r\n\r\n*   **Constraint:**\r\n    *   Do not delete information solely for simplification.\r\n    *   Preserve architecture completeness while improving readability.\r\n    *   Use current JSON structure terms: `elements`, `relationships`, `views`, `browser_path`.\r\n\r\n**Output Format:**\r\n\r\n**Part 1: The Architecture Change Report**\r\nPlease use this exact format for easy parsing:\r\n\r\n### [TRACEABILITY - UPDATE]\r\n*   **Element Name:** `Existing Element Name` (Use exact ID or Name from JSON)\r\n*   **Code Paths:** `[\"path/to/implementation_file.py\", \"path/to/class_file.py\"]`\r\n*   **Reason:** `New implementation / Refactoring / Correction required`\r\n\r\n### [TRACEABILITY - ALIGNED (OMITTED)]\r\n*   **Rule:** Do not list aligned elements one-by-one.\r\n*   **Summary:** `N elements verified as already aligned and omitted from [TRACEABILITY - UPDATE]`.\r\n\r\n### [ELEMENT - ADD]\r\n*   **Name:** `Exact Code Name`\r\n*   **Type:** `ApplicationComponent` (or other ArchiMate type)\r\n*   **Parent View:** `Exact View Name` (Must exist in JSON)\r\n*   **Description:** `1-sentence description.`\r\n*   **Attributes:** `code_paths = [\"path/to/file.py\"]`\r\n\r\n### [ELEMENT - MODIFY]\r\n*   **Name:** `Existing Element Name`\r\n*   **Change Summary:** Description of why this change is needed.\r\n*   **TOBE Name:** `Complete replacement value or N/A`\r\n*   **TOBE Description:** `Complete replacement description text (full content, not delta)`\r\n*   **TOBE Attributes:**\r\n    *   `attribute_name_1 = complete replacement value`\r\n    *   `attribute_name_2 = complete replacement value`\r\n*   **TOBE Browser Path:** `Complete replacement path or N/A`\r\n\r\n### [RELATIONSHIP - ADD]\r\n*   **Source:** `Element A`\r\n*   **Target:** `Element B`\r\n*   **Type:** `Serving` (or other ArchiMate relationship)\r\n*   **Parent View:** `Exact View Name` (Must exist in JSON)\r\n*   **Description:** `Why this exists.`\r\n\r\n**Part 2: Business Gap Analysis**\r\n*   **Implemented Processes:** ...\r\n*   **Missing Capabilities:** ...\r\n\r\n**Part 3: Documentation & README Synchronization**\r\n*   **Reviewed READMEs:**\r\n    *   **File:** `path/to/README.md`\r\n*   **Discrepancies:** Detail any specific discrepancies found between the code and the documentation.\r\n*   **Recommended Updates (Not Applied):** Summarize the exact changes that should be made.\r\n\r\n**Part 4: Strategy & Architecture Compliance Report**\r\n*   **Compliance:** (PASS / FAIL / PARTIAL)\r\n*   **Violations:** Describe any violations of architecture principles (e.g. coupling issues, missing layers).\r\n*   **Recommendations:** Suggest corrective actions to align implementation with strategy.\r\n\r\n**Part 5: KG Reorganization Plan (Progressive Disclosure + SoC)**\r\n\r\n### [REORGANIZATION - PRINCIPLES CHECK]\r\n*   **Progressive Disclosure:** `PASS / PARTIAL / FAIL` with rationale.\r\n*   **Separation of Concerns:** `PASS / PARTIAL / FAIL` with rationale.\r\n*   **Hotspots:** List the top cluttered Views/elements causing cognitive overload.\r\n\r\n### [VIEW - ADD]\r\n*   **View Name:** `New View Name`\r\n*   **Target Browser Path:** `Model/.../.../New View Name`\r\n*   **Purpose:** `Single concern this view explains`\r\n*   **Description:** `Must include Stakeholders / Concerns / Purpose / Scope in plain text`\r\n*   **Included Elements:** `[\"id1\", \"id2\", ...]`\r\n*   **Included Relationships:** `[\"id1\", \"id2\", ...]`\r\n*   **Reason:** `Why this reduces cognitive load`\r\n\r\n### [VIEW - MODIFY]\r\n*   **View Name:** `Existing View Name`\r\n*   **Current Browser Path:** `Model/.../.../Existing View Name`\r\n*   **Target Browser Path:** `Model/.../.../Updated View Name`\r\n*   **Change:** `Rename / Narrow Scope / Re-layout`\r\n*   **Before Scope:** `Current concern mix`\r\n*   **After Scope:** `New focused concern`\r\n*   **Description Update:** `Include Stakeholders / Concerns / Purpose / Scope in plain text`\r\n\r\n### [VIEW - SPLIT]\r\n*   **Source View:** `Existing overloaded View`\r\n*   **Source Browser Path:** `Model/.../.../Existing overloaded View`\r\n*   **New Views:** `[\"View A\", \"View B\", ...]`\r\n*   **Target Browser Paths:** `[\"Model/.../.../View A\", \"Model/.../.../View B\", ...]`\r\n*   **Split Logic:** `Concern boundaries used for split`\r\n*   **Description Requirement:** `For each new View, include Stakeholders / Concerns / Purpose / Scope in its description`\r\n\r\n### [VIEW - MERGE]\r\n*   **Source Views:** `[\"View A\", \"View B\"]`\r\n*   **Source Browser Paths:** `[\"Model/.../.../View A\", \"Model/.../.../View B\"]`\r\n*   **Target View:** `Merged View Name`\r\n*   **Target Browser Path:** `Model/.../.../Merged View Name`\r\n*   **Merge Logic:** `Why these views are redundant`\r\n*   **Description Requirement:** `Merged target View description must include Stakeholders / Concerns / Purpose / Scope`\r\n\r\n### [ELEMENT - MOVE]\r\n*   **Element:** `ID or Name`\r\n*   **Current Browser Path:** `current/path`\r\n*   **Target Browser Path:** `target/path`\r\n*   **Reason:** `Ownership clarity / SoC`\r\n\r\n### [RELATIONSHIP - MOVE]\r\n*   **Relationship:** `ID or statement`\r\n*   **From View:** `View Name`\r\n*   **To View:** `View Name`\r\n*   **Reason:** `Readability / clutter reduction`\r\n\r\n"
 }
 ]
-,"project_info": {
-"tasks": [
-{
-"name": "the \"change\" of \"ELEMENT - MODIFY\" should not only be a suggestion,  you should give complete `TOBE` content for the related description or attributes"
-,"type": "ToDo"
-,"status": "Active"
-,"start_date": "2026-3-6"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "High",
-"assigned_to": "llm"
-}
-]
-}
 },
 {
 "id": "1193",
@@ -416,6 +388,32 @@
 ,"description": "[\"src/extension.ts\", \"package.json\", \"README.md\", \"MARKETPLACE.md\"]"
 }
 ]
+,"project_info": {
+"tasks": [
+{
+"name": "help me add new button to auto trigger projectmanagement-related prompt to copilot"
+,"type": "ToDo"
+,"status": "Active"
+,"description": "including 3 buttons to trigger these 3 prompt below:\r\nworkprompt\\task-list-prompt.md\r\nworkprompt\\task-support-prompt.md\r\nworkprompt\\weekly-report-prompt.md"
+,"start_date": "2026-3-7"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+},
+{
+"name": "添加一个迭代中多轮交互的提示词和插件界面对应按钮"
+,"type": "ToDo"
+,"status": "Active"
+,"description": "当首次执行结束后，测试人员会对照JSON MODEL中的TASK列表对COPILOT开发交付的系统进行验收，没验收通过一个会手动将该TASK在EA上标记为VERIFIED状态；\r\n但是如果某个任务没有验收通过，则测试人员会手工在该任务的进展描述相关问题，然后会将问题列表再次导出到design\\tasks\\taskandissues_for_LLM.json，示例如下：\r\n[ { \"Name\": \"AI辅助编程现状\", \"Problem\": \"请帮我调查AI辅助编程现状，有哪些进展，有哪些短板亟需突破？\", \"ProblemNotes\": \"XXX\", \"ResolverNotes\": \"未修复：\\n1、pp\\n2、wq\\n已修复：\\n1、XX\\n2、WW\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1122 }, { \"Name\": \"AI4PB VS插件\", \"Problem\": \"help me add new button to auto trigger related prompt to copilot\", \"ProblemNotes\": \"including 3 buttons to trigger these 3 prompt below:\\nworkprompt\\\\task-list-prompt.md\\nworkprompt\\\\task-support-prompt.md\\nworkprompt\\\\weekly-report-prompt.md\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1209 }, { \"Name\": \"AI4PB VS插件\", \"Problem\": \"添加一个迭代中多轮交互的提示词和插件界面对应按钮\", \"ProblemNotes\": \"当首次执行结束后，测试人员会对照JSON MODEL中的TASK列表对COPILOT开发交付的系统进行验收，没验收通过一个会手动将该TASK在EA上标记为VERIFIED状态；\\n但是如果某个任务没有验收通过，则测试人员会手工在该任务的进展描述相关问题，然后会将问题列表再次导出到/design/tasks/下的\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1209 }, { \"Name\": \"Github Copilot\", \"Problem\": \"at the end of each interation ,the wrap-upping should be examing the fullfiment of each task whose status is verified.\", \"ProblemNotes\": \"in the wrap up prompt you need to tell llm to extract the tasks from the json model again, check each task whose status is verified.\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1187 } ]\r\n接下来我们需要把这个任务列表告诉LLM让他根据任务进展中对未修复或未完成问题的描述继续工作，工作过程中依然需要像init提示那样持续维护代码和架构的Traceability；--因此我需要你在插件中增加一个按钮，和INIT等按钮一样，用户点击后插件则向COPILOT发送一条指示进行本轮问题处理；"
+,"start_date": "2026-3-7"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 ,"subdiagram_views": [
 {
 "view_id": "159",

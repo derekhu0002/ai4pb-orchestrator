@@ -29,13 +29,21 @@ const BUNDLED_PATHS = {
   eaTemplate: 'EA-model-template/EA-model-template.feap',
   initialPrompt: 'workprompt/initial-prompt.md',
   wrapPrompt: 'workprompt/Wrap-up Prompt.md',
-  reversePrompt: 'workprompt/reverse-engineer-WHOLE.md'
+  reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
+  taskListPrompt: 'workprompt/task-list-prompt.md',
+  taskSupportPrompt: 'workprompt/task-support-prompt.md',
+  weeklyReportPrompt: 'workprompt/weekly-report-prompt.md',
+  iterationIssuesPrompt: 'workprompt/iteration-issues-prompt.md'
 };
 
 const TOOL_NAMES = {
   initPrompt: 'ai4pb_get_init_session_prompt',
   wrapPrompt: 'ai4pb_get_wrap_up_prompt',
-  auditPrompt: 'ai4pb_get_design_audit_prompt'
+  auditPrompt: 'ai4pb_get_design_audit_prompt',
+  taskListPrompt: 'ai4pb_get_task_list_prompt',
+  taskSupportPrompt: 'ai4pb_get_task_support_prompt',
+  weeklyReportPrompt: 'ai4pb_get_weekly_report_prompt',
+  iterationIssuesPrompt: 'ai4pb_get_iteration_issues_prompt'
 } as const;
 
 const GUIDED_DEFAULTS = {
@@ -68,7 +76,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow),
     vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt),
     vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt),
-    vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt)
+    vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt),
+    vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt)
   );
 }
 
@@ -117,11 +129,16 @@ class PromptTemplateTool implements vscode.LanguageModelTool<PromptToolInput> {
   }
 }
 
+// @ArchitectureID: 1187
 function registerPromptTools(context: vscode.ExtensionContext): void {
   const toolDefinitions: Array<{ name: string; label: string; promptRelativePath: string }> = [
     { name: TOOL_NAMES.initPrompt, label: 'Init Session', promptRelativePath: BUNDLED_PATHS.initialPrompt },
     { name: TOOL_NAMES.wrapPrompt, label: 'Wrap-up', promptRelativePath: BUNDLED_PATHS.wrapPrompt },
-    { name: TOOL_NAMES.auditPrompt, label: 'Design Audit', promptRelativePath: BUNDLED_PATHS.reversePrompt }
+    { name: TOOL_NAMES.auditPrompt, label: 'Design Audit', promptRelativePath: BUNDLED_PATHS.reversePrompt },
+    { name: TOOL_NAMES.taskListPrompt, label: 'Task List', promptRelativePath: BUNDLED_PATHS.taskListPrompt },
+    { name: TOOL_NAMES.taskSupportPrompt, label: 'Task Support', promptRelativePath: BUNDLED_PATHS.taskSupportPrompt },
+    { name: TOOL_NAMES.weeklyReportPrompt, label: 'Weekly Report', promptRelativePath: BUNDLED_PATHS.weeklyReportPrompt },
+    { name: TOOL_NAMES.iterationIssuesPrompt, label: 'Iteration Issues', promptRelativePath: BUNDLED_PATHS.iterationIssuesPrompt }
   ];
 
   for (const tool of toolDefinitions) {
@@ -135,6 +152,7 @@ function registerPromptTools(context: vscode.ExtensionContext): void {
   }
 }
 
+// @ArchitectureID: 1213
 class WorkflowViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ai4pb.workflowView';
   private webviewView?: vscode.WebviewView;
@@ -248,6 +266,26 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         return;
       }
 
+      if (key === 'copilotTaskList') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithTaskListPrompt');
+        return;
+      }
+
+      if (key === 'copilotTaskSupport') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithTaskSupportPrompt');
+        return;
+      }
+
+      if (key === 'copilotWeeklyReport') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithWeeklyReportPrompt');
+        return;
+      }
+
+      if (key === 'copilotIterationIssues') {
+        await vscode.commands.executeCommand('ai4pb.openCopilotWithIterationIssuesPrompt');
+        return;
+      }
+
       if (key === 'reports') {
         const latestReportPath = this.findLatestReportPath(resolvePath(root, 'TEMP'));
         if (latestReportPath) {
@@ -331,6 +369,38 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         label: '打开 Copilot（Wrap-up）',
         state: 'ok',
         detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-wrapup。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotTaskList',
+        label: '打开 Copilot（Task List）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-task-list。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotTaskSupport',
+        label: '打开 Copilot（Task Support）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-task-support。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotWeeklyReport',
+        label: '打开 Copilot（Weekly Report）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-weekly-report。',
+        actionLabel: '打开'
+      });
+
+      items.push({
+        key: 'copilotIterationIssues',
+        label: '打开 Copilot（Iteration Issues）',
+        state: 'ok',
+        detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-iteration-issues。',
         actionLabel: '打开'
       });
     } catch (error) {
@@ -1057,6 +1127,7 @@ async function runGuidedWorkflow(): Promise<void> {
   }
 }
 
+// @ArchitectureID: 1187
 async function openCopilotWithInitPrompt(): Promise<void> {
   await openCopilotWithPromptReference(
     [
@@ -1068,6 +1139,7 @@ async function openCopilotWithInitPrompt(): Promise<void> {
   );
 }
 
+// @ArchitectureID: 1187
 async function openCopilotWithDesignAuditPrompt(): Promise<void> {
   await openCopilotWithPromptReference(
     [
@@ -1079,6 +1151,7 @@ async function openCopilotWithDesignAuditPrompt(): Promise<void> {
   );
 }
 
+// @ArchitectureID: 1187
 async function openCopilotWithWrapUpPrompt(): Promise<void> {
   await openCopilotWithPromptReference(
     [
@@ -1087,6 +1160,54 @@ async function openCopilotWithWrapUpPrompt(): Promise<void> {
       '请现在开始。'
     ].join('\n'),
     'wrap-up workflow'
+  );
+}
+
+// @ArchitectureID: 1209
+async function openCopilotWithTaskListPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-task-list。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'task list workflow'
+  );
+}
+
+// @ArchitectureID: 1209
+async function openCopilotWithTaskSupportPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-task-support。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'task support workflow'
+  );
+}
+
+// @ArchitectureID: 1209
+async function openCopilotWithWeeklyReportPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-weekly-report。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'weekly report workflow'
+  );
+}
+
+// @ArchitectureID: 1209
+async function openCopilotWithIterationIssuesPrompt(): Promise<void> {
+  await openCopilotWithPromptReference(
+    [
+      '请使用 #ai4pb-iteration-issues。',
+      '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
+      '请现在开始。'
+    ].join('\n'),
+    'iteration issues workflow'
   );
 }
 

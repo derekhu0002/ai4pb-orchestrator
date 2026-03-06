@@ -171,6 +171,25 @@
 
 ---
 
+## 8) `iteration-issues-prompt.md`
+### 用途
+用于“首轮验收后”的问题续作：读取 `design\tasks\taskandissues_for_LLM.json`，结合架构任务状态继续修复未完成项。
+
+### 输入
+- 架构与任务数据：`design\KG\SystemArchitecture.json`
+- 问题清单：`design\tasks\taskandissues_for_LLM.json`
+
+### 输出
+- 单份迭代续作报告（建议 markdown）：
+	- 已处理问题项与证据
+	- 剩余阻塞与下一步建议
+
+### 适用场景
+- 首轮开发验收后出现未通过项
+- 测试人员导出问题清单后，进入多轮迭代修复
+
+---
+
 ## 推荐执行顺序（实战）
 1. `initial-prompt.md`（启动/新迭代）
 2. `reverse-engineer-WHOLE.md`（如需补齐存量认知）
@@ -178,6 +197,7 @@
 4. `task-list-prompt.md`（生成全量优先级清单）
 5. `weekly-report-prompt.md`（对外周报）
 6. `Wrap-up Prompt.md`（阶段收尾）
+7. `iteration-issues-prompt.md`（验收问题续作）
 
 ---
 
