@@ -26,6 +26,7 @@ Compare the `design\KG\SystemArchitecture.json` content against your actual code
 *   **Elements (Modify):**
     *   **Description & Tech Stack:** If the code uses a different library (e.g., ChromaDB instead of Milvus) or a different logic flow, request a change to the `name` and `description`.
     *   **Attributes:** Update `code_paths` and metadata.
+    *   **TOBE Content (MANDATORY):** Do not provide only suggestions. For every `[ELEMENT - MODIFY]`, you MUST provide complete target-state (`TOBE`) content for every changed field, including full replacement text for `description` and full replacement value for any changed attributes.
     *   **Location:** Verify if the element is in the correct View. If the code suggests it belongs elsewhere (e.g., moved from "Core" to "Utils"), note this.
 
 *   **Elements (Delete vs. Future):**
@@ -115,7 +116,13 @@ Please use this exact format for easy parsing:
 
 ### [ELEMENT - MODIFY]
 *   **Name:** `Existing Element Name`
-*   **Change:** Description of change (e.g., "Change tech stack from X to Y").
+*   **Change Summary:** Description of why this change is needed.
+*   **TOBE Name:** `Complete replacement value or N/A`
+*   **TOBE Description:** `Complete replacement description text (full content, not delta)`
+*   **TOBE Attributes:**
+    *   `attribute_name_1 = complete replacement value`
+    *   `attribute_name_2 = complete replacement value`
+*   **TOBE Browser Path:** `Complete replacement path or N/A`
 
 ### [RELATIONSHIP - ADD]
 *   **Source:** `Element A`
