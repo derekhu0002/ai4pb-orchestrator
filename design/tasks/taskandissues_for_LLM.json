@@ -1,1 +1,26 @@
-﻿[{"Name":"AI4PB VS插件","Problem":"修改本插件界面为类似COPILOT的对话框，用户可以指定需要使用的SKILL，或者输入自然语言由插件底层自动选择需要使用的SKILL","ProblemNotes":"","ResolverNotes":"未修复：\n1、你丢失了“EA初始化”，请你自己设计最好的用户交互逻辑把这个功能补充回来。\n已修复：\n1、你丢失了“EA导出配置”，请你自己设计最好的用户交互逻辑把这个功能补充回来。","ProblemType":"ToDo","Object_ID":1209}]
+﻿[
+    {
+        "Name": "ProjectManagement",
+        "Problem": "integreate task-support-prompt into task-list prompt",
+        "ProblemNotes": "to make the task-support generation before task-list.",
+        "ResolverNotes": "已修复：\n1、我需要在TASK LIST中包含TASK SUPPORT提示词作为前置输出；",
+        "ProblemType": "ToDo",
+        "Object_ID": 1211
+    },
+    {
+        "Name": "SKILLS",
+        "Problem": "将当前的提示词都换成SKILL进行表达",
+        "ProblemNotes": "",
+        "ResolverNotes": "已修复：\n1、我需要的SKILL是COPILOT的SKILL框架，我希望使用COPIOOT的SKILL框架。",
+        "ProblemType": "ToDo",
+        "Object_ID": 1220
+    },
+    {
+        "Name": "AI4PB VS插件",
+        "Problem": "修改本插件界面为类似COPILOT的对话框，用户可以指定需要使用的SKILL，或者输入自然语言由插件底层自动选择需要使用的SKILL",
+        "ProblemNotes": "",
+        "ResolverNotes": "已修复：\n1、你丢失了“EA导出配置”，请你自己设计最好的用户交互逻辑把这个功能补充回来。\n2、你丢失了“EA初始化”，请你自己设计最好的用户交互逻辑把这个功能补充回来。",
+        "ProblemType": "ToDo",
+        "Object_ID": 1209
+    }
+]
