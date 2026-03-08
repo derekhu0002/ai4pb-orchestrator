@@ -36,6 +36,15 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 | 打开 Copilot（Wrap-up） | `ai4pb.openCopilotWithWrapUpPrompt` | 触发 `#ai4pb-wrapup` |
 | 打开 Copilot（Weekly Report） | `ai4pb.openCopilotWithWeeklyReportPrompt` | 触发 `#ai4pb-weekly-report` |
 
+## Chat 请求路径说明
+
+侧边栏 Webview 的聊天请求由 `WorkflowViewProvider.handleChatRequest` 统一处理，支持两种模式：
+
+- 显式技能选择：用户在 UI 中选择 skill 时，直接使用该 skill（如 `task-list`、`audit`）。
+- 自动技能推断：未选择 skill 时，基于输入文本执行技能推断并自动路由到对应 prompt 引用。
+
+最终会拼装种子文本并调用 Copilot 打开流程（`openCopilotWithPromptReference`）。
+
 ## Prompt Tools
 
 扩展内置以下可引用工具（Copilot Chat 中可用）：

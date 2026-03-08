@@ -71,6 +71,14 @@ var EA_AUTOGEN_CONFIG = {
 | `project_auto_gen_suitable_for_LLM-V2.js` | LLM 导出增强版（含 browser_path、任务过滤等） | 当前图/包 | 增强 JSON + 可能的 PDF |
 | `PUT-all-elements-on-diagram.js` | 将选中包内元素放到当前图（不递归） | 当前图 + 选中包 | 图中新增元素 |
 
+### 架构元素映射（简表）
+
+| 脚本家族 | 对应架构元素 | 典型文件 |
+|---|---|---|
+| EA 导出与任务提取脚本 | `Sparx EA` | `project_auto_gen_suitable_for_LLM-V2-bootstrap.js`、`project_auto_gen_suitable_for_LLM-V2.js`、`GetTasksAndIssuesForLLM-active.js` |
+| EA 通用辅助脚本（schema/STIX/铺图） | `EA Script Utility Suite` | `schema_json_to_diagram.js`、`schema_diagram_to_json.js`、`stix_to_ea.js`、`ea_to_stix.js`、`PUT-all-elements-on-diagram.js` |
+| EA SQL 审计/检索脚本 | `EA SQL Audit Queries` | `..\\EA-sqlscript\\MyToDoIssueSearch.sql`、`..\\EA-sqlscript\\Searchforaudit.sql` |
+
 ---
 
 ## 逐脚本说明

@@ -3,125 +3,130 @@
 ### [TRACEABILITY - UPDATE]
 *   **Element Name:** `VS Code`
 *   **Code Paths:** `["package.json", "src/extension.ts"]`
-*   **Reason:** `code_paths missing; extension contribution points and runtime command orchestration are implemented in these files.`
+*   **Reason:** `code_paths missing; extension contribution points (views/commands/tools) and host integration are implemented in these files.`
 
 *   **Element Name:** `Github Copilot`
-*   **Code Paths:** `["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md"]`
-*   **Reason:** `code_paths missing; integration moved from manual copy-only usage to LM tool references (#ai4pb-init/#ai4pb-audit/#ai4pb-wrapup) and command-driven chat entry.`
+*   **Code Paths:** `["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md", "workprompt/task-list-prompt.md", "workprompt/task-support-prompt.md", "workprompt/weekly-report-prompt.md", "workprompt/iteration-issues-prompt.md"]`
+*   **Reason:** `code_paths missing/incomplete; Copilot integration now includes seven LM tool references and skill-routed chat invocation paths.`
 
 *   **Element Name:** `Sparx EA`
-*   **Code Paths:** `["script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js", "script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js", "script/EA-jsscript/fetch_shared_script.py"]`
-*   **Reason:** `code_paths missing; service behavior is implemented by bootstrap + shared exporter + script fetch helper.`
+*   **Code Paths:** `["script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js", "script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js", "script/EA-jsscript/GetTasksAndIssuesForLLM-active.js", "script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js"]`
+*   **Reason:** `existing code_paths are incomplete; active EA service behavior includes exporter bootstrap and task/issue extraction scripts.`
 
-*   **Element Name:** `AI4PB VS插件`
-*   **Code Paths:** `["src/extension.ts", "package.json", "README.md", "MARKETPLACE.md"]`
-*   **Reason:** `code_paths missing/incomplete; component has grown to include workflow view, status actions, guided workflow, and Copilot tool integration.`
+*   **Element Name:** `Prompt Tool Registry`
+*   **Code Paths:** `["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md", "workprompt/task-list-prompt.md", "workprompt/task-support-prompt.md", "workprompt/weekly-report-prompt.md", "workprompt/iteration-issues-prompt.md"]`
+*   **Reason:** `existing code_paths are incomplete; service implementation includes tool registration plus concrete prompt assets delivered by each tool.`
+
+*   **Element Name:** `SKILLS`
+*   **Code Paths:** `[".github/skills/ai4pb-workflows/SKILL.md", ".github/skills/ai4pb-init/SKILL.md", ".github/skills/ai4pb-task-list/SKILL.md", ".github/skills/ai4pb-task-support/SKILL.md", ".github/skills/ai4pb-iteration-issues/SKILL.md", ".github/skills/ai4pb-audit/SKILL.md", ".github/skills/ai4pb-wrapup/SKILL.md", ".github/skills/ai4pb-weekly-report/SKILL.md"]`
+*   **Reason:** `code_paths missing; current implementation models skills as repository assets consumed by Copilot skill references.`
 
 ### [TRACEABILITY - ALIGNED (OMITTED)]
 *   **Rule:** Do not list aligned elements one-by-one.
-*   **Summary:** `2 elements verified as already aligned and omitted from [TRACEABILITY - UPDATE] (WorkflowViewProvider, Release VSIX Toolchain).`
+*   **Summary:** `5 elements verified as already aligned and omitted from [TRACEABILITY - UPDATE].`
 
 ### [ELEMENT - ADD]
-*   **Name:** `EA Script Utility Suite`
-*   **Type:** `ApplicationComponent`
-*   **Parent View:** `Application`
-*   **Description:** `Repository-level EA automation utilities for schema import/export, STIX conversion, and diagram element placement that are currently major orphaned implementation files.`
-*   **Attributes:** `code_paths = ["script/EA-jsscript/schema_json_to_diagram.js", "script/EA-jsscript/schema_diagram_to_json.js", "script/EA-jsscript/stix_to_ea.js", "script/EA-jsscript/ea_to_stix.js", "script/EA-jsscript/PUT-all-elements-on-diagram.js"]`
-
 *   **Name:** `Post-Tools Utilities`
 *   **Type:** `ApplicationComponent`
 *   **Parent View:** `Application`
-*   **Description:** `Post-processing toolkit for JSON diff, PDF merge, prompt assembly, and task scanning used in architecture analysis workflows.`
+*   **Description:** `Repository post-processing utilities provide JSON comparison, PDF merge, prompt utility logic, and task scanning support for architecture governance workflows.`
 *   **Attributes:** `code_paths = ["script/post-tools/compare_json.py", "script/post-tools/merge_pdfs.py", "script/post-tools/prompt.py", "script/post-tools/scan_tasks.py"]`
 
-*   **Name:** `Prompt Tool Registry`
+*   **Name:** `EA SQL Audit Queries`
 *   **Type:** `ApplicationService`
-*   **Parent View:** `Application`
-*   **Description:** `LanguageModelTools service exposing init, audit, and wrap-up prompt retrieval endpoints consumed by Copilot Agent.`
-*   **Attributes:** `code_paths = ["package.json", "src/extension.ts"]`
+*   **Parent View:** `EA JSSCRIPT`
+*   **Description:** `SQL-based audit and task discovery queries support EA-side extraction and architecture audit preparation.`
+*   **Attributes:** `code_paths = ["script/EA-sqlscript/MyToDoIssueSearch.sql", "script/EA-sqlscript/Searchforaudit.sql"]`
 
 ### [ELEMENT - MODIFY]
 *   **Name:** `VS Code`
-*   **Change Summary:** `Element is modeled as external IDE but lacks explicit repository traceability for extension-host integration points.`
+*   **Change Summary:** `Host component lacks explicit traceability attributes for implemented contribution points.`
 *   **TOBE Name:** `N/A`
-*   **TOBE Description:** `VS Code is the host platform where AI4PB extension commands, views, and language model tools are contributed and executed.`
+*   **TOBE Description:** `VS Code is the host runtime that loads the AI4PB extension, renders the workflow webview, exposes registered commands, and brokers language model tool execution for Copilot chat.`
 *   **TOBE Attributes:**
     *   `code_paths = ["package.json", "src/extension.ts"]`
 *   **TOBE Browser Path:** `N/A`
 
 *   **Name:** `Github Copilot`
-*   **Change Summary:** `Current description/usage in relationships still implies manual prompt copy only, while code implements direct LM tools and one-click chat handoff.`
+*   **Change Summary:** `Integration scope expanded to full skill-set tool references but metadata only partially reflects this.`
 *   **TOBE Name:** `N/A`
-*   **TOBE Description:** `GitHub Copilot is integrated through registered language model tools and command-driven chat initiation to consume AI4PB prompt templates and execute architecture-guided workflows.`
+*   **TOBE Description:** `GitHub Copilot consumes AI4PB language model tools and skill references to execute init, task planning, task support, iteration issue handling, audit, wrap-up, and weekly reporting workflows driven by architecture context.`
 *   **TOBE Attributes:**
-    *   `code_paths = ["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md"]`
+    *   `code_paths = ["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md", "workprompt/task-list-prompt.md", "workprompt/task-support-prompt.md", "workprompt/weekly-report-prompt.md", "workprompt/iteration-issues-prompt.md"]`
 *   **TOBE Browser Path:** `N/A`
 
 *   **Name:** `Sparx EA`
-*   **Change Summary:** `Element contains large script payload attribute but no normalized code_paths metadata for traceability and maintenance.`
+*   **Change Summary:** `Service currently tracks only exporter scripts while active task/issue extraction scripts are also core service behavior.`
 *   **TOBE Name:** `N/A`
-*   **TOBE Description:** `Sparx EA service executes bootstrap and shared JScript exporters to produce architecture JSON artifacts and support model-driven delivery workflows.`
+*   **TOBE Description:** `Sparx EA executes bootstrap-driven JScript automation to export architecture JSON and to extract active tasks/issues for LLM-driven delivery loops.`
 *   **TOBE Attributes:**
-    *   `code_paths = ["script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js", "script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js", "script/EA-jsscript/fetch_shared_script.py"]`
+    *   `code_paths = ["script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js", "script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js", "script/EA-jsscript/GetTasksAndIssuesForLLM-active.js", "script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js"]`
 *   **TOBE Browser Path:** `N/A`
 
-*   **Name:** `AI4PB VS插件`
-*   **Change Summary:** `Description under-specifies current runtime capabilities; element also lacks code_paths despite being the central implemented component.`
+*   **Name:** `Prompt Tool Registry`
+*   **Change Summary:** `Service implementation is correctly present but asset-level prompt traceability is incomplete.`
 *   **TOBE Name:** `N/A`
-*   **TOBE Description:** `AI4PB VS插件 is a VS Code extension that orchestrates model-driven AI delivery through workflow webview actions, architecture context validation, guided iteration automation, design-code alignment report generation, wrap-up report generation, and Copilot prompt tool integration.`
+*   **TOBE Description:** `Prompt Tool Registry is the extension-level language model tool service that registers and serves all AI4PB prompt templates to Copilot by stable tool names and references.`
 *   **TOBE Attributes:**
-    *   `code_paths = ["src/extension.ts", "package.json", "README.md", "MARKETPLACE.md"]`
+    *   `code_paths = ["package.json", "src/extension.ts", "workprompt/initial-prompt.md", "workprompt/reverse-engineer-WHOLE.md", "workprompt/Wrap-up Prompt.md", "workprompt/task-list-prompt.md", "workprompt/task-support-prompt.md", "workprompt/weekly-report-prompt.md", "workprompt/iteration-issues-prompt.md"]`
 *   **TOBE Browser Path:** `N/A`
 
-*   **Name:** `ProjectManagement`
-*   **Change Summary:** `Element has prompt content attributes but lacks explicit code_paths mapping to prompt files, reducing traceability consistency.`
+*   **Name:** `SKILLS`
+*   **Change Summary:** `Component has no code_paths and description does not represent current skill package structure.`
 *   **TOBE Name:** `N/A`
-*   **TOBE Description:** `ProjectManagement packages task-list, task-support, and weekly-report prompt assets used for management-level planning outputs from the architecture model.`
+*   **TOBE Description:** `SKILLS packages AI4PB workflow and domain skills as reusable prompt engineering assets under .github/skills and is consumed by Copilot skill references in guided workflows.`
 *   **TOBE Attributes:**
-    *   `code_paths = ["workprompt/task-list-prompt.md", "workprompt/task-support-prompt.md", "workprompt/weekly-report-prompt.md"]`
+    *   `code_paths = [".github/skills/ai4pb-workflows/SKILL.md", ".github/skills/ai4pb-init/SKILL.md", ".github/skills/ai4pb-task-list/SKILL.md", ".github/skills/ai4pb-task-support/SKILL.md", ".github/skills/ai4pb-iteration-issues/SKILL.md", ".github/skills/ai4pb-audit/SKILL.md", ".github/skills/ai4pb-wrapup/SKILL.md", ".github/skills/ai4pb-weekly-report/SKILL.md"]`
 *   **TOBE Browser Path:** `N/A`
 
 ### [RELATIONSHIP - ADD]
-*   **Source:** `AI4PB VS插件`
-*   **Target:** `WorkflowViewProvider`
-*   **Type:** `ArchiMate_Composition`
-*   **Parent View:** `AI4PB VS插件`
-*   **Description:** `WorkflowViewProvider is an internal structural part of the extension component and is instantiated by extension activation logic.`
-
-*   **Source:** `AI4PB VS插件`
-*   **Target:** `JSON Format of Archimate Model`
+*   **Source:** `Github Copilot`
+*   **Target:** `Prompt Tool Registry`
 *   **Type:** `ArchiMate_Access`
-*   **Parent View:** `Application`
-*   **Description:** `Extension runtime reads architecture JSON path for refresh, precheck, start-iteration, and reporting flows.`
+*   **Parent View:** `AI4PB VS插件-infrustracture`
+*   **Description:** `Copilot requests prompt templates through registered language model tools defined by the extension.`
 
-*   **Source:** `AI4PB VS插件`
+*   **Source:** `Prompt Tool Registry`
+*   **Target:** `Implementation Instructions`
+*   **Type:** `ArchiMate_Access`
+*   **Parent View:** `SKILLS`
+*   **Description:** `Tool registry serves init-session prompt template content from the implementation instructions asset.`
+
+*   **Source:** `Prompt Tool Registry`
+*   **Target:** `Full Audit Prompt`
+*   **Type:** `ArchiMate_Access`
+*   **Parent View:** `SKILLS`
+*   **Description:** `Tool registry serves design-audit prompt template content for architecture alignment workflows.`
+
+*   **Source:** `Prompt Tool Registry`
+*   **Target:** `Session WrapUp Prompt`
+*   **Type:** `ArchiMate_Access`
+*   **Parent View:** `SKILLS`
+*   **Description:** `Tool registry serves wrap-up prompt content for verified-task session closure.`
+
+*   **Source:** `Prompt Tool Registry`
 *   **Target:** `ProjectManagement`
 *   **Type:** `ArchiMate_Access`
-*   **Parent View:** `Application`
-*   **Description:** `Extension opens and operationalizes project-management prompt assets as part of model-guided delivery support.`
+*   **Parent View:** `SKILLS`
+*   **Description:** `Tool registry serves task-list, task-support, and weekly-report prompt templates from project management prompt assets.`
 
-*   **Source:** `AI4PB VS插件`
-*   **Target:** `Github Copilot`
-*   **Type:** `ArchiMate_Triggering`
-*   **Parent View:** `Application`
-*   **Description:** `Extension commands trigger Copilot Chat sessions with ai4pb tool references for init/audit/wrap-up workflows.`
+*   **Source:** `Sparx EA`
+*   **Target:** `EA SQL Audit Queries`
+*   **Type:** `ArchiMate_Access`
+*   **Parent View:** `EA JSSCRIPT`
+*   **Description:** `EA automation workflow uses SQL query assets to discover active tasks and audit targets for export.`
 
 
 # Part 2: Business Gap Analysis
 *   **Implemented Processes:**
-    *   `Requirement Analysis And System Architecture Analysis` is partially implemented via architecture context refresh, JSON presence checks, and prompt/tool orchestration.
-    *   `Implementation` is strongly implemented via guided workflow (`refresh -> precheck -> start iteration -> alignment -> wrap-up`) and generated runtime artifacts in `TEMP/`.
-    *   `System Architecture Description` is actively consumed as the source-of-truth JSON (`design/KG/SystemArchitecture.json`).
+    *   `Requirement Analysis And System Architecture Analysis` is partially supported by architecture JSON refresh checks, prompt tools, and workflow command orchestration in the extension.
+    *   `Implementation` is supported through guided command flow (`startIterationFromModel`, `runDesignCodeAlignment`, `generateWrapUpReport`) and runtime artifacts under `TEMP/`.
+    *   `System Architecture Description` is actively consumed from `design/KG/SystemArchitecture.json` as the source of architectural context.
 
 *   **Missing Capabilities:**
-    *   `TestAndVerification` has zero automated verification execution in extension runtime (no test command orchestration, no result ingestion).
-    *   `Issue` / `BugOrIssue` feedback is not synchronized back into architecture task structures automatically.
-    *   Strategy/motivation objects (`Goal`, `Value`, `Assessment`, `Principle`) have no direct measurable telemetry pipeline in code.
-
-*   **Suggestions:**
-    *   Add a verification command/service to run task-defined tests and persist machine-readable outcomes into `TEMP/` for model feedback.
-    *   Add issue-sync utility that transforms audit and verification findings into normalized `project_info.tasks` update proposals.
-    *   Add lightweight KPI extraction from reports (completion ratio, blocked ratio, stale-architecture age) and map to strategy elements.
+    *   `TestAndVerification` has no direct automated test execution/ingestion in extension runtime.
+    *   `Issue` and `BugOrIssue` are not automatically synchronized back into architecture task objects from generated reports.
+    *   Business-level closure from `Final Target System` to governance feedback is documentation-based, not machine-enforced.
 
 
 # Part 3: Documentation & README Synchronization
@@ -131,116 +136,108 @@
     *   **File:** `script/EA-jsscript/README.md`
 
 *   **Discrepancies:**
-    *   `README.md` still emphasizes a 3-button main entry, while current extension behavior is status-card driven and includes direct Copilot actions plus additional command endpoints.
-    *   `README.md` references guided flow conceptually but does not explicitly document generated artifact filenames/patterns (`design-code-alignment-*.md`, `wrap-up-*.md`, `iteration-state.json`).
-    *   `workprompt/README.md` declares prompt output directories under `implementation/*`, whereas extension-generated operational artifacts are under `TEMP/*`; this dual-output model is not explicitly separated.
-    *   `src/extension.ts` references bundled `docs/system-engineer-guidance.md`, but this file is absent in repository docs, creating documentation traceability risk.
+    *   `README.md` action list emphasizes sidebar workflow but does not document that chat mode can auto-infer skills from free text in the webview message flow.
+    *   `workprompt/README.md` includes `askprompt.md`, but this file is not present in `workprompt/` and is not registered by tools in `package.json`.
+    *   `script/EA-jsscript/README.md` explains broad script families, but architecture currently links only a subset (`Sparx EA`, `JSON格式模型提取JS脚本`) and does not map SQL audit scripts.
 
 *   **Recommended Updates (Not Applied):**
-    *   Update root README with an explicit action-to-command map and exact generated artifact names/locations.
-    *   Update `workprompt/README.md` with a clear split: LLM content outputs (`implementation/*`) vs extension runtime outputs (`TEMP/*`).
-    *   Add or remove stale guidance reference by either creating `docs/system-engineer-guidance.md` or deleting this dependency from runtime checks.
+    *   In `README.md`, add one section clarifying chat request path: `WorkflowViewProvider.handleChatRequest` supports explicit skill selection and automatic inference.
+    *   In `workprompt/README.md`, remove or mark `askprompt.md` as `[PROPOSED]` unless implemented and registered.
+    *   In `script/EA-jsscript/README.md`, add a short mapping table from script families to architecture elements (`Sparx EA`, `EA Script Utility Suite`, `EA SQL Audit Queries`).
 
 
 # Part 4: Strategy & Architecture Compliance Report
 *   **Compliance:** `PARTIAL`
 *   **Violations:**
-    *   `Separation of Concerns` is partial: `src/extension.ts` combines webview UI, config persistence, workflow orchestration, artifact checks, and reporting in one module.
-    *   `Traceability` is partial: multiple key application/service elements lack standardized `code_paths`.
-    *   `Verification-closure` is partial: strategy requires loop closure, but implementation has no automated test/verification execution or issue re-ingestion.
+    *   `Separation of Concerns` is partial: `src/extension.ts` centralizes UI rendering, status actions, prompt tool registration, config persistence, and orchestration logic.
+    *   `Modularity/Traceability` is partial: several application/service elements still require code_paths completion to satisfy architecture governance.
+    *   `Closed-loop delivery` is partial: implementation and reporting exist, but verification automation and issue re-ingestion to model are missing.
 *   **Recommendations:**
-    *   Refactor extension into bounded modules (`workflow`, `ui`, `config`, `reports`, `copilot-integration`) and map each to dedicated KG components.
-    *   Enforce `code_paths` completeness in architecture governance checks for all Application Component/Service/Interface elements.
-    *   Introduce verification and issue-sync services to close implementation -> test -> feedback loop.
+    *   Split extension runtime into dedicated modules (`toolRegistry`, `workflowView`, `statusActions`, `reporting`, `config`) and map each module to explicit architecture ownership.
+    *   Enforce a governance check requiring `code_paths` for every Application Component/Service/Interface before release.
+    *   Add verification command integration and structured issue-import path to complete Requirement -> Implementation -> Test -> Issue -> Requirement loop.
 
 
 # Part 5: KG Reorganization Plan (Progressive Disclosure + SoC)
 
 ### [REORGANIZATION - PRINCIPLES CHECK]
-*   **Progressive Disclosure:** `PARTIAL` with rationale: layered containers exist, but detailed implementation concerns are concentrated in overloaded `Application`, `Business`, and `System Architecture Description` views.
-*   **Separation of Concerns:** `PARTIAL` with rationale: runtime orchestration, prompt assets, and extraction toolchain are mixed in single views.
-*   **Hotspots:** `Application`, `Business`, `System Architecture Description`.
+*   **Progressive Disclosure:** `PARTIAL` with rationale.
+*   **Separation of Concerns:** `PARTIAL` with rationale.
+*   **Hotspots:** `Application`, `SKILLS`, `Business`.
 
 ### [VIEW - ADD]
-*   **View Name:** `Application - Extension Runtime Flow`
-*   **Target Browser Path:** `Model/Application/Application/Application - Extension Runtime Flow`
-*   **Purpose:** `Single concern this view explains: extension runtime orchestration and Copilot handoff`
-*   **Description:** `Stakeholders: SystemEngineer, Developer. Concerns: runtime command flow, prompt/tool invocation, artifact generation. Purpose: explain how extension executes model-driven iteration. Scope: AI4PB VS插件, VS Code, Github Copilot, WorkflowViewProvider, JSON Format of Archimate Model, prompt data objects.`
-*   **Included Elements:** `["1186", "1187", "1209", "1213", "1194", "1190", "1189", "1191", "1211"]`
-*   **Included Relationships:** `["1056", "1062", "1088", "1089", "1090", "1091", "1077", "REL_NEW_AI4PB_to_WorkflowViewProvider_Composition", "REL_NEW_AI4PB_to_GithubCopilot_Triggering"]`
-*   **Reason:** `Reduces cognitive load by isolating runtime behavior from extraction/toolchain concerns.`
+*   **View Name:** `Application - Runtime Interaction Flow`
+*   **Target Browser Path:** `Model/Application/Application/Application - Runtime Interaction Flow`
+*   **Purpose:** `Single concern this view explains`
+*   **Description:** `Stakeholders: SystemEngineer, Developer. Concerns: command orchestration, chat handoff, tool invocation boundaries. Purpose: explain runtime collaboration among VS Code host, extension, Copilot, and workflow provider. Scope: 1186, 1209, 1213, 1187, 1219, 1194.`
+*   **Included Elements:** `["1186", "1209", "1213", "1187", "1219", "1194"]`
+*   **Included Relationships:** `["1056", "1088", "1098", "1099", "1100"]`
+*   **Reason:** `Separates runtime behavior from prompt asset and EA extraction concerns.`
 
-*   **View Name:** `Application - EA Extraction & Script Tooling`
-*   **Target Browser Path:** `Model/Application/Application/Application - EA Extraction & Script Tooling`
-*   **Purpose:** `Single concern this view explains: EA export pipeline and supporting scripts`
-*   **Description:** `Stakeholders: Enterprise Architect, SystemEngineer. Concerns: export script ownership, bootstrap decoupling, generated JSON provenance. Purpose: show extraction implementation chain from EA to JSON. Scope: Sparx EA, JSON格式模型提取JS脚本, JSON Format of Archimate Model, EA Script Utility Suite, Post-Tools Utilities.`
-*   **Included Elements:** `["1193", "1210", "1194", "ELM_NEW_EA_Script_Utility_Suite", "ELM_NEW_Post_Tools_Utilities"]`
-*   **Included Relationships:** `["1061", "1092", "1093", "REL_NEW_AI4PB_to_JSON_Access"]`
-*   **Reason:** `Separates extraction/tooling concern from runtime UX concern.`
+*   **View Name:** `Application - Prompt Asset Supply`
+*   **Target Browser Path:** `Model/Application/Application/Application - Prompt Asset Supply`
+*   **Purpose:** `Single concern this view explains`
+*   **Description:** `Stakeholders: Prompt engineers, SystemEngineer. Concerns: source-of-truth prompt ownership and delivery into Copilot tools. Purpose: isolate prompt service and data object dependencies. Scope: 1219, 1190, 1191, 1189, 1211, 1220, 1187.`
+*   **Included Elements:** `["1219", "1190", "1191", "1189", "1211", "1220", "1187"]`
+*   **Included Relationships:** `["1058", "1103"]`
+*   **Reason:** `Reduces clutter in Application and clarifies prompt governance boundaries.`
 
 ### [VIEW - MODIFY]
 *   **View Name:** `Application`
 *   **Current Browser Path:** `Model/Application/Application/Application`
 *   **Target Browser Path:** `Model/Application/Application/Application Overview`
-*   **Change:** `Rename / Narrow Scope`
-*   **Before Scope:** `Mix of extension runtime flow, prompt assets, extraction links, and implementation details.`
-*   **After Scope:** `High-level application inventory only, with drill-down references to focused subviews.`
-*   **Description Update:** `Stakeholders: Architects, delivery leads. Concerns: application landscape boundaries. Purpose: top-level application map. Scope: key components/services and only essential cross-cutting relations.`
+*   **Change:** `Rename / Narrow Scope / Re-layout`
+*   **Before Scope:** `Mixes runtime flow, prompt assets, and EA extraction concerns in one diagram.`
+*   **After Scope:** `High-level inventory only; drill-down delegated to focused runtime/prompt/extraction views.`
+*   **Description Update:** `Stakeholders: Enterprise Architect, delivery leads. Concerns: application landscape and ownership boundaries. Purpose: top-level navigation view before drill-down. Scope: only core components/services and minimal cross-cutting relationships.`
 
-*   **View Name:** `StrategyAndMotivation`
-*   **Current Browser Path:** `Model/StrategyAndMotivation/StrategyAndMotivation/StrategyAndMotivation`
-*   **Target Browser Path:** `Model/StrategyAndMotivation/StrategyAndMotivation/Strategy & Motivation Core`
-*   **Change:** `Narrow Scope / Re-layout`
-*   **Before Scope:** `Currently under-populated (empty inclusion set), weak strategy visibility.`
-*   **After Scope:** `Focused strategy layer with Goal/Driver/Assessment/Value/Principle/Constrain and explicit trace to requirements/outcomes.`
-*   **Description Update:** `Stakeholders: Business stakeholders, Enterprise Architect. Concerns: why-change rationale, principles, constraints. Purpose: make strategic intent auditable. Scope: motivation elements and their requirement/outcome links.`
+*   **View Name:** `SKILLS`
+*   **Current Browser Path:** `Model/Application/Application/VS Code/AI4PB VS插件/SKILLS/SKILLS`
+*   **Target Browser Path:** `Model/Application/Application/VS Code/AI4PB VS插件/SKILLS/SKILLS Prompt Catalog`
+*   **Change:** `Rename / Narrow Scope / Re-layout`
+*   **Before Scope:** `Prompt data objects are grouped, but service interactions and skill ownership are implicit.`
+*   **After Scope:** `Prompt catalog view with explicit service-access relationships and ownership boundaries.`
+*   **Description Update:** `Stakeholders: Prompt engineers, SystemEngineer. Concerns: template ownership, versioning, and consumability. Purpose: maintain prompt assets as governed catalog. Scope: prompt data objects, SKILLS component, Prompt Tool Registry access links.`
 
 ### [VIEW - SPLIT]
 *   **Source View:** `Business`
 *   **Source Browser Path:** `Model/Business/Business/Business`
-*   **New Views:** `["Business - Delivery Lifecycle", "Business - Roles & Responsibilities"]`
-*   **Target Browser Paths:** `["Model/Business/Business/Business - Delivery Lifecycle", "Model/Business/Business/Business - Roles & Responsibilities"]`
-*   **Split Logic:** `Separate temporal process flow (Requirement->Implementation->Test->Issue loop) from actor assignment and responsibility mapping.`
-*   **Description Requirement:** `For each new View, include Stakeholders / Concerns / Purpose / Scope in its description`
-
-*   **Source View:** `System Architecture Description`
-*   **Source Browser Path:** `Model/Business/Business/System Architecture Description/System Architecture Description`
-*   **New Views:** `["System Architecture Description - Meta Model", "System Architecture Description - Strategy Trace"]`
-*   **Target Browser Paths:** `["Model/Business/Business/System Architecture Description/System Architecture Description - Meta Model", "Model/Business/Business/System Architecture Description/System Architecture Description - Strategy Trace"]`
-*   **Split Logic:** `Separate conceptual ArchiMate meta-structure from strategy/motivation trace relationships to keep each view within cognitive limits.`
+*   **New Views:** `["Business - Delivery Process", "Business - Role Assignment"]`
+*   **Target Browser Paths:** `["Model/Business/Business/Business - Delivery Process", "Model/Business/Business/Business - Role Assignment"]`
+*   **Split Logic:** `Separate lifecycle trigger/flow relationships from actor assignment relationships to keep each view in cognitive range.`
 *   **Description Requirement:** `For each new View, include Stakeholders / Concerns / Purpose / Scope in its description`
 
 ### [VIEW - MERGE]
-*   **Source Views:** `["AI for Business", "SystemArchitecture"]`
-*   **Source Browser Paths:** `["Model/AI-For-Project-Building-SystemArchitecture/AI for Business/AI for Business", "Model/AI-For-Project-Building-SystemArchitecture/SystemArchitecture"]`
-*   **Target View:** `AI4PB Architecture Overview`
-*   **Target Browser Path:** `Model/AI-For-Project-Building-SystemArchitecture/AI4PB Architecture Overview`
-*   **Merge Logic:** `Both are high-level overviews with sparse relationships; merging creates a single executive entry point before drill-down views.`
+*   **Source Views:** `["AI for Business", "Model Driven AI for  Project Building"]`
+*   **Source Browser Paths:** `["Model/AI-For-Project-Building-SystemArchitecture/AI for Business/AI for Business", "Model/AI-For-Project-Building-SystemArchitecture/Model Driven AI for  Project Building/Model Driven AI for  Project Building"]`
+*   **Target View:** `AI4PB Strategic Overview`
+*   **Target Browser Path:** `Model/AI-For-Project-Building-SystemArchitecture/AI4PB Strategic Overview`
+*   **Merge Logic:** `Both views are high-level with sparse relations; one executive overview improves entry-point clarity before layer drill-down.`
 *   **Description Requirement:** `Merged target View description must include Stakeholders / Concerns / Purpose / Scope`
 
 ### [ELEMENT - MOVE]
-*   **Element:** `JSON格式模型提取JS脚本`
-*   **Current Browser Path:** `Model/Application/Application/JSON格式模型提取JS脚本`
-*   **Target Browser Path:** `Model/Technology/Technology/EA Extraction Runtime/JSON格式模型提取JS脚本`
+*   **Element:** `EA Script Utility Suite`
+*   **Current Browser Path:** `Model/Application/Application/EA Script Utility Suite`
+*   **Target Browser Path:** `Model/Application/Application/Sparx EA/EA Script Utility Suite`
 *   **Reason:** `Ownership clarity / SoC`
 
-*   **Element:** `Release VSIX Toolchain`
-*   **Current Browser Path:** `Model/Technology/Technology/Release VSIX Toolchain`
-*   **Target Browser Path:** `Model/Technology/Technology/Build & Release/Release VSIX Toolchain`
+*   **Element:** `JSON格式模型提取JS脚本`
+*   **Current Browser Path:** `Model/Application/Application/VS Code/AI4PB VS插件/JSON格式模型提取JS脚本`
+*   **Target Browser Path:** `Model/Application/Application/Sparx EA/JSON格式模型提取JS脚本`
 *   **Reason:** `Ownership clarity / SoC`
 
 ### [RELATIONSHIP - MOVE]
+*   **Relationship:** `1099 / AI4PB VS插件 --(ArchiMate_Access)--> JSON Format of Archimate Model`
+*   **From View:** `Application`
+*   **To View:** `Application - Runtime Interaction Flow`
+*   **Reason:** `Readability / clutter reduction`
+
 *   **Relationship:** `1093 / Sparx EA --(ArchiMate_Access)--> JSON格式模型提取JS脚本`
 *   **From View:** `Application`
-*   **To View:** `Application - EA Extraction & Script Tooling`
+*   **To View:** `EA JSSCRIPT`
 *   **Reason:** `Readability / clutter reduction`
 
-*   **Relationship:** `1062 / Github Copilot --(ArchiMate_Access)--> JSON Format of Archimate Model`
+*   **Relationship:** `1103 / AI4PB VS插件 --(ArchiMate_Composition)--> SKILLS`
 *   **From View:** `Application`
-*   **To View:** `Application - Extension Runtime Flow`
-*   **Reason:** `Readability / clutter reduction`
-
-*   **Relationship:** `1095 / Requirement Analysis And System Architecture Analysis --(ArchiMate_Triggering)--> Implementation`
-*   **From View:** `Business`
-*   **To View:** `Business - Delivery Lifecycle`
+*   **To View:** `SKILLS`
 *   **Reason:** `Readability / clutter reduction`

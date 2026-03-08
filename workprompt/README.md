@@ -156,9 +156,11 @@
 
 ---
 
-## 7) `askprompt.md`
+## 7) `[PROPOSED] askprompt.md`
 ### 用途
 通用问答或补充分析入口，用于临时问题澄清与特定主题深挖。
+
+> 当前状态：`askprompt.md` 尚未在本目录落地，也未在扩展 `languageModelTools` 中注册；该条目作为候选能力保留。
 
 ### 建议用法
 - 当现有专用 Prompt 不完全匹配需求时
