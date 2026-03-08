@@ -218,29 +218,8 @@
 "id": "1187",
 "name": "Github Copilot"
 ,"type": "ArchiMate_ApplicationComponent"
-,"browser_path": "Model/Application/Application/Github Copilot"
-,"description": "GitHub Copilot is integrated through registered language model tools and command-driven chat initiation to consume AI4PB prompt templates and execute architecture-guided workflows."
-,"attributes": [
-{
-"name": "code_paths"
-,"description": "[\"package.json\", \"src/extension.ts\", \"workprompt/initial-prompt.md\", \"workprompt/reverse-engineer-WHOLE.md\", \"workprompt/Wrap-up Prompt.md\"]"
-}
-]
-,"project_info": {
-"tasks": [
-{
-"name": "at the end of each interation ,the wrap-upping should be examing the fullfiment of each task whose status is verified."
-,"type": "ToDo"
-,"status": "Active"
-,"description": "in the wrap up prompt you need to tell llm to extract the tasks from the json model again, check each task whose status is verified."
-,"start_date": "2026-3-7"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-}
-]
-}
+,"browser_path": "Model/Application/Application/VS Code/Github Copilot"
+,"description": "GitHub Copilot is integrated through registered language model tools and command-driven chat initiation to consume AI4PB prompt templates and execute architecture-guided workflows.\r\n本架构中COPILOT是一个外部组件，不涉及对它的开发修改，只需要和它交互。"
 },
 {
 "id": "1189",
@@ -289,13 +268,19 @@
 ,"description": "[\"script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js\", \"script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js\"]"
 }
 ]
+,"subdiagram_views": [
+{
+"view_id": "162",
+"view_name": "EA JSSCRIPT"
+}
+]
 },
 {
 "id": "1194",
 "name": "JSON Format of Archimate Model"
 ,"type": "ArchiMate_DataObject"
 ,"browser_path": "Model/Application/Application/JSON Format of Archimate Model"
-,"description": "canonical runtime artifact path is design/KG/SystemArchitecture.json and it is consumed by extension checks and prompt workflow."
+,"description": "canonical runtime artifact path is design/KG/SystemArchitecture.json and it is consumed by extension checks and prompt workflow.\r\n-architecture description accroding to architemate meta model.\r\n-project task information"
 },
 {
 "id": "1195",
@@ -380,7 +365,7 @@
 "id": "1209",
 "name": "AI4PB VS插件"
 ,"type": "ArchiMate_ApplicationComponent"
-,"browser_path": "Model/Application/Application/AI4PB VS插件"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件"
 ,"description": "AI4PB VS插件 is a VS Code extension that orchestrates model-driven AI delivery through workflow webview actions, architecture context validation, guided iteration automation, design-code alignment report generation, wrap-up report generation, and Copilot prompt tool integration."
 ,"attributes": [
 {
@@ -391,22 +376,10 @@
 ,"project_info": {
 "tasks": [
 {
-"name": "help me add new button to auto trigger projectmanagement-related prompt to copilot"
+"name": "修改本插件界面为类似COPILOT的对话框，用户可以指定需要使用的SKILL，或者输入自然语言由插件底层自动选择需要使用的SKILL"
 ,"type": "ToDo"
 ,"status": "Active"
-,"description": "including 3 buttons to trigger these 3 prompt below:\r\nworkprompt\\task-list-prompt.md\r\nworkprompt\\task-support-prompt.md\r\nworkprompt\\weekly-report-prompt.md"
-,"start_date": "2026-3-7"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-},
-{
-"name": "添加一个迭代中多轮交互的提示词和插件界面对应按钮"
-,"type": "ToDo"
-,"status": "Active"
-,"description": "当首次执行结束后，测试人员会对照JSON MODEL中的TASK列表对COPILOT开发交付的系统进行验收，没验收通过一个会手动将该TASK在EA上标记为VERIFIED状态；\r\n但是如果某个任务没有验收通过，则测试人员会手工在该任务的进展描述相关问题，然后会将问题列表再次导出到design\\tasks\\taskandissues_for_LLM.json，示例如下：\r\n[ { \"Name\": \"AI辅助编程现状\", \"Problem\": \"请帮我调查AI辅助编程现状，有哪些进展，有哪些短板亟需突破？\", \"ProblemNotes\": \"XXX\", \"ResolverNotes\": \"未修复：\\n1、pp\\n2、wq\\n已修复：\\n1、XX\\n2、WW\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1122 }, { \"Name\": \"AI4PB VS插件\", \"Problem\": \"help me add new button to auto trigger related prompt to copilot\", \"ProblemNotes\": \"including 3 buttons to trigger these 3 prompt below:\\nworkprompt\\\\task-list-prompt.md\\nworkprompt\\\\task-support-prompt.md\\nworkprompt\\\\weekly-report-prompt.md\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1209 }, { \"Name\": \"AI4PB VS插件\", \"Problem\": \"添加一个迭代中多轮交互的提示词和插件界面对应按钮\", \"ProblemNotes\": \"当首次执行结束后，测试人员会对照JSON MODEL中的TASK列表对COPILOT开发交付的系统进行验收，没验收通过一个会手动将该TASK在EA上标记为VERIFIED状态；\\n但是如果某个任务没有验收通过，则测试人员会手工在该任务的进展描述相关问题，然后会将问题列表再次导出到/design/tasks/下的\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1209 }, { \"Name\": \"Github Copilot\", \"Problem\": \"at the end of each interation ,the wrap-upping should be examing the fullfiment of each task whose status is verified.\", \"ProblemNotes\": \"in the wrap up prompt you need to tell llm to extract the tasks from the json model again, check each task whose status is verified.\", \"ResolverNotes\": \"\", \"ProblemType\": \"ToDo\", \"Object_ID\": 1187 } ]\r\n接下来我们需要把这个任务列表告诉LLM让他根据任务进展中对未修复或未完成问题的描述继续工作，工作过程中依然需要像init提示那样持续维护代码和架构的Traceability；--因此我需要你在插件中增加一个按钮，和INIT等按钮一样，用户点击后插件则向COPILOT发送一条指示进行本轮问题处理；"
-,"start_date": "2026-3-7"
+,"start_date": "2026-3-8"
 ,"due_date": "1899-12-30"
 ,"reporter": "derek"
 ,"priority": "Low",
@@ -418,6 +391,10 @@
 {
 "view_id": "159",
 "view_name": "AI4PB VS插件"
+},
+{
+"view_id": "161",
+"view_name": "AI4PB VS插件-infrustracture"
 }
 ]
 },
@@ -425,7 +402,7 @@
 "id": "1210",
 "name": "JSON格式模型提取JS脚本"
 ,"type": "ArchiMate_DataObject"
-,"browser_path": "Model/Application/Application/JSON格式模型提取JS脚本"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/JSON格式模型提取JS脚本"
 ,"attributes": [
 {
 "name": "extractionJSScript",
@@ -445,6 +422,21 @@
 ,"description": "[\"workprompt/task-list-prompt.md\", \"workprompt/task-support-prompt.md\", \"workprompt/weekly-report-prompt.md\"]"
 }
 ]
+,"project_info": {
+"tasks": [
+{
+"name": "integreate task-support-prompt into task-list prompt"
+,"type": "ToDo"
+,"status": "Active"
+,"description": "to make the task-support generation before task-list."
+,"start_date": "2026-3-8"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 },
 {
 "id": "1212",
@@ -463,7 +455,7 @@
 "id": "1213",
 "name": "WorkflowViewProvider"
 ,"type": "ArchiMate_ApplicationComponent"
-,"browser_path": "Model/Application/Application/AI4PB VS插件/WorkflowViewProvider"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/WorkflowViewProvider"
 ,"description": "Sidebar Webview orchestrator that renders workflow status and dispatches user actions to extension commands."
 ,"attributes": [
 {
@@ -471,31 +463,6 @@
 ,"description": "[\"src/extension.ts\"]"
 }
 ]
-,"project_info": {
-"tasks": [
-{
-"name": "移除插件界面上的“提示词集合”按钮及其相关功能"
-,"type": "ToDo"
-,"status": "Active"
-,"start_date": "2026-3-7"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-},
-{
-"name": "重新排列插件按钮，安装SCRUM敏捷开发流程进行组织"
-,"type": "ToDo"
-,"status": "Active"
-,"description": "SCRUM是一种敏捷开发流程，在传统的SCRUM开发流程基础上，我们通过AI COPILOT来提升其效率，但是大流程仍然延续SCRUM，这样能保证AI能力的可控使用；"
-,"start_date": "2026-3-7"
-,"due_date": "1899-12-30"
-,"reporter": "derek"
-,"priority": "Low",
-"assigned_to": "llm"
-}
-]
-}
 },
 {
 "id": "1214",
@@ -511,19 +478,6 @@
 ]
 },
 {
-"id": "1215",
-"name": "Post-Tools Utilities"
-,"type": "ArchiMate_ApplicationComponent"
-,"browser_path": "Model/Application/Application/Post-Tools Utilities"
-,"description": "Post-processing toolkit for JSON diff, PDF merge, prompt assembly, and task scanning used in architecture analysis workflows."
-,"attributes": [
-{
-"name": "code_paths"
-,"description": "[\"script/post-tools\"]"
-}
-]
-},
-{
 "id": "1219",
 "name": "Prompt Tool Registry"
 ,"type": "ArchiMate_ApplicationService"
@@ -533,6 +487,33 @@
 {
 "name": "code_paths"
 ,"description": "[\"package.json\", \"src/extension.ts\"]"
+}
+]
+},
+{
+"id": "1220",
+"name": "SKILLS"
+,"type": "ArchiMate_ApplicationComponent"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/SKILLS"
+,"description": "提示词集合，么个提示词用SKILL表达"
+,"project_info": {
+"tasks": [
+{
+"name": "将当前的提示词都换成SKILL进行表达"
+,"type": "ToDo"
+,"status": "Active"
+,"start_date": "2026-3-8"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
+,"subdiagram_views": [
+{
+"view_id": "160",
+"view_name": "SKILLS"
 }
 ]
 }
@@ -735,36 +716,14 @@
 },
 {
 "id":"1058"
-,"statement":"Github Copilot --(ArchiMate_Access)--> Full Audit Prompt"
+,"statement":"Github Copilot --(ArchiMate_Access)--> SKILLS"
 ,"name":"ArchiMate_Access"
-,"description": "人工方式拷贝到Copilot的对话中。"
+,"description": "AI4PB插件自动发送PROMPT到COPILOT"
 ,"super_type": "ArchiMate_Access"
 ,"source_id":"1187"
-,"target_id":"1191"
+,"target_id":"1220"
 ,"source_name":"Github Copilot"
-,"target_name":"Full Audit Prompt"
-},
-{
-"id":"1059"
-,"statement":"Github Copilot --(ArchiMate_Access)--> Session WrapUp Prompt"
-,"name":"ArchiMate_Access"
-,"description": "人工方式拷贝到Copilot的对话中。\r\n"
-,"super_type": "ArchiMate_Access"
-,"source_id":"1187"
-,"target_id":"1189"
-,"source_name":"Github Copilot"
-,"target_name":"Session WrapUp Prompt"
-},
-{
-"id":"1060"
-,"statement":"Github Copilot --(ArchiMate_Access)--> Implementation Instructions"
-,"name":"ArchiMate_Access"
-,"description": "人工方式拷贝到Copilot的对话中。\r\n"
-,"super_type": "ArchiMate_Access"
-,"source_id":"1187"
-,"target_id":"1190"
-,"source_name":"Github Copilot"
-,"target_name":"Implementation Instructions"
+,"target_name":"SKILLS"
 },
 {
 "id":"1061"
@@ -916,17 +875,6 @@
 ,"target_name":"Model Driven AI for Business"
 },
 {
-"id":"1077"
-,"statement":"Github Copilot --(ArchiMate_Access)--> ProjectManagement"
-,"name":"ArchiMate_Access"
-,"description": "人工方式拷贝到Copilot的对话中。\r\n"
-,"super_type": "ArchiMate_Access"
-,"source_id":"1187"
-,"target_id":"1211"
-,"source_name":"Github Copilot"
-,"target_name":"ProjectManagement"
-},
-{
 "id":"1078"
 ,"statement":"Developer --(ArchiMate_Assignment)--> Implementation"
 ,"name":"ArchiMate_Assignment"
@@ -1037,50 +985,6 @@
 ,"target_name":"AI4PB VS插件"
 },
 {
-"id":"1089"
-,"statement":"AI4PB VS插件 --(ArchiMate_Association)--> Full Audit Prompt"
-,"name":"ArchiMate_Association"
-,"description": "插件中已经带上了官方的提示词"
-,"super_type": "ArchiMate_Association"
-,"source_id":"1209"
-,"target_id":"1191"
-,"source_name":"AI4PB VS插件"
-,"target_name":"Full Audit Prompt"
-},
-{
-"id":"1090"
-,"statement":"Session WrapUp Prompt --(ArchiMate_Association)--> AI4PB VS插件"
-,"name":"ArchiMate_Association"
-,"description": "插件中已经带上了官方的提示词\r\n"
-,"super_type": "ArchiMate_Association"
-,"source_id":"1189"
-,"target_id":"1209"
-,"source_name":"Session WrapUp Prompt"
-,"target_name":"AI4PB VS插件"
-},
-{
-"id":"1091"
-,"statement":"Implementation Instructions --(ArchiMate_Association)--> AI4PB VS插件"
-,"name":"ArchiMate_Association"
-,"description": "插件中已经带上了官方的提示词\r\n"
-,"super_type": "ArchiMate_Association"
-,"source_id":"1190"
-,"target_id":"1209"
-,"source_name":"Implementation Instructions"
-,"target_name":"AI4PB VS插件"
-},
-{
-"id":"1092"
-,"statement":"AI4PB VS插件 --(ArchiMate_Association)--> JSON格式模型提取JS脚本"
-,"name":"ArchiMate_Association"
-,"description": "插件中已打包这个脚本"
-,"super_type": "ArchiMate_Association"
-,"source_id":"1209"
-,"target_id":"1210"
-,"source_name":"AI4PB VS插件"
-,"target_name":"JSON格式模型提取JS脚本"
-},
-{
 "id":"1093"
 ,"statement":"Sparx EA --(ArchiMate_Access)--> JSON格式模型提取JS脚本"
 ,"name":"ArchiMate_Access"
@@ -1090,17 +994,6 @@
 ,"target_id":"1210"
 ,"source_name":"Sparx EA"
 ,"target_name":"JSON格式模型提取JS脚本"
-},
-{
-"id":"1094"
-,"statement":"AI4PB VS插件 --(ArchiMate_Association)--> ProjectManagement"
-,"name":"ArchiMate_Association"
-,"description": "Extension opens and operationalizes project-management prompt assets as part of model-guided delivery support."
-,"super_type": "ArchiMate_Association"
-,"source_id":"1209"
-,"target_id":"1211"
-,"source_name":"AI4PB VS插件"
-,"target_name":"ProjectManagement"
 },
 {
 "id":"1095"
@@ -1164,9 +1057,52 @@
 ,"target_id":"1187"
 ,"source_name":"AI4PB VS插件"
 ,"target_name":"Github Copilot"
+},
+{
+"id":"1101"
+,"statement":"Github Copilot --(ArchiMate_Access)--> JSON格式模型提取JS脚本"
+,"name":"ArchiMate_Access"
+,"super_type": "ArchiMate_Access"
+,"source_id":"1187"
+,"target_id":"1210"
+,"source_name":"Github Copilot"
+,"target_name":"JSON格式模型提取JS脚本"
+},
+{
+"id":"1102"
+,"statement":"AI4PB VS插件 --(ArchiMate_Composition)--> JSON格式模型提取JS脚本"
+,"name":"ArchiMate_Composition"
+,"super_type": "ArchiMate_Composition"
+,"source_id":"1209"
+,"target_id":"1210"
+,"source_name":"AI4PB VS插件"
+,"target_name":"JSON格式模型提取JS脚本"
+},
+{
+"id":"1103"
+,"statement":"AI4PB VS插件 --(ArchiMate_Composition)--> SKILLS"
+,"name":"ArchiMate_Composition"
+,"super_type": "ArchiMate_Composition"
+,"source_id":"1209"
+,"target_id":"1220"
+,"source_name":"AI4PB VS插件"
+,"target_name":"SKILLS"
 }
 ],
 "views": [
+{
+"view_id": "162",
+"view_name": "EA JSSCRIPT"
+,"browser_path": "Model/Application/Application/Sparx EA/EA JSSCRIPT"
+,"parent_element_id": "1193"
+,"parent_element_name": "Sparx EA"
+,"included_elements": [
+"1214"
+]
+,"included_relationships": [
+
+]
+},
 {
 "view_id": "157",
 "view_name": "AI for Business"
@@ -1209,7 +1145,7 @@
 {
 "view_id": "159",
 "view_name": "AI4PB VS插件"
-,"browser_path": "Model/Application/Application/AI4PB VS插件/AI4PB VS插件"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/AI4PB VS插件"
 ,"parent_element_id": "1209"
 ,"parent_element_name": "AI4PB VS插件"
 ,"included_elements": [
@@ -1218,6 +1154,35 @@
 ]
 ,"included_relationships": [
 "1098"
+]
+},
+{
+"view_id": "161",
+"view_name": "AI4PB VS插件-infrustracture"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/AI4PB VS插件-infrustracture"
+,"parent_element_id": "1209"
+,"parent_element_name": "AI4PB VS插件"
+,"included_elements": [
+"1219"
+]
+,"included_relationships": [
+
+]
+},
+{
+"view_id": "160",
+"view_name": "SKILLS"
+,"browser_path": "Model/Application/Application/VS Code/AI4PB VS插件/SKILLS/SKILLS"
+,"parent_element_id": "1220"
+,"parent_element_name": "SKILLS"
+,"included_elements": [
+"1211",
+"1191",
+"1190",
+"1189"
+]
+,"included_relationships": [
+
 ]
 },
 {
@@ -1230,34 +1195,23 @@
 "1186",
 "1187",
 "1209",
-"1189",
-"1190",
-"1191",
 "1193",
 "1194",
-"1214",
 "1210",
-"1211",
-"1215",
-"1219"
+"1220"
 ]
 ,"included_relationships": [
 "1056",
 "1058",
-"1059",
-"1060",
 "1061",
 "1062",
-"1077",
 "1088",
-"1089",
-"1090",
-"1091",
-"1092",
 "1093",
-"1094",
 "1099",
-"1100"
+"1100",
+"1101",
+"1102",
+"1103"
 ]
 },
 {

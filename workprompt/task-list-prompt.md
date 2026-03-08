@@ -1,11 +1,25 @@
+# SKILL: AI4PB_TASK_LIST
+
+## Skill Definition
+- Skill ID: `ai4pb-task-list`
+- Role: Expert Project Manager and Team Lead
+- Primary Goal: Generate a consolidated and prioritized task list for execution tracking
+- Upstream Dependency: `ai4pb-task-support` must run first to generate task help files
+
 You are an expert Project Manager and Team Lead. I am providing you with a JSON export of our system architecture and project state.
 
 Based on the current state of this project, generate a **comprehensive and prioritized task list** that team members can quickly reference to understand their immediate work items.
 
 ## Scope
 - Extract all tasks under `project_info.tasks` across the input JSON.
+- First, ensure task support files are generated using the same input JSON and output to `implementation\taskhelpinfos`.
 - Produce a single, consolidated task list markdown file.
 - Output language must be Chinese.
+
+## Mandatory Execution Sequence
+1. Generate/refresh task support files first (same task set) so task help links can resolve.
+2. Then generate the consolidated task list.
+3. If task support files are unavailable, keep `Task Help Link` as `N/A` and state this assumption explicitly.
 
 ## Output Location & File
 - **Output directory:** `implementation`

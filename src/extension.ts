@@ -46,6 +46,45 @@ const TOOL_NAMES = {
   iterationIssuesPrompt: 'ai4pb_get_iteration_issues_prompt'
 } as const;
 
+type SkillKey =
+  | 'init'
+  | 'audit'
+  | 'wrapup'
+  | 'task-list'
+  | 'task-support'
+  | 'weekly-report'
+  | 'iteration-issues';
+
+const SKILL_PROMPT_REFERENCE: Record<SkillKey, string> = {
+  init: '#ai4pb-init',
+  audit: '#ai4pb-audit',
+  wrapup: '#ai4pb-wrapup',
+  'task-list': '#ai4pb-task-list',
+  'task-support': '#ai4pb-task-support',
+  'weekly-report': '#ai4pb-weekly-report',
+  'iteration-issues': '#ai4pb-iteration-issues'
+};
+
+const SKILL_DISPLAY_LABEL: Record<SkillKey, string> = {
+  init: 'Init Session',
+  audit: 'Design Audit',
+  wrapup: 'Wrap-up',
+  'task-list': 'Task List',
+  'task-support': 'Task Support',
+  'weekly-report': 'Weekly Report',
+  'iteration-issues': 'Iteration Issues'
+};
+
+const CHAT_SKILL_OPTIONS: Array<{ key: SkillKey; label: string }> = [
+  { key: 'init', label: 'Init' },
+  { key: 'task-list', label: 'Task List' },
+  { key: 'task-support', label: 'Task Support' },
+  { key: 'iteration-issues', label: 'Issues' },
+  { key: 'audit', label: 'Audit' },
+  { key: 'wrapup', label: 'Wrap-up' },
+  { key: 'weekly-report', label: 'Weekly Report' }
+];
+
 const GUIDED_DEFAULTS = {
   needallmaintenace: false,
   needbrowserlocation: true,
@@ -170,8 +209,14 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.getHtml(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string }) => {
+    webviewView.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string; skill?: string; text?: string }) => {
       if (message.type === 'refreshStatus') {
+        await this.postStatusSnapshot();
+        return;
+      }
+
+      if (message.type === 'chatRequest') {
+        await this.handleChatRequest(message.text, message.skill);
         await this.postStatusSnapshot();
         return;
       }
@@ -209,6 +254,15 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     }, 15000);
 
     void this.postStatusSnapshot();
+  }
+
+  // @ArchitectureID: 1209
+  private async handleChatRequest(rawText?: string, rawSkill?: string): Promise<void> {
+    const text = (rawText ?? '').trim();
+    const selectedSkill = normalizeSkillKey(rawSkill) ?? inferSkillFromText(text);
+    const seedText = buildSkillSeedText(selectedSkill, text);
+    const label = selectedSkill ? `${SKILL_DISPLAY_LABEL[selectedSkill]} skill` : 'auto skill';
+    await openCopilotWithPromptReference(seedText, label);
   }
 
   // @ArchitectureID: 1213
@@ -454,8 +508,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     return latestPath;
   }
 
+  // @ArchitectureID: 1209
   private getHtml(webview: vscode.Webview): string {
     const nonce = String(Date.now());
+    const skillsJson = JSON.stringify(CHAT_SKILL_OPTIONS);
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -463,125 +519,230 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { 
-      font-family: var(--vscode-font-family); 
-      padding: 14px 12px;
-      color: var(--vscode-foreground); 
-      background-color: var(--vscode-editor-background); 
+    :root {
+      --chat-radius: 14px;
+      --chat-panel: color-mix(in srgb, var(--vscode-editor-background) 86%, var(--vscode-editorWidget-background) 14%);
+      --chat-border: color-mix(in srgb, var(--vscode-foreground) 18%, transparent);
     }
-    .header { display: none; }
-    
-    .grid-container { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 36px;
-      margin-bottom: 24px;
-      width: 100%;
-    }
-    
-    button { 
-      outline: none; 
-      font-family: inherit; 
-      text-align: center;
-    }
-
-    .info-text {
-      font-size: 13px;
-      line-height: 1.45;
-      margin-bottom: 12px;
+    body {
+      font-family: var(--vscode-font-family);
       color: var(--vscode-foreground);
-      text-align: left;
+      background:
+        radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--vscode-textLink-foreground) 16%, transparent) 0%, transparent 44%),
+        radial-gradient(circle at 8% 92%, color-mix(in srgb, var(--vscode-button-background) 14%, transparent) 0%, transparent 40%),
+        var(--vscode-editor-background);
+      padding: 10px;
+      margin: 0;
     }
-    
-    .call-to-action-btn {
-      background-color: var(--vscode-button-background, #0e639c) !important;
-      color: var(--vscode-button-foreground, #ffffff) !important;
-      border: none !important;
-      border-radius: 3px;
-      padding: 6px 12px;
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      gap: 10px;
+      height: calc(100vh - 20px);
+      min-height: 440px;
+    }
+    .title {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .skill-chip {
+      border: 1px solid var(--chat-border);
+      background: color-mix(in srgb, var(--chat-panel) 76%, transparent);
+      color: var(--vscode-foreground);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
       cursor: pointer;
-      display: block;
-      width: 100% !important;
-      box-sizing: border-box;
-      font-size: 13px;
-      font-weight: 500;
-      min-height: 30px;
-      text-align: center;
     }
-    .call-to-action-btn:hover {
-      background-color: var(--vscode-button-hoverBackground, #1177bb) !important;
+    .skill-chip.active {
+      border-color: var(--vscode-button-background);
+      background: color-mix(in srgb, var(--vscode-button-background) 20%, var(--chat-panel));
     }
-    
-    .block-container {
+    .thread {
+      border: 1px solid var(--chat-border);
+      border-radius: var(--chat-radius);
+      padding: 10px;
+      overflow-y: auto;
+      background: var(--chat-panel);
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      width: min(360px, calc(100% - 8px));
-      margin: 0 auto;
-      box-sizing: border-box;
+      gap: 10px;
     }
-
-    .stamp { 
-      font-size: 10px; 
-      opacity: 0.5; 
-      margin-top: 20px; 
-      text-align: right; 
+    .bubble {
+      border-radius: 12px;
+      padding: 8px 10px;
+      line-height: 1.45;
+      font-size: 12px;
+      max-width: 95%;
+      white-space: pre-wrap;
+    }
+    .bubble.ai {
+      background: color-mix(in srgb, var(--vscode-editorWidget-background) 78%, transparent);
+      border: 1px solid var(--chat-border);
+      align-self: flex-start;
+    }
+    .bubble.user {
+      background: color-mix(in srgb, var(--vscode-button-background) 26%, var(--chat-panel));
+      border: 1px solid color-mix(in srgb, var(--vscode-button-background) 45%, transparent);
+      align-self: flex-end;
+    }
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid var(--chat-border);
+      padding: 10px;
+      box-sizing: border-box;
+      color: var(--vscode-input-foreground);
+      background: var(--vscode-input-background);
+      font-family: var(--vscode-font-family);
+      font-size: 12px;
+    }
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .meta {
+      font-size: 11px;
+      opacity: 0.75;
+    }
+    .send-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      background: var(--vscode-button-background, #0e639c);
+      color: var(--vscode-button-foreground, #fff);
+      cursor: pointer;
+    }
+    .send-btn:hover {
+      background: var(--vscode-button-hoverBackground, #1177bb);
+    }
+    .stamp {
+      font-size: 10px;
+      opacity: 0.6;
+      text-align: right;
     }
   </style>
 </head>
 <body>
-  <div class="grid-container" id="statusGrid">
-    <!-- Dynamic cards injected here -->
+  <div class="shell">
+    <div class="title">AI4PB Skill Chat</div>
+    <div class="thread" id="thread"></div>
+    <div class="composer">
+      <div class="skills" id="skills"></div>
+      <textarea id="promptInput" placeholder="输入需求，或先点一个 SKILL 再发送。"></textarea>
+      <div class="composer-row">
+        <div class="meta" id="skillMeta">当前模式: Auto Skill</div>
+        <button id="sendBtn" class="send-btn">发送到 Copilot</button>
+      </div>
+    </div>
+    <p id="statusStamp" class="stamp">Status: loading...</p>
   </div>
-  
-  <p id="statusStamp" class="stamp">Status: loading...</p>
 
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
+    const skills = ${skillsJson};
+    const state = {
+      selectedSkill: null,
+      status: null
+    };
 
-    const statusGrid = document.getElementById('statusGrid');
+    const thread = document.getElementById('thread');
+    const skillsContainer = document.getElementById('skills');
+    const skillMeta = document.getElementById('skillMeta');
+    const promptInput = document.getElementById('promptInput');
+    const sendBtn = document.getElementById('sendBtn');
     const statusStamp = document.getElementById('statusStamp');
+
+    function appendBubble(role, text) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + role;
+      bubble.textContent = text;
+      thread.appendChild(bubble);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function updateSkillMeta() {
+      skillMeta.textContent = '当前模式: ' + (state.selectedSkill ? state.selectedSkill : 'Auto Skill');
+    }
+
+    function renderSkills() {
+      skillsContainer.innerHTML = '';
+
+      const autoBtn = document.createElement('button');
+      autoBtn.className = 'skill-chip' + (!state.selectedSkill ? ' active' : '');
+      autoBtn.textContent = 'Auto';
+      autoBtn.addEventListener('click', () => {
+        state.selectedSkill = null;
+        renderSkills();
+        updateSkillMeta();
+      });
+      skillsContainer.appendChild(autoBtn);
+
+      skills.forEach((skill) => {
+        const button = document.createElement('button');
+        button.className = 'skill-chip' + (state.selectedSkill === skill.key ? ' active' : '');
+        button.textContent = skill.label;
+        button.addEventListener('click', () => {
+          state.selectedSkill = skill.key;
+          renderSkills();
+          updateSkillMeta();
+        });
+        skillsContainer.appendChild(button);
+      });
+    }
 
     function renderStatus(payload) {
       if (!payload || !payload.items) {
         return;
       }
 
+      state.status = payload;
       statusStamp.textContent = 'Updated: ' + payload.generatedAt;
-      statusGrid.innerHTML = '';
-
-      payload.items.forEach((item) => {
-        const block = document.createElement('div');
-        block.className = 'block-container';
-
-        const infoText = document.createElement('div');
-        infoText.className = 'info-text';
-        infoText.textContent = item.detail;
-
-        const actionButton = document.createElement('button');
-        actionButton.className = 'call-to-action-btn';
-        actionButton.setAttribute('data-action-key', item.key);
-        actionButton.textContent = item.label;
-
-        block.appendChild(infoText);
-        block.appendChild(actionButton);
-          
-        statusGrid.appendChild(block);
-      });
-
-      statusGrid.querySelectorAll('.call-to-action-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const key = btn.getAttribute('data-action-key');
-          vscode.postMessage({ type: 'statusAction', key });
-        });
-      });
     }
 
-    document.querySelectorAll('button[data-cmd]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const command = btn.getAttribute('data-cmd');
-        vscode.postMessage({ command });
+    function sendRequest() {
+      const text = String(promptInput.value || '').trim();
+      if (!text && !state.selectedSkill) {
+        appendBubble('ai', '请输入任务描述，或先选择一个 SKILL。');
+        return;
+      }
+
+      appendBubble('user', text || '[使用所选 SKILL 直接开始]');
+
+      const skillText = state.selectedSkill ? ('指定 SKILL: ' + state.selectedSkill) : '自动选择 SKILL';
+      appendBubble('ai', '已提交到 Copilot，模式: ' + skillText + '。');
+
+      vscode.postMessage({
+        type: 'chatRequest',
+        text,
+        skill: state.selectedSkill
       });
+
+      promptInput.value = '';
+    }
+
+    sendBtn.addEventListener('click', sendRequest);
+    promptInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendRequest();
+      }
     });
 
     window.addEventListener('message', (event) => {
@@ -591,11 +752,83 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
+    appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
+    renderSkills();
+    updateSkillMeta();
     vscode.postMessage({ type: 'refreshStatus' });
   </script>
 </body>
 </html>`;
   }
+}
+
+// @ArchitectureID: 1209
+function normalizeSkillKey(value?: string): SkillKey | undefined {
+  const normalized = (value ?? '').trim().toLowerCase();
+  switch (normalized) {
+    case 'init':
+      return 'init';
+    case 'audit':
+      return 'audit';
+    case 'wrapup':
+    case 'wrap-up':
+      return 'wrapup';
+    case 'task-list':
+    case 'task list':
+      return 'task-list';
+    case 'task-support':
+    case 'task support':
+      return 'task-support';
+    case 'weekly-report':
+    case 'weekly report':
+      return 'weekly-report';
+    case 'iteration-issues':
+    case 'iteration issues':
+      return 'iteration-issues';
+    default:
+      return undefined;
+  }
+}
+
+// @ArchitectureID: 1209
+function inferSkillFromText(input: string): SkillKey {
+  const text = input.toLowerCase();
+  if (/task\s*list|任务列表|待办清单|task-list/.test(text)) {
+    return 'task-list';
+  }
+  if (/task\s*support|任务支持|执行步骤|task-support/.test(text)) {
+    return 'task-support';
+  }
+  if (/weekly\s*report|周报|weekly-report/.test(text)) {
+    return 'weekly-report';
+  }
+  if (/issue|问题|缺陷|风险|阻塞|iteration/.test(text)) {
+    return 'iteration-issues';
+  }
+  if (/audit|对齐|审计|差异|reverse/.test(text)) {
+    return 'audit';
+  }
+  if (/wrap|收尾|总结|复盘/.test(text)) {
+    return 'wrapup';
+  }
+  return 'init';
+}
+
+// @ArchitectureID: 1209
+function buildSkillSeedText(skill: SkillKey, userText: string): string {
+  const promptRef = SKILL_PROMPT_REFERENCE[skill];
+  const userDirective = userText.trim();
+  const lines = [
+    `请使用 ${promptRef}。`,
+    '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。'
+  ];
+
+  if (userDirective.length > 0) {
+    lines.push(`补充上下文：${userDirective}`);
+  }
+
+  lines.push('请现在开始。');
+  return lines.join('\n');
 }
 
 function getWorkspaceRoot(): string {
@@ -1188,6 +1421,7 @@ async function openCopilotWithIterationIssuesPrompt(): Promise<void> {
   );
 }
 
+// @ArchitectureID: 1209
 async function openCopilotWithPromptReference(seedText: string, label: string): Promise<void> {
   try {
     await vscode.commands.executeCommand('workbench.action.chat.open', { query: seedText });
@@ -1209,6 +1443,7 @@ async function openCopilotWithPromptReference(seedText: string, label: string): 
   }
 }
 
+// @ArchitectureID: 1209
 async function trySubmitCopilotChat(): Promise<void> {
   try {
     await vscode.commands.executeCommand('workbench.action.chat.submit');

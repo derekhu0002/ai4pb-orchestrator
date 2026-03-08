@@ -1,3 +1,10 @@
+# SKILL: AI4PB_ITERATION_ISSUES
+
+## Skill Definition
+- Skill ID: `ai4pb-iteration-issues`
+- Role: Architectural Implementation Engine
+- Primary Goal: Continue unresolved issue execution in later iteration
+
 # ITERATION ISSUE CONTINUATION
 
 ## Role

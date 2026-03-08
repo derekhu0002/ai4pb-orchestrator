@@ -1,3 +1,10 @@
+# SKILL: AI4PB_WRAP_UP
+
+## Skill Definition
+- Skill ID: `ai4pb-wrapup`
+- Role: Architectural Implementation Engine
+- Primary Goal: Sync verified-task delivery status at session wrap-up
+
 # SESSION WRAP-UP & SYNC
 
 ## Task Status Sync (Session Delta)

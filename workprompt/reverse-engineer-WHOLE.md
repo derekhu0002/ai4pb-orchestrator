@@ -1,3 +1,10 @@
+# SKILL: AI4PB_DESIGN_AUDIT
+
+## Skill Definition
+- Skill ID: `ai4pb-audit`
+- Role: Expert Software Architect and ArchiMate Modeler
+- Primary Goal: Generate architecture audit and change report against as-built implementation
+
 **Role:** Expert Software Architect and ArchiMate Modeler.
 
 **Context:**
