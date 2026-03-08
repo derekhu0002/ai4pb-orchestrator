@@ -44,6 +44,7 @@ const RELATIVE_PATHS = {
 };
 const BUNDLED_PATHS = {
     eaTemplate: 'EA-model-template/EA-model-template.feap',
+    skillsRoot: '.github/skills',
     initialPrompt: 'workprompt/initial-prompt.md',
     wrapPrompt: 'workprompt/Wrap-up Prompt.md',
     reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
@@ -99,6 +100,7 @@ function activate(context) {
     extensionInstallRoot = context.extensionUri.fsPath;
     output = vscode.window.createOutputChannel('AI4PB Orchestrator');
     output.appendLine('AI4PB Orchestrator activated.');
+    ensureWorkspaceSkillsInstalled();
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
     const workflowViewProvider = new WorkflowViewProvider(context.extensionUri);
     registerPromptTools(context);
@@ -506,6 +508,23 @@ class WorkflowViewProvider {
       grid-template-columns: 1fr;
       gap: 8px;
     }
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quick-btn {
+      border: 1px solid var(--chat-border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: color-mix(in srgb, var(--chat-panel) 70%, transparent);
+      color: var(--vscode-foreground);
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .quick-btn:hover {
+      border-color: var(--vscode-button-background);
+    }
     textarea {
       width: 100%;
       min-height: 72px;
@@ -553,6 +572,10 @@ class WorkflowViewProvider {
     <div class="thread" id="thread"></div>
     <div class="composer">
       <div class="skills" id="skills"></div>
+      <div class="quick-actions">
+        <button id="configBtn" class="quick-btn">EA导出配置</button>
+        <button id="refreshBtn" class="quick-btn">刷新状态</button>
+      </div>
       <textarea id="promptInput" placeholder="输入需求，或先点一个 SKILL 再发送。"></textarea>
       <div class="composer-row">
         <div class="meta" id="skillMeta">当前模式: Auto Skill</div>
@@ -575,6 +598,8 @@ class WorkflowViewProvider {
     const skillMeta = document.getElementById('skillMeta');
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
+    const configBtn = document.getElementById('configBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
     const statusStamp = document.getElementById('statusStamp');
 
     function appendBubble(role, text) {
@@ -646,6 +671,15 @@ class WorkflowViewProvider {
     }
 
     sendBtn.addEventListener('click', sendRequest);
+    configBtn.addEventListener('click', () => {
+      appendBubble('user', '[打开 EA 导出配置]');
+      vscode.postMessage({ type: 'statusAction', key: 'options' });
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      vscode.postMessage({ type: 'refreshStatus' });
+    });
+
     promptInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -851,6 +885,40 @@ async function configureGuidedOptions(root) {
 }
 function exists(filePath) {
     return fs.existsSync(filePath);
+}
+// @ArchitectureID: 1220
+function ensureWorkspaceSkillsInstalled() {
+    try {
+        const root = getWorkspaceRoot();
+        const bundledSkillsRoot = resolveExtensionPath(BUNDLED_PATHS.skillsRoot);
+        if (!exists(bundledSkillsRoot)) {
+            output.appendLine(`[AI4PB] Bundled skills not found: ${bundledSkillsRoot}`);
+            return;
+        }
+        const workspaceSkillsRoot = resolvePath(root, BUNDLED_PATHS.skillsRoot);
+        copyFilesRecursivelyOverwrite(bundledSkillsRoot, workspaceSkillsRoot);
+        output.appendLine(`[AI4PB] Skills synchronized to workspace: ${workspaceSkillsRoot}`);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        output.appendLine(`[AI4PB] Skills auto-install skipped: ${message}`);
+    }
+}
+// @ArchitectureID: 1220
+function copyFilesRecursivelyOverwrite(sourceDir, targetDir) {
+    fs.mkdirSync(targetDir, { recursive: true });
+    const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+    for (const entry of entries) {
+        const sourcePath = path.join(sourceDir, entry.name);
+        const targetPath = path.join(targetDir, entry.name);
+        if (entry.isDirectory()) {
+            copyFilesRecursivelyOverwrite(sourcePath, targetPath);
+            continue;
+        }
+        if (entry.isFile()) {
+            fs.copyFileSync(sourcePath, targetPath);
+        }
+    }
 }
 function fileMtime(filePath) {
     if (!exists(filePath)) {

@@ -17,7 +17,7 @@ Based on the current state of this project, generate a **comprehensive and prior
 - Output language must be Chinese.
 
 ## Mandatory Execution Sequence
-1. Generate/refresh task support files first (same task set) so task help links can resolve.
+1. First execute `#ai4pb-task-support` to generate/refresh task support files for the same task set.
 2. Then generate the consolidated task list.
 3. If task support files are unavailable, keep `Task Help Link` as `N/A` and state this assumption explicitly.
 
