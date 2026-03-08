@@ -573,6 +573,7 @@ class WorkflowViewProvider {
     <div class="composer">
       <div class="skills" id="skills"></div>
       <div class="quick-actions">
+        <button id="initBtn" class="quick-btn">EA初始化</button>
         <button id="configBtn" class="quick-btn">EA导出配置</button>
         <button id="refreshBtn" class="quick-btn">刷新状态</button>
       </div>
@@ -598,6 +599,7 @@ class WorkflowViewProvider {
     const skillMeta = document.getElementById('skillMeta');
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
+    const initBtn = document.getElementById('initBtn');
     const configBtn = document.getElementById('configBtn');
     const refreshBtn = document.getElementById('refreshBtn');
     const statusStamp = document.getElementById('statusStamp');
@@ -671,6 +673,11 @@ class WorkflowViewProvider {
     }
 
     sendBtn.addEventListener('click', sendRequest);
+    initBtn.addEventListener('click', () => {
+      appendBubble('user', '[执行 EA 初始化]');
+      vscode.postMessage({ type: 'statusAction', key: 'init' });
+    });
+
     configBtn.addEventListener('click', () => {
       appendBubble('user', '[打开 EA 导出配置]');
       vscode.postMessage({ type: 'statusAction', key: 'options' });
