@@ -165,18 +165,12 @@ class WorkflowViewProvider {
         };
         webviewView.webview.html = this.getHtml(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(async (message) => {
-            if (message.type === 'refreshStatus') {
-                await this.postStatusSnapshot();
-                return;
-            }
             if (message.type === 'chatRequest') {
                 await this.handleChatRequest(message.text, message.skill);
-                await this.postStatusSnapshot();
                 return;
             }
             if (message.type === 'statusAction' && message.key) {
                 await this.handleStatusAction(message.key);
-                await this.postStatusSnapshot();
                 return;
             }
             const command = message.command;
@@ -184,24 +178,10 @@ class WorkflowViewProvider {
                 return;
             }
             await vscode.commands.executeCommand(command);
-            await this.postStatusSnapshot();
-        });
-        webviewView.onDidChangeVisibility(() => {
-            if (webviewView.visible) {
-                void this.postStatusSnapshot();
-            }
         });
         webviewView.onDidDispose(() => {
             this.webviewView = undefined;
-            if (this.refreshTimer) {
-                clearInterval(this.refreshTimer);
-                this.refreshTimer = undefined;
-            }
         });
-        this.refreshTimer = setInterval(() => {
-            void this.postStatusSnapshot();
-        }, 15000);
-        void this.postStatusSnapshot();
     }
     // @ArchitectureID: 1209
     async handleChatRequest(rawText, rawSkill) {
@@ -277,101 +257,6 @@ class WorkflowViewProvider {
             const message = error instanceof Error ? error.message : String(error);
             void vscode.window.showErrorMessage(`AI4PB status action failed: ${message}`);
         }
-    }
-    async postStatusSnapshot() {
-        if (!this.webviewView) {
-            return;
-        }
-        const payload = this.collectStatusSnapshot();
-        await this.webviewView.webview.postMessage({ type: 'status', payload });
-    }
-    // @ArchitectureID: 1213
-    collectStatusSnapshot() {
-        const now = new Date();
-        const items = [];
-        try {
-            const root = getWorkspaceRoot();
-            const aiConfigPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
-            const options = getEffectiveGuidedOptions(loadAiConfig(root));
-            items.push({
-                key: 'init',
-                label: '初始化 EA 模板',
-                state: 'ok',
-                detail: '将 EA 模板复制到工作区根目录，并按项目名称命名。',
-                actionLabel: '执行'
-            });
-            items.push({
-                key: 'options',
-                label: '导出选项',
-                state: exists(aiConfigPath) ? 'ok' : 'warn',
-                detail: `模式=${options.maintenacetype}，浏览器路径=${options.needbrowserlocation ? '开启' : '关闭'}，全量维护=${options.needallmaintenace ? '开启' : '关闭'}`,
-                actionLabel: '设置'
-            });
-            // SCRUM-oriented sequence: planning -> execution -> inspection -> reporting.
-            items.push({
-                key: 'copilotTaskList',
-                label: '打开 Copilot（Task List）',
-                state: 'ok',
-                detail: 'SCRUM 计划：一键打开 Copilot Chat，并自动使用 #ai4pb-task-list。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotInit',
-                label: '打开 Copilot（Init Prompt）',
-                state: 'ok',
-                detail: 'SCRUM 开发启动：一键打开 Copilot Chat，并自动使用 #ai4pb-init。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotTaskSupport',
-                label: '打开 Copilot（Task Support）',
-                state: 'ok',
-                detail: 'SCRUM 执行支持：一键打开 Copilot Chat，并自动使用 #ai4pb-task-support。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotIterationIssues',
-                label: '打开 Copilot（Iteration Issues）',
-                state: 'ok',
-                detail: 'SCRUM 每日跟踪：一键打开 Copilot Chat，并自动使用 #ai4pb-iteration-issues。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotAudit',
-                label: '打开 Copilot（Design Audit）',
-                state: 'ok',
-                detail: 'SCRUM 评审检查：一键打开 Copilot Chat，并自动使用 #ai4pb-audit。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotWrapUp',
-                label: '打开 Copilot（Wrap-up）',
-                state: 'ok',
-                detail: 'SCRUM 迭代收尾：一键打开 Copilot Chat，并自动使用 #ai4pb-wrapup。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotWeeklyReport',
-                label: '打开 Copilot（Weekly Report）',
-                state: 'ok',
-                detail: 'SCRUM 对外汇报：一键打开 Copilot Chat，并自动使用 #ai4pb-weekly-report。',
-                actionLabel: '打开'
-            });
-        }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            items.push({
-                key: 'workspace',
-                label: '工作区',
-                state: 'error',
-                detail: message,
-                actionLabel: '刷新'
-            });
-        }
-        return {
-            generatedAt: toIsoLocal(now),
-            items
-        };
     }
     findLatestReportMtime(tempDir) {
         if (!exists(tempDir)) {
@@ -575,7 +460,6 @@ class WorkflowViewProvider {
       <div class="quick-actions">
         <button id="initBtn" class="quick-btn">EA初始化</button>
         <button id="configBtn" class="quick-btn">EA导出配置</button>
-        <button id="refreshBtn" class="quick-btn">刷新状态</button>
       </div>
       <textarea id="promptInput" placeholder="输入需求，或先点一个 SKILL 再发送。"></textarea>
       <div class="composer-row">
@@ -583,7 +467,7 @@ class WorkflowViewProvider {
         <button id="sendBtn" class="send-btn">发送到 Copilot</button>
       </div>
     </div>
-    <p id="statusStamp" class="stamp">Status: loading...</p>
+    <p class="stamp">AI4PB Skill Chat</p>
   </div>
 
   <script nonce="${nonce}">
@@ -601,8 +485,6 @@ class WorkflowViewProvider {
     const sendBtn = document.getElementById('sendBtn');
     const initBtn = document.getElementById('initBtn');
     const configBtn = document.getElementById('configBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const statusStamp = document.getElementById('statusStamp');
 
     function appendBubble(role, text) {
       const bubble = document.createElement('div');
@@ -642,15 +524,6 @@ class WorkflowViewProvider {
       });
     }
 
-    function renderStatus(payload) {
-      if (!payload || !payload.items) {
-        return;
-      }
-
-      state.status = payload;
-      statusStamp.textContent = 'Updated: ' + payload.generatedAt;
-    }
-
     function sendRequest() {
       const text = String(promptInput.value || '').trim();
       if (!text && !state.selectedSkill) {
@@ -683,10 +556,6 @@ class WorkflowViewProvider {
       vscode.postMessage({ type: 'statusAction', key: 'options' });
     });
 
-    refreshBtn.addEventListener('click', () => {
-      vscode.postMessage({ type: 'refreshStatus' });
-    });
-
     promptInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -694,17 +563,9 @@ class WorkflowViewProvider {
       }
     });
 
-    window.addEventListener('message', (event) => {
-      const message = event.data;
-      if (message && message.type === 'status') {
-        renderStatus(message.payload);
-      }
-    });
-
     appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
     renderSkills();
     updateSkillMeta();
-    vscode.postMessage({ type: 'refreshStatus' });
   </script>
 </body>
 </html>`;
