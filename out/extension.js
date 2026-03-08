@@ -169,11 +169,11 @@ class WorkflowViewProvider {
         }, 15000);
         void this.postStatusSnapshot();
     }
+    // @ArchitectureID: 1213
     async handleStatusAction(key) {
         try {
             const root = getWorkspaceRoot();
             const archPath = getArchitectureJsonPath(root);
-            const promptPaths = getBundledPromptPaths();
             if (key === 'architecture') {
                 if (exists(archPath)) {
                     await openFileIfExists(archPath);
@@ -190,19 +190,6 @@ class WorkflowViewProvider {
             }
             if (key === 'options') {
                 await configureGuidedOptions(root);
-                return;
-            }
-            if (key === 'prompts') {
-                let opened = 0;
-                for (const promptPath of promptPaths) {
-                    if (exists(promptPath)) {
-                        await openFileIfExists(promptPath);
-                        opened++;
-                    }
-                }
-                if (opened === 0) {
-                    void vscode.window.showWarningMessage('No bundled prompt files found in extension workprompt/.');
-                }
                 return;
             }
             if (key === 'copilotInit') {
@@ -256,6 +243,7 @@ class WorkflowViewProvider {
         const payload = this.collectStatusSnapshot();
         await this.webviewView.webview.postMessage({ type: 'status', payload });
     }
+    // @ArchitectureID: 1213
     collectStatusSnapshot() {
         const now = new Date();
         const items = [];
@@ -277,62 +265,54 @@ class WorkflowViewProvider {
                 detail: `模式=${options.maintenacetype}，浏览器路径=${options.needbrowserlocation ? '开启' : '关闭'}，全量维护=${options.needallmaintenace ? '开启' : '关闭'}`,
                 actionLabel: '设置'
             });
-            const promptPaths = getBundledPromptPaths();
-            const missingPrompts = promptPaths.filter((promptPath) => !exists(promptPath)).length;
+            // SCRUM-oriented sequence: planning -> execution -> inspection -> reporting.
             items.push({
-                key: 'prompts',
-                label: '提示词集合',
-                state: missingPrompts === 0 ? 'ok' : missingPrompts === promptPaths.length ? 'error' : 'warn',
-                detail: `初始化会话：${exists(promptPaths[0]) ? '正常' : '缺失'} | 收尾总结：${exists(promptPaths[1]) ? '正常' : '缺失'} | 设计审计：${exists(promptPaths[2]) ? '正常' : '缺失'}`,
+                key: 'copilotTaskList',
+                label: '打开 Copilot（Task List）',
+                state: 'ok',
+                detail: 'SCRUM 计划：一键打开 Copilot Chat，并自动使用 #ai4pb-task-list。',
                 actionLabel: '打开'
             });
             items.push({
                 key: 'copilotInit',
                 label: '打开 Copilot（Init Prompt）',
                 state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-init。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotAudit',
-                label: '打开 Copilot（Design Audit）',
-                state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-audit。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotWrapUp',
-                label: '打开 Copilot（Wrap-up）',
-                state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-wrapup。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotTaskList',
-                label: '打开 Copilot（Task List）',
-                state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-task-list。',
+                detail: 'SCRUM 开发启动：一键打开 Copilot Chat，并自动使用 #ai4pb-init。',
                 actionLabel: '打开'
             });
             items.push({
                 key: 'copilotTaskSupport',
                 label: '打开 Copilot（Task Support）',
                 state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-task-support。',
-                actionLabel: '打开'
-            });
-            items.push({
-                key: 'copilotWeeklyReport',
-                label: '打开 Copilot（Weekly Report）',
-                state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-weekly-report。',
+                detail: 'SCRUM 执行支持：一键打开 Copilot Chat，并自动使用 #ai4pb-task-support。',
                 actionLabel: '打开'
             });
             items.push({
                 key: 'copilotIterationIssues',
                 label: '打开 Copilot（Iteration Issues）',
                 state: 'ok',
-                detail: '一键打开 Copilot Chat，并自动使用 #ai4pb-iteration-issues。',
+                detail: 'SCRUM 每日跟踪：一键打开 Copilot Chat，并自动使用 #ai4pb-iteration-issues。',
+                actionLabel: '打开'
+            });
+            items.push({
+                key: 'copilotAudit',
+                label: '打开 Copilot（Design Audit）',
+                state: 'ok',
+                detail: 'SCRUM 评审检查：一键打开 Copilot Chat，并自动使用 #ai4pb-audit。',
+                actionLabel: '打开'
+            });
+            items.push({
+                key: 'copilotWrapUp',
+                label: '打开 Copilot（Wrap-up）',
+                state: 'ok',
+                detail: 'SCRUM 迭代收尾：一键打开 Copilot Chat，并自动使用 #ai4pb-wrapup。',
+                actionLabel: '打开'
+            });
+            items.push({
+                key: 'copilotWeeklyReport',
+                label: '打开 Copilot（Weekly Report）',
+                state: 'ok',
+                detail: 'SCRUM 对外汇报：一键打开 Copilot Chat，并自动使用 #ai4pb-weekly-report。',
                 actionLabel: '打开'
             });
         }

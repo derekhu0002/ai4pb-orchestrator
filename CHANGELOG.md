@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.25
+
+### Features
+- Reorganized workflow sidebar Copilot actions into a SCRUM-oriented sequence: Task List -> Init -> Task Support -> Iteration Issues -> Design Audit -> Wrap-up -> Weekly Report
+
+### Changes
+- Removed the legacy "提示词集合 / Prompt Set" sidebar action and its related open-all-prompts behavior
+- Updated action descriptions to reflect planning, execution, inspection, and reporting phases
+
+### Documentation
+- Refreshed `README.md` and `MARKETPLACE.md` to match current UI and command/tool coverage
+
 ## 0.0.22
 
 ### Improvements

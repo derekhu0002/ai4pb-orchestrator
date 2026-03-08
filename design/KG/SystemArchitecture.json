@@ -250,7 +250,7 @@
 ,"attributes": [
 {
 "name": "Wrap-up Prompt",
-"content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\workprompt\\\\Wrap-up Prompt.md\n\n# SESSION WRAP-UP & SYNC\r\n\r\n## Task Status Sync (Session Delta)\r\nReview the active `project_info.tasks` extracted from `design\\KG\\SystemArchitecture.json` identified at session start and assign one status per task:\r\n- **Done**: Fully implemented and validated.\r\n- **In Progress**: Partially implemented.\r\n- **Blocked**: Cannot complete due to constraints/dependencies.\r\n\r\nInclude concise evidence for each task (changed files, verification notes, blockers).\r\n\r\n## Output Contract\r\nProduce one report with `Session task status updates`."
+"content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\workprompt\\\\Wrap-up Prompt.md\n\n# SESSION WRAP-UP & SYNC\r\n\r\n## Task Status Sync (Session Delta)\r\nRe-scan `design\\KG\\SystemArchitecture.json` at wrap-up time and extract `project_info.tasks` again.\r\n\r\nThen focus on tasks whose current status is `VERIFIED` and evaluate delivery fulfillment for each such task. For every verified task, assign one conclusion:\r\n- **Done**: Fully implemented and validated.\r\n- **In Progress**: Partially implemented.\r\n- **Blocked**: Cannot complete due to constraints/dependencies.\r\n\r\nInclude concise evidence for each verified task (changed files, verification notes, blockers).\r\n\r\nIf no task is currently `VERIFIED`, explicitly state that no verified tasks were found in this wrap-up scan.\r\n\r\n## Output Contract\r\nProduce one report with `Session task status updates for verified tasks`."
 }
 ]
 },
@@ -471,6 +471,31 @@
 ,"description": "[\"src/extension.ts\"]"
 }
 ]
+,"project_info": {
+"tasks": [
+{
+"name": "移除插件界面上的“提示词集合”按钮及其相关功能"
+,"type": "ToDo"
+,"status": "Active"
+,"start_date": "2026-3-7"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+},
+{
+"name": "重新排列插件按钮，安装SCRUM敏捷开发流程进行组织"
+,"type": "ToDo"
+,"status": "Active"
+,"description": "SCRUM是一种敏捷开发流程，在传统的SCRUM开发流程基础上，我们通过AI COPILOT来提升其效率，但是大流程仍然延续SCRUM，这样能保证AI能力的可控使用；"
+,"start_date": "2026-3-7"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 },
 {
 "id": "1214",

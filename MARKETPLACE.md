@@ -1,70 +1,60 @@
 # AI4PB Orchestrator
 
-AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（ArchiMate）建模产物与 GitHub Copilot 工作流连接起来，形成“建模 → 导出 → 实现 → 审计 → 总结”的闭环。
+AI4PB Orchestrator connects EA (ArchiMate) architecture output with GitHub Copilot implementation workflows.
 
-## What’s Included
+It helps teams run a model-driven loop: architecture modeling -> JSON export -> guided implementation -> design audit -> wrap-up.
 
-- 工作流侧边栏（AI4PB Activity Bar）
-- 架构上下文检查与迭代状态流转
-- Prompt 资产管理（Init / Design Audit / Wrap-up）
-- Copilot Agent Tool 集成（无需手工复制 Prompt）
+## Highlights
 
-## Sidebar Actions (Current)
+- AI4PB Activity Bar with workflow actions
+- Architecture context checks and iteration state outputs
+- Prompt Tool integration for Copilot Chat (no manual copy/paste)
+- Release-friendly VSIX packaging flow
 
-打开 AI4PB 侧边栏后，当前可用按钮包括：
+## Sidebar Workflow (Current)
 
-1. 初始化 EA 模板
-2. 导出选项
-3. 提示词集合
-4. 打开 Copilot（Init Prompt）
-5. 打开 Copilot（Design Audit）
-6. 打开 Copilot（Wrap-up）
+The current sidebar removes the old "Prompt Set" action and follows a SCRUM-oriented sequence:
 
-## Copilot Agent Tools
+1. Initialize EA Template
+2. Export Option
+3. Open Copilot (Task List)
+4. Open Copilot (Init Prompt)
+5. Open Copilot (Task Support)
+6. Open Copilot (Iteration Issues)
+7. Open Copilot (Design Audit)
+8. Open Copilot (Wrap-up)
+9. Open Copilot (Weekly Report)
 
-扩展提供 3 个可被 Agent 调用的工具：
+## Copilot Tools
 
-- `#ai4pb-init` → Init Session Prompt
-- `#ai4pb-audit` → Design Audit Prompt
-- `#ai4pb-wrapup` → Wrap-up Prompt
+This extension contributes the following tools that can be referenced directly in chat:
 
-你也可以使用命令面板的一键入口：
+- `#ai4pb-init`
+- `#ai4pb-audit`
+- `#ai4pb-wrapup`
+- `#ai4pb-task-list`
+- `#ai4pb-task-support`
+- `#ai4pb-weekly-report`
+- `#ai4pb-iteration-issues`
 
-- `AI4PB: Open Copilot with Init Prompt`
-- `AI4PB: Open Copilot with Design Audit Prompt`
-- `AI4PB: Open Copilot with Wrap-up Prompt`
+## Typical Usage
 
-## Recommended Workflow
+1. Export the latest architecture JSON from EA to `design/KG/SystemArchitecture.json`.
+2. Open the AI4PB sidebar and set export options.
+3. Run Copilot actions in order: Task List -> Init -> Task Support -> Iteration Issues -> Audit -> Wrap-up -> Weekly Report.
+4. Review generated files under `TEMP/` and sync results back to EA.
 
-### 1) 在 EA 中手动导出（当前推荐）
+## Included Commands
 
-1. 打开 EA 目标图
-2. 在图中右键打开菜单
-3. 执行导出菜单（你现有 EA 脚本流程）
-4. 确认 `design/KG/SystemArchitecture.json` 已更新
-
-![EA export menu](image.png)
-![Architecture JSON updated](image-1.png)
-
-### 2) 在 VS Code 中执行 AI4PB 流程
-
-1. 使用“导出选项”设置维护模式与过滤选项
-2. 使用“提示词集合”检查关键 Prompt 资产
-3. 使用 Copilot 一键入口直接进入对应会话
+- `AI4PB: Initialize EA Template`
+- `AI4PB: Refresh Architecture Context`
+- `AI4PB: Start Iteration from Model`
+- `AI4PB: Run Design-Code Alignment`
+- `AI4PB: Generate Wrap-up Report`
+- `AI4PB: Open Next Action`
+- `AI4PB: Run All (Guided)`
 
 ## Notes
 
-- 当前版本默认采用 **EA 手动导出** 作为正式流程。
-- 当架构 JSON 缺失或过旧时，扩展会给出明确提示。
-
-## Troubleshooting
-
-### 看不到最新架构内容
-
-- 回到 EA 重新执行导出
-- 检查 `design/KG/SystemArchitecture.json` 的时间戳是否变化
-
-### Prompt 打不开或缺失
-
-- 确认 `workprompt/` 目录文件完整
-- 使用“提示词集合”按钮重新打开
+- EA manual export remains the supported production path.
+- If architecture JSON is missing or stale, AI4PB reports the issue in precheck/status.
