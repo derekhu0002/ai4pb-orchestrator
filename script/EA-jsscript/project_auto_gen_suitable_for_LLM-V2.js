@@ -206,6 +206,19 @@ function getProjectinfo(tele) {
 	tasks = tele.Issues;
 	var stringtasks = [];
 	var projectSummury = null;
+	// @ArchitectureID: 1193
+	function shouldIncludeTaskByMaintenance(statusValue) {
+		var status = (statusValue == null) ? "" : ("" + statusValue).toLowerCase();
+		if (needallmaintenace == "All") {
+			return true;
+		}
+		if (needallmaintenace == "ActiveAndVerified") {
+			return status == "active" || status == "verified";
+		}
+		// Default and fallback behavior: only active tasks.
+		return status == "active";
+	}
+
 	for (var i = 0; i < tasks.Count; i++) {
 		var task as EA.Issue;
 		task = tasks.GetAt(i);
@@ -221,11 +234,8 @@ function getProjectinfo(tele) {
 							'}';
 		} else {
 			
-			if (!needallmaintenace) {
-				// include only the active ones.
-				if (task.Status != "Active") {
-					continue;
-				}
+			if (!shouldIncludeTaskByMaintenance(task.Status)) {
+				continue;
 			}
 			
 			if (maintenacetype == "forllm") {
@@ -910,7 +920,7 @@ var projectPath = "D:\\projects\\AI4X\\AI4X-Platform\\";
 var needCode = false;
 var needContent = true;
 var needdoc = true;
-var needallmaintenace = false;
+var needallmaintenace = "onlyActive";
 var needbrowserlocation = true;
 var maintenacetype = "forproject"; // forllm forproject
 
@@ -928,7 +938,13 @@ if (typeof EA_AUTOGEN_CONFIG != "undefined" && EA_AUTOGEN_CONFIG != null) {
 		needdoc = EA_AUTOGEN_CONFIG.needdoc;
 	}
 	if (typeof EA_AUTOGEN_CONFIG.needallmaintenace != "undefined") {
-		needallmaintenace = EA_AUTOGEN_CONFIG.needallmaintenace;
+		if (EA_AUTOGEN_CONFIG.needallmaintenace === true) {
+			needallmaintenace = "All";
+		} else if (EA_AUTOGEN_CONFIG.needallmaintenace === false) {
+			needallmaintenace = "onlyActive";
+		} else {
+			needallmaintenace = EA_AUTOGEN_CONFIG.needallmaintenace;
+		}
 	}
 	if (typeof EA_AUTOGEN_CONFIG.needbrowserlocation != "undefined") {
 		needbrowserlocation = EA_AUTOGEN_CONFIG.needbrowserlocation;

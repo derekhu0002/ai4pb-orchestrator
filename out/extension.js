@@ -81,16 +81,20 @@ const SKILL_DISPLAY_LABEL = {
     'iteration-issues': 'Iteration Issues'
 };
 const CHAT_SKILL_OPTIONS = [
-    { key: 'init', label: 'Init' },
+    // Flow 1: task list -> init -> issues -> wrap-up
     { key: 'task-list', label: 'Task List' },
-    { key: 'task-support', label: 'Task Support' },
+    { key: 'init', label: 'Init' },
     { key: 'iteration-issues', label: 'Issues' },
-    { key: 'audit', label: 'Audit' },
     { key: 'wrapup', label: 'Wrap-up' },
-    { key: 'weekly-report', label: 'Weekly Report' }
+    // Flow 2: audit
+    { key: 'audit', label: 'Audit' },
+    // Flow 3: task list -> weekly report
+    { key: 'weekly-report', label: 'Weekly Report' },
+    // Supplemental task execution support
+    { key: 'task-support', label: 'Task Support' },
 ];
 const GUIDED_DEFAULTS = {
-    needallmaintenace: false,
+    needallmaintenace: 'onlyActive',
     needbrowserlocation: true,
     maintenacetype: 'forllm'
 };
@@ -398,6 +402,29 @@ class WorkflowViewProvider {
       gap: 8px;
       flex-wrap: wrap;
     }
+    .flow-guide {
+      border: 1px solid var(--chat-border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: color-mix(in srgb, var(--chat-panel) 74%, transparent);
+      display: grid;
+      gap: 6px;
+    }
+    .flow-title {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.9;
+      letter-spacing: 0.02em;
+    }
+    .flow-item {
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: 0.88;
+    }
+    .flow-tools {
+      font-size: 10px;
+      opacity: 0.7;
+    }
     .quick-btn {
       border: 1px solid var(--chat-border);
       border-radius: 999px;
@@ -457,6 +484,13 @@ class WorkflowViewProvider {
     <div class="thread" id="thread"></div>
     <div class="composer">
       <div class="skills" id="skills"></div>
+      <div class="flow-guide">
+        <div class="flow-title">流程说明 (SCRUM)</div>
+        <div class="flow-item">流程1 开发迭代: Task List -> Init -> Issues -> Wrap-up</div>
+        <div class="flow-item">流程2 审计: Audit</div>
+        <div class="flow-item">流程3 计划与汇报: Task List -> Weekly Report</div>
+        <div class="flow-tools">工具入口: EA初始化, EA导出配置</div>
+      </div>
       <div class="quick-actions">
         <button id="initBtn" class="quick-btn">EA初始化</button>
         <button id="configBtn" class="quick-btn">EA导出配置</button>
@@ -659,12 +693,19 @@ function getBundledPromptPaths() {
         resolveExtensionPath(BUNDLED_PATHS.reversePrompt)
     ];
 }
+// @ArchitectureID: 1209
 function getEffectiveGuidedOptions(config) {
     const existingAutoGen = config?.EA_AUTOGEN_CONFIG;
+    const configuredScope = existingAutoGen?.needallmaintenace;
+    const normalizedScope = configuredScope === true
+        ? 'All'
+        : configuredScope === false
+            ? 'onlyActive'
+            : configuredScope === 'ActiveAndVerified' || configuredScope === 'All' || configuredScope === 'onlyActive'
+                ? configuredScope
+                : GUIDED_DEFAULTS.needallmaintenace;
     return {
-        needallmaintenace: typeof existingAutoGen?.needallmaintenace === 'boolean'
-            ? existingAutoGen.needallmaintenace
-            : GUIDED_DEFAULTS.needallmaintenace,
+        needallmaintenace: normalizedScope,
         needbrowserlocation: typeof existingAutoGen?.needbrowserlocation === 'boolean'
             ? existingAutoGen.needbrowserlocation
             : GUIDED_DEFAULTS.needbrowserlocation,
@@ -673,10 +714,13 @@ function getEffectiveGuidedOptions(config) {
             : GUIDED_DEFAULTS.maintenacetype
     };
 }
+// @ArchitectureID: 1209
 function buildGuidedAiConfig(existing, overrides) {
     const existingAutoGen = existing?.EA_AUTOGEN_CONFIG;
     const effectiveOptions = getEffectiveGuidedOptions(existing);
-    if (typeof overrides?.needallmaintenace === 'boolean') {
+    if (overrides?.needallmaintenace === 'onlyActive'
+        || overrides?.needallmaintenace === 'ActiveAndVerified'
+        || overrides?.needallmaintenace === 'All') {
         effectiveOptions.needallmaintenace = overrides.needallmaintenace;
     }
     if (typeof overrides?.needbrowserlocation === 'boolean') {
@@ -709,6 +753,7 @@ function ensureGuidedAiConfig(root, overrides) {
     fs.writeFileSync(configPath, JSON.stringify(normalized, null, 2), 'utf-8');
     return normalized;
 }
+// @ArchitectureID: 1209
 async function configureGuidedOptions(root) {
     const current = getEffectiveGuidedOptions(loadAiConfig(root));
     const modePick = await vscode.window.showQuickPick([
@@ -734,11 +779,12 @@ async function configureGuidedOptions(root) {
         return;
     }
     const allMaintenancePick = await vscode.window.showQuickPick([
-        { label: 'On', description: 'Enable all maintenance', value: true },
-        { label: 'Off', description: 'Disable all maintenance', value: false }
+        { label: 'onlyActive', description: 'Only include Active tasks', value: 'onlyActive' },
+        { label: 'ActiveAndVerified', description: 'Include Active and Verified tasks', value: 'ActiveAndVerified' },
+        { label: 'All', description: 'Include tasks in all statuses', value: 'All' }
     ], {
-        title: 'AI4PB: Enable all maintenance',
-        placeHolder: `Current: ${current.needallmaintenace ? 'On' : 'Off'}`,
+        title: 'AI4PB: Select maintenance scope',
+        placeHolder: `Current: ${current.needallmaintenace}`,
         ignoreFocusOut: true
     });
     if (!allMaintenancePick) {

@@ -12,6 +12,14 @@ You operate in a strict Model-Driven Development (MDD) environment.
 # INPUT DATA
 1. **Architecture Source of Truth:** `design\KG\SystemArchitecture.json` (The JSON Model).
 
+# PHASE 0: ITERATION BASELINE TAG (MANDATORY)
+Before scanning tasks or writing code, mark the current commit as this iteration start using a Git tag.
+
+1. Build a tag name with prefix `sprint-start-` (recommended format: `sprint-start-YYYY-MM-DD` or `sprint-start-YYYY-MM-DD-HHMMSS`).
+2. Create the tag on current `HEAD`.
+3. If the chosen tag already exists, create a new unique `sprint-start-*` tag instead of overwriting.
+4. Report the final tag name you created in your startup output.
+
 # PHASE 1: WORK MANIFEST EXTRACTION
 **Before writing code, you must scan the Architecture JSON to identify your tasks.**
 1.  **Scan:** Iterate through every Element in the JSON `elements` array.

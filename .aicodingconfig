@@ -1,6 +1,6 @@
 {
   "EA_AUTOGEN_CONFIG": {
-    "needallmaintenace": false,
+    "needallmaintenace": "ActiveAndVerified",
     "needbrowserlocation": true,
     "maintenacetype": "forllm"
   }

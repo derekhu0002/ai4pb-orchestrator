@@ -17,7 +17,7 @@ var EA_AUTOGEN_CONFIG = {
 	needCode: false,
 	needContent: true,
 	needdoc: false,
-	needallmaintenace: false,
+	needallmaintenace: "onlyActive",
 	needbrowserlocation: true,
 	maintenacetype: "forllm" // forllm | forproject
 };
@@ -355,7 +355,15 @@ function applyExternalConfig(overrides) {
 	if (typeof overrides.needCode != "undefined") EA_AUTOGEN_CONFIG.needCode = overrides.needCode;
 	if (typeof overrides.needContent != "undefined") EA_AUTOGEN_CONFIG.needContent = overrides.needContent;
 	if (typeof overrides.needdoc != "undefined") EA_AUTOGEN_CONFIG.needdoc = overrides.needdoc;
-	if (typeof overrides.needallmaintenace != "undefined") EA_AUTOGEN_CONFIG.needallmaintenace = overrides.needallmaintenace;
+	if (typeof overrides.needallmaintenace != "undefined") {
+		if (overrides.needallmaintenace === true) {
+			EA_AUTOGEN_CONFIG.needallmaintenace = "All";
+		} else if (overrides.needallmaintenace === false) {
+			EA_AUTOGEN_CONFIG.needallmaintenace = "onlyActive";
+		} else {
+			EA_AUTOGEN_CONFIG.needallmaintenace = overrides.needallmaintenace;
+		}
+	}
 	if (typeof overrides.needbrowserlocation != "undefined") EA_AUTOGEN_CONFIG.needbrowserlocation = overrides.needbrowserlocation;
 	if (typeof overrides.maintenacetype != "undefined") EA_AUTOGEN_CONFIG.maintenacetype = overrides.maintenacetype;
 
