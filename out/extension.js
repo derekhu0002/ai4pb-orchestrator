@@ -66,6 +66,7 @@ const SKILL_PROMPT_REFERENCE = {
     init: '#ai4pb-init',
     audit: '#ai4pb-audit',
     wrapup: '#ai4pb-wrapup',
+    'iteration-summary': '#ai4pb-iteration-summary',
     'task-list': '#ai4pb-task-list',
     'task-support': '#ai4pb-task-support',
     'weekly-report': '#ai4pb-weekly-report',
@@ -75,17 +76,19 @@ const SKILL_DISPLAY_LABEL = {
     init: 'Init Session',
     audit: 'Design Audit',
     wrapup: 'Wrap-up',
+    'iteration-summary': 'Git Commit',
     'task-list': 'Task List',
     'task-support': 'Task Support',
     'weekly-report': 'Weekly Report',
     'iteration-issues': 'Iteration Issues'
 };
 const CHAT_SKILL_OPTIONS = [
-    // Flow 1: task list -> init -> issues -> wrap-up
+    // Flow 1: task list -> init -> issues -> wrap-up -> git commit (iteration-summary)
     { key: 'task-list', label: 'Task List' },
     { key: 'init', label: 'Init' },
     { key: 'iteration-issues', label: 'Issues' },
     { key: 'wrapup', label: 'Wrap-up' },
+    { key: 'iteration-summary', label: 'Git 提交' },
     // Flow 2: audit
     { key: 'audit', label: 'Audit' },
     // Flow 3: task list -> weekly report
@@ -108,7 +111,7 @@ function activate(context) {
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
     const workflowViewProvider = new WorkflowViewProvider(context.extensionUri);
     registerPromptTools(context);
-    context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt));
+    context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
 }
 function deactivate() {
     output?.dispose();
@@ -244,6 +247,10 @@ class WorkflowViewProvider {
             }
             if (key === 'copilotIterationIssues') {
                 await vscode.commands.executeCommand('ai4pb.openCopilotWithIterationIssuesPrompt');
+                return;
+            }
+            if (key === 'copilotIterationSummary') {
+                await vscode.commands.executeCommand('ai4pb.openCopilotWithIterationSummaryPrompt');
                 return;
             }
             if (key === 'reports') {
@@ -486,7 +493,7 @@ class WorkflowViewProvider {
       <div class="skills" id="skills"></div>
       <div class="flow-guide">
         <div class="flow-title">流程说明 (SCRUM)</div>
-        <div class="flow-item">流程1 开发迭代: Task List -> Init -> Issues -> Wrap-up</div>
+        <div class="flow-item">流程1 开发迭代: Task List -> Init -> Issues -> Wrap-up -> Git Commit </div>
         <div class="flow-item">流程2 审计: Audit</div>
         <div class="flow-item">流程3 计划与汇报: Task List -> Weekly Report</div>
         <div class="flow-tools">工具入口: EA初始化, EA导出配置</div>
@@ -617,6 +624,11 @@ function normalizeSkillKey(value) {
         case 'wrapup':
         case 'wrap-up':
             return 'wrapup';
+        case 'iteration-summary':
+        case 'git commit':
+        case 'git提交':
+        case 'git 提交':
+            return 'iteration-summary';
         case 'task-list':
         case 'task list':
             return 'task-list';
@@ -654,10 +666,31 @@ function inferSkillFromText(input) {
     if (/wrap|收尾|总结|复盘/.test(text)) {
         return 'wrapup';
     }
+    if (/git\s*commit|提交信息|提交消息|提交/.test(text)) {
+        return 'iteration-summary';
+    }
     return 'init';
 }
 // @ArchitectureID: 1209
 function buildSkillSeedText(skill, userText) {
+    if (skill === 'iteration-summary') {
+        const promptPath = resolveExtensionPath('workprompt/iteration-summary.md');
+        if (exists(promptPath)) {
+            const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
+            if (promptContent.length > 0) {
+                const lines = [
+                    '请严格执行以下提示词并生成本次迭代的提交信息：',
+                    '',
+                    promptContent
+                ];
+                if (userText.trim().length > 0) {
+                    lines.push('', `补充上下文：${userText.trim()}`);
+                }
+                lines.push('', '请现在开始。');
+                return lines.join('\n');
+            }
+        }
+    }
     const promptRef = SKILL_PROMPT_REFERENCE[skill];
     const userDirective = userText.trim();
     const lines = [
@@ -1188,6 +1221,26 @@ async function openCopilotWithIterationIssuesPrompt() {
         '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
         '请现在开始。'
     ].join('\n'), 'iteration issues workflow');
+}
+// @ArchitectureID: 1209
+async function openCopilotWithIterationSummaryPrompt() {
+    const promptPath = resolveExtensionPath('workprompt/iteration-summary.md');
+    if (!exists(promptPath)) {
+        void vscode.window.showErrorMessage(`AI4PB iteration summary prompt missing: ${promptPath}`);
+        return;
+    }
+    const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
+    if (!promptContent) {
+        void vscode.window.showErrorMessage('AI4PB iteration summary prompt is empty.');
+        return;
+    }
+    await openCopilotWithPromptReference([
+        '请严格执行以下提示词并生成本次迭代的提交信息：',
+        '',
+        promptContent,
+        '',
+        '请现在开始。'
+    ].join('\n'), 'iteration summary workflow');
 }
 // @ArchitectureID: 1209
 async function openCopilotWithPromptReference(seedText, label) {
