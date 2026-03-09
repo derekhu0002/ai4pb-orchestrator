@@ -13,6 +13,11 @@
 
 为避免混淆，本仓库存在两类输出：
 
+### Prompt 使用模式（新增）
+- `模板型 Prompt（由 LM Tool 直接读取）`：作为 Copilot 工具模板被读取/引用，默认不直接写文件。
+  - 典型文件：`initial-prompt.md`、`reverse-engineer-WHOLE.md`、`Wrap-up Prompt.md`、`iteration-issues-prompt.md`、`iteration-summary.md`、`task-list-prompt.md`、`task-support-prompt.md`、`weekly-report-prompt.md`
+- `产出型 Prompt（由执行过程驱动生成文件）`：在会话中执行后，按提示词约定将结果写入 `implementation/*`（是否落盘取决于执行者是否按提示词执行）。
+
 ### A. LLM 内容输出（`implementation/*`）
 - 由 Prompt 驱动生成的业务/项目文档内容。
 - 典型文件：
@@ -30,6 +35,7 @@
 ### 结论
 - `implementation/*`：用于交付给团队阅读和执行的内容成果。
 - `TEMP/*`：用于扩展运行过程追踪、对齐检查和会话收尾的过程工件。
+- `workprompt/*.md`：首先是 Prompt 资产本体，是否生成文件取决于具体 Prompt 类型与执行流程。
 
 ---
 

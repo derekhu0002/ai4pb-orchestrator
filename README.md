@@ -64,7 +64,7 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 
 1. 在 EA 中维护任务并导出 `design/KG/SystemArchitecture.json`。
 2. 在 VS Code 点击 `导出选项` 设置维护模式。
-3. 按 SCRUM 顺序执行 Copilot 动作：Task List -> Init -> Task Support -> Iteration Issues -> Audit -> Wrap-up -> Weekly Report。
+3. 按 SCRUM 顺序执行 Copilot 动作：Task List -> Init -> Task Support -> Iteration Issues -> Audit -> Wrap-up -> Iteration Summary -> Weekly Report。
 4. 复核 `TEMP/` 中产物并回写 EA。
 
 ## 关键路径

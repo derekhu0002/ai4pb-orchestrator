@@ -77,7 +77,7 @@ var EA_AUTOGEN_CONFIG = {
 |---|---|---|
 | EA 导出与任务提取脚本 | `Sparx EA` | `project_auto_gen_suitable_for_LLM-V2-bootstrap.js`、`project_auto_gen_suitable_for_LLM-V2.js`、`GetTasksAndIssuesForLLM-active.js` |
 | EA 通用辅助脚本（schema/STIX/铺图） | `EA Script Utility Suite` | `schema_json_to_diagram.js`、`schema_diagram_to_json.js`、`stix_to_ea.js`、`ea_to_stix.js`、`PUT-all-elements-on-diagram.js` |
-| EA SQL 审计/检索脚本 | `EA SQL Audit Queries` | `..\\EA-sqlscript\\MyToDoIssueSearch.sql`、`..\\EA-sqlscript\\Searchforaudit.sql` |
+| EA SQL 审计/检索脚本 | `EA SQL Audit Queries` | `..\\EA-sqlscript\\MyToDoIssueSearch.sql`、`..\\EA-sqlscript\\searchforaudit-withelementid.sql`、`..\\EA-sqlscript\\Searchforaudit-withelementname.sql`、`..\\EA-sqlscript\\searchforaudit-withconnectorid.sql` |
 
 ---
 
