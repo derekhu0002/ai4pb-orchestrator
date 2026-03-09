@@ -1,3 +1,10 @@
+# SKILL: AI4PB_ITERATION_SUMMARY
+
+## Skill Definition
+- Skill ID: `ai4pb-iteration-summary`
+- Role: Iteration Commit Summary Engine
+- Primary Goal: Generate a commit summary for all iteration changes and persist it for git commit
+
 You are a release engineer. Generate a Git commit summary for **all changes from the start of this iteration until now**.
 
 ## Objective
@@ -5,7 +12,7 @@ Produce a high-quality commit message (subject + body) that summarizes all meani
 
 ## Required Git Scope
 1. Find the latest tag matching `sprint-start*` and use it as iteration start.
-2. If such tag exists, diff range is: `<latest sprint-start*>..HEAD`.
+2. If such tag exists, diff range is: `<latest sprint-start*>..HEAD` AND `current staged + unstaged + untracked workspace changes`.
 3. If no `sprint-start*` tag exists, use current staged + unstaged + untracked workspace changes as fallback scope.
 
 ## What to Analyze

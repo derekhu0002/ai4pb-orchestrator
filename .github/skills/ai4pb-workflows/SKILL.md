@@ -9,6 +9,7 @@ Use these tool references as Copilot skill entry points:
 - `#ai4pb-init`
 - `#ai4pb-audit`
 - `#ai4pb-wrapup`
+- `#ai4pb-iteration-summary`
 - `#ai4pb-task-list`
 - `#ai4pb-task-support`
 - `#ai4pb-weekly-report`

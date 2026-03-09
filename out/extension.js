@@ -51,7 +51,8 @@ const BUNDLED_PATHS = {
     taskListPrompt: 'workprompt/task-list-prompt.md',
     taskSupportPrompt: 'workprompt/task-support-prompt.md',
     weeklyReportPrompt: 'workprompt/weekly-report-prompt.md',
-    iterationIssuesPrompt: 'workprompt/iteration-issues-prompt.md'
+    iterationIssuesPrompt: 'workprompt/iteration-issues-prompt.md',
+    iterationSummaryPrompt: 'workprompt/iteration-summary.md'
 };
 const TOOL_NAMES = {
     initPrompt: 'ai4pb_get_init_session_prompt',
@@ -60,7 +61,8 @@ const TOOL_NAMES = {
     taskListPrompt: 'ai4pb_get_task_list_prompt',
     taskSupportPrompt: 'ai4pb_get_task_support_prompt',
     weeklyReportPrompt: 'ai4pb_get_weekly_report_prompt',
-    iterationIssuesPrompt: 'ai4pb_get_iteration_issues_prompt'
+    iterationIssuesPrompt: 'ai4pb_get_iteration_issues_prompt',
+    iterationSummaryPrompt: 'ai4pb_get_iteration_summary_prompt'
 };
 const SKILL_PROMPT_REFERENCE = {
     init: '#ai4pb-init',
@@ -152,7 +154,8 @@ function registerPromptTools(context) {
         { name: TOOL_NAMES.taskListPrompt, label: 'Task List', promptRelativePath: BUNDLED_PATHS.taskListPrompt },
         { name: TOOL_NAMES.taskSupportPrompt, label: 'Task Support', promptRelativePath: BUNDLED_PATHS.taskSupportPrompt },
         { name: TOOL_NAMES.weeklyReportPrompt, label: 'Weekly Report', promptRelativePath: BUNDLED_PATHS.weeklyReportPrompt },
-        { name: TOOL_NAMES.iterationIssuesPrompt, label: 'Iteration Issues', promptRelativePath: BUNDLED_PATHS.iterationIssuesPrompt }
+        { name: TOOL_NAMES.iterationIssuesPrompt, label: 'Iteration Issues', promptRelativePath: BUNDLED_PATHS.iterationIssuesPrompt },
+        { name: TOOL_NAMES.iterationSummaryPrompt, label: 'Iteration Summary', promptRelativePath: BUNDLED_PATHS.iterationSummaryPrompt }
     ];
     for (const tool of toolDefinitions) {
         context.subscriptions.push(vscode.lm.registerTool(tool.name, new PromptTemplateTool(tool.label, tool.promptRelativePath)));
@@ -673,24 +676,6 @@ function inferSkillFromText(input) {
 }
 // @ArchitectureID: 1209
 function buildSkillSeedText(skill, userText) {
-    if (skill === 'iteration-summary') {
-        const promptPath = resolveExtensionPath('workprompt/iteration-summary.md');
-        if (exists(promptPath)) {
-            const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
-            if (promptContent.length > 0) {
-                const lines = [
-                    '请严格执行以下提示词并生成本次迭代的提交信息：',
-                    '',
-                    promptContent
-                ];
-                if (userText.trim().length > 0) {
-                    lines.push('', `补充上下文：${userText.trim()}`);
-                }
-                lines.push('', '请现在开始。');
-                return lines.join('\n');
-            }
-        }
-    }
     const promptRef = SKILL_PROMPT_REFERENCE[skill];
     const userDirective = userText.trim();
     const lines = [
@@ -1224,21 +1209,9 @@ async function openCopilotWithIterationIssuesPrompt() {
 }
 // @ArchitectureID: 1209
 async function openCopilotWithIterationSummaryPrompt() {
-    const promptPath = resolveExtensionPath('workprompt/iteration-summary.md');
-    if (!exists(promptPath)) {
-        void vscode.window.showErrorMessage(`AI4PB iteration summary prompt missing: ${promptPath}`);
-        return;
-    }
-    const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
-    if (!promptContent) {
-        void vscode.window.showErrorMessage('AI4PB iteration summary prompt is empty.');
-        return;
-    }
     await openCopilotWithPromptReference([
-        '请严格执行以下提示词并生成本次迭代的提交信息：',
-        '',
-        promptContent,
-        '',
+        '请使用 #ai4pb-iteration-summary。',
+        '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
         '请现在开始。'
     ].join('\n'), 'iteration summary workflow');
 }

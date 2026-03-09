@@ -20,7 +20,8 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 6. `打开 Copilot（Iteration Issues）`
 7. `打开 Copilot（Design Audit）`
 8. `打开 Copilot（Wrap-up）`
-9. `打开 Copilot（Weekly Report）`
+9. `打开 Copilot（Iteration Summary）`
+10. `打开 Copilot（Weekly Report）`
 
 ## Action -> Command 映射
 
@@ -34,6 +35,7 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 | 打开 Copilot（Iteration Issues） | `ai4pb.openCopilotWithIterationIssuesPrompt` | 触发 `#ai4pb-iteration-issues` |
 | 打开 Copilot（Design Audit） | `ai4pb.openCopilotWithDesignAuditPrompt` | 触发 `#ai4pb-audit` |
 | 打开 Copilot（Wrap-up） | `ai4pb.openCopilotWithWrapUpPrompt` | 触发 `#ai4pb-wrapup` |
+| 打开 Copilot（Iteration Summary） | `ai4pb.openCopilotWithIterationSummaryPrompt` | 触发 `#ai4pb-iteration-summary` |
 | 打开 Copilot（Weekly Report） | `ai4pb.openCopilotWithWeeklyReportPrompt` | 触发 `#ai4pb-weekly-report` |
 
 ## Chat 请求路径说明
@@ -52,6 +54,7 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 - `#ai4pb-init`
 - `#ai4pb-audit`
 - `#ai4pb-wrapup`
+- `#ai4pb-iteration-summary`
 - `#ai4pb-task-list`
 - `#ai4pb-task-support`
 - `#ai4pb-weekly-report`
@@ -88,6 +91,9 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 
 - 确保 VS Code 已安装并启用 GitHub Copilot Chat。
 - 在命令面板手动执行对应 `AI4PB: Open Copilot with ...` 命令确认可用性。
+
+
+
 
 
 

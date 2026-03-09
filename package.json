@@ -2,7 +2,7 @@
   "name": "ai4pb-orchestrator",
   "displayName": "AI4PB Orchestrator DEV",
   "description": "Orchestrate EA export, architecture context refresh, prompt flow, and reporting for AI-For-Project-Building.",
-  "version": "0.0.33",
+  "version": "0.0.36",
   "publisher": "derekhu",
   "repository": {
     "type": "git",
@@ -94,6 +94,10 @@
       {
         "command": "ai4pb.openCopilotWithIterationIssuesPrompt",
         "title": "AI4PB: Open Copilot with Iteration Issues Prompt"
+      },
+      {
+        "command": "ai4pb.openCopilotWithIterationSummaryPrompt",
+        "title": "AI4PB: Open Copilot with Iteration Summary Prompt"
       }
     ],
     "languageModelTools": [
@@ -182,6 +186,19 @@
         "toolReferenceName": "ai4pb-iteration-issues",
         "userDescription": "Get the AI4PB iteration-issues prompt template",
         "modelDescription": "Returns the full AI4PB iteration issues prompt from workprompt/iteration-issues-prompt.md.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "ai4pb_get_iteration_summary_prompt",
+        "displayName": "AI4PB Iteration Summary Prompt",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "ai4pb-iteration-summary",
+        "userDescription": "Get the AI4PB iteration-summary prompt template",
+        "modelDescription": "Returns the full AI4PB iteration summary prompt from workprompt/iteration-summary.md.",
         "inputSchema": {
           "type": "object",
           "properties": {},
