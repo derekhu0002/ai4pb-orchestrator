@@ -36,4 +36,10 @@ Classify each change as:
 - Avoid repeating low-value generated-file noise unless relevant.
 - If scope is empty, output: `No changes detected for this iteration scope.`
 
+## Persistence Requirement (Mandatory)
+- Save the generated commit message to: `debug/iteration-commit-message.md`.
+- If `debug/` does not exist, create it first.
+- Overwrite `debug/iteration-commit-message.md` with the latest generated content each run.
+- After saving the file, also print the same commit message content in chat output.
+
 Now run the analysis and return the final commit message content only (ready to paste into `git commit`).
