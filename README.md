@@ -1,6 +1,8 @@
 ﻿# AI4PB Orchestrator
 
-AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（ArchiMate）模型与 Copilot 实施流程衔接起来，形成“建模 -> 导出 -> 实施 -> 审计 -> 总结”的闭环。
+AI4PB Orchestrator 是面向系统工程师与研发团队的 VS Code 扩展工作流编排组件，旨在将 Sparx EA（ArchiMate）模型与 GitHub Copilot Chat 无缝衔接起来。实现一种基于 **模型驱动** 和 **SCRUM 敏捷实战** 的软件交付模式： “需求与架构建模 -> 知识图谱 JSON 导出 -> AI 辅助指导编码 -> 架构-代码对齐审计 -> 收尾评估与周报”。
+
+> 📘 **强烈推荐阅读**： 有关整个工作流机制设计原理、最佳实践排期和架构模型的建立规范，请参阅[**《AI4PB 开发交付方法论全指引》**](docs/getting-started/README.md)。
 
 ## 扩展定位
 
@@ -62,17 +64,18 @@ AI4PB Orchestrator 是面向系统工程师的 VS Code 扩展，用于把 EA（A
 
 ## 推荐流程
 
-1. 在 EA 中维护任务并导出 `design/KG/SystemArchitecture.json`。
-2. 在 VS Code 点击 `导出选项` 设置维护模式。
-3. 按 SCRUM 顺序执行 Copilot 动作：Task List -> Init -> Task Support -> Iteration Issues -> Audit -> Wrap-up -> Iteration Summary -> Weekly Report。
-4. 复核 `TEMP/` 中产物并回写 EA。
+1. 在 EA 中将需要分配的任务标记为对应的 TODO/Issue，并导出最新图谱到 `design/KG/SystemArchitecture.json`。
+2. 在 VS Code 设置或操作侧边栏 `导出选项`，对齐你的迭代策略。
+3. 遵循严格的 SCRUM 敏捷顺序执行 AI4PB Copilot 动作节点：`Task List` -> `Init` -> `Task Support` -> `Iteration Issues` -> `Audit` -> `Wrap-up` -> `Iteration Summary` -> `Weekly Report`。
+4. 审查 `implementation/`（产出业务资产）与 `design/temp/`、`TEMP/`（评估审计跟踪资产）内的最新文件产物，基于审计意见修正图纸并重新同频 EA。
 
 ## 关键路径
 
 - 架构 JSON：`design/KG/SystemArchitecture.json`
 - 扩展入口：`src/extension.ts`
-- Prompt 资产：`workprompt/*.md`
-- 报告输出：`TEMP/`
+- Prompt 资产与技能树：`.github/skills/*` 及 `workprompt/*.md`
+- Markdown 指南库：`docs/getting-started/`
+- 执行产出交付物：`implementation/*` , `TEMP/` 以及 `debug/`
 
 ## 常见命令
 
