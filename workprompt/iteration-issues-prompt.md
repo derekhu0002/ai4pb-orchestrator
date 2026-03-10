@@ -30,13 +30,17 @@ You are an **Architectural Implementation Engine** continuing a later iteration 
 2. Every class/function you add or modify must include: `// @ArchitectureID: [Element ID]`.
 3. Only implement what is required to address unresolved issues and current active tasks.
 
-## Phase 4: Verification
+## Phase 3: Verification
 For each processed issue/task:
 1. Verify against task `description` or `acceptance_criteria` in the architecture JSON.
 2. Report status as `Done`, `In Progress`, or `Blocked` with concise evidence.
 
-## Output Contract
-Output one concise markdown report with:
-- Processed issue list from `taskandissues_for_LLM.json`
-- Changed files and verification evidence
-- Remaining blockers and next actions
+## Phase 4: Resolver Notes Update (MANDATORY Context Preservation)
+After you have verified the implementation for an issue, you MUST update the `design\tasks\taskandissues_for_LLM.json` file to preserve context for future iterations:
+1. Locate the exact JSON object you just worked on in `design\tasks\taskandissues_for_LLM.json`.
+2. Summarize your work directly into the execution context. Your summary MUST include:
+   - The specific issue addressed and your technical approach.
+   - The changed files and verification evidence.
+   - The final result, along with any remaining blockers and next actions.
+3. **APPEND** this detailed summary to the existing `ResolverNotes` string for that specific task.
+4. **CRITICAL:** Do NOT overwrite or delete any existing text inside `ResolverNotes`. Always append your new entry, prepended with today's date (e.g., `\n[YYYY-MM-DD] from LLM: <Your detailed summary>`).

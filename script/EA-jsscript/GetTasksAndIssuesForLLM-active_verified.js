@@ -215,6 +215,7 @@ function xmlToJson(xml) {
             "ProblemNotes": getNodeValueByAliases(row, ["ProblemNotes", "PROBLEMNOTES", "Notes"]),
             "ResolverNotes": getNodeValueByAliases(row, ["ResolverNotes", "RESOLVERNOTES", "Resolution"]),
             "ProblemType": getNodeValueByAliases(row, ["ProblemType", "PROBLEMTYPE", "Type"]),
+            "Status": getNodeValueByAliases(row, ["Status", "STATUS"]),
             "Object_ID": isNaN(objectIdNumber) ? null : objectIdNumber
         };
         tasks.push(task);
