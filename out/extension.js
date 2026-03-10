@@ -435,17 +435,15 @@ class WorkflowViewProvider {
       opacity: 0.88;
     }
     .flow-tools {
+      font-size: 11px;
+      opacity: 0.78;
+    }
     .title-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
     }
-    .title {
-      font-size: 10px;
-      opacity: 0.7;
-    }
-    .quick-btn {
     .version-chip {
       border: 1px solid var(--chat-border);
       border-radius: 999px;
@@ -454,6 +452,7 @@ class WorkflowViewProvider {
       opacity: 0.8;
       white-space: nowrap;
     }
+    .quick-btn {
       border: 1px solid var(--chat-border);
       border-radius: 999px;
       padding: 4px 10px;
