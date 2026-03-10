@@ -12,10 +12,10 @@ You are an **Architectural Implementation Engine** continuing a later iteration 
 
 ## Input Data
 1. Architecture source of truth: `design\KG\SystemArchitecture.json`
-2. Iteration issue list: `design\tasks\taskandissues_for_LLM.json`
+2. Iteration issue list: `design\tasks\taskandissues_for_LLM.md`
 
 ## Phase 1: Process Issue Backlog
-1. Load `design\tasks\taskandissues_for_LLM.json`.
+1. Load `design\tasks\taskandissues_for_LLM.md`.
 2. For each issue item, parse:
    - `Name`
    - `Problem`
@@ -36,8 +36,8 @@ For each processed issue/task:
 2. Report status as `Done`, `In Progress`, or `Blocked` with concise evidence.
 
 ## Phase 4: Resolver Notes Update (MANDATORY Context Preservation)
-After you have verified the implementation for an issue, you MUST update the `design\tasks\taskandissues_for_LLM.json` file to preserve context for future iterations:
-1. Locate the exact JSON object you just worked on in `design\tasks\taskandissues_for_LLM.json`.
+After you have verified the implementation for an issue, you MUST update the `design\tasks\taskandissues_for_LLM.md` file to preserve context for future iterations:
+1. Locate the exact task entry you just worked on in `design\tasks\taskandissues_for_LLM.md`.
 2. Summarize your work directly into the execution context. Your summary MUST include:
    - The specific issue addressed and your technical approach.
    - The changed files and verification evidence.

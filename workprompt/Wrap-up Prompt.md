@@ -8,7 +8,7 @@
 # SESSION WRAP-UP & SYNC
 
 ## Task Status Sync (Session Delta)
-Re-scan `design\tasks\taskandissues_for_LLM.json` at wrap-up time and extract all `ToDos` and `Issues` entries.
+Re-scan `design\tasks\taskandissues_for_LLM.md` at wrap-up time and extract all `ToDos` and `Issues` entries.
 
 Review all code/file modifications that happened during this iteration before concluding task status, and obtain them via Git diff query first.
 Iteration start ref rule:

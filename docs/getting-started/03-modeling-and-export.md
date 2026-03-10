@@ -32,7 +32,7 @@ AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
    - 使用 bootstrap 模式可以确保所有模型使用的抽取逻辑一致并自动寻址到 `.vscode` 或者本地扩展安装点中的真实验本。
 3. 检查生成产物：
    - 脚本将成功输出带有任务体系的 JSON 至 `design/KG/SystemArchitecture.json` （核心约束路径）。
-   - 与此同时导出专门的任务文件 `design/tasks/taskandissues_for_LLM.json`。
+   - 与此同时导出专门的任务文件 `design/tasks/taskandissues_for_LLM.md`。
 ![[Pasted image 20260310130733.png]]
 
 至此，大语言模型进行精准“AI生成”所需的前置语料已经储备完毕！接下来可以在开发环境使用插件将这些架构直接注入对话窗口。

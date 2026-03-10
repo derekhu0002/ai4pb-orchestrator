@@ -2,7 +2,7 @@
 
 /*
  * 主函数
- * 这个脚本会运行一个预定义的、带参数的模型搜索，并将结果导出为JSON文件。
+ * 这个脚本会运行一个预定义的、带参数的模型搜索，并将结果导出为Markdown文件。
  */
 function main() {
     // 这是你在步骤1中创建的搜索的名称
@@ -16,14 +16,14 @@ function main() {
         // 返回一个包含结果的XML字符串
         var xmlResult = runSearchXml(searchName, searchTerm);
 
-        // 将XML结果转换为JSON数组
-        var jsonArray = xmlToJson(xmlResult);
+        // 将XML结果转换为任务数组
+        var taskArray = xmlToJson(xmlResult);
 
-        if (jsonArray.length > 0) {
+        if (taskArray.length > 0) {
             var filePath = getDefaultOutputPath();
-            // 将JSON数据写入文件
-            writeToFile(toJsonString(jsonArray), filePath);
-            Session.Output("成功将 " + jsonArray.length + " 个任务导出到: " + filePath);
+            // 将Markdown数据写入文件
+            writeToFile(toMarkdownString(taskArray), filePath);
+            Session.Output("成功将 " + taskArray.length + " 个任务导出到: " + filePath);
         } else {
             Session.Output("搜索 '" + searchName + "' 没有返回任何结果。");
         }
@@ -149,7 +149,7 @@ function parseDaysFromSearchTerm(searchTerm) {
 
 /*
  * 获取默认输出路径: 相对于EA文件所在目录的 ./design/tasks/
- * @return 输出JSON文件的完整路径
+ * @return 输出Markdown文件的完整路径
  */
 function getDefaultOutputPath() {
     var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -165,7 +165,7 @@ function getDefaultOutputPath() {
 
     ensureFolderExists(fso, outputFolder);
 
-    return fso.BuildPath(outputFolder, "taskandissues_for_LLM.json");
+    return fso.BuildPath(outputFolder, "taskandissues_for_LLM.md");
 }
 
 /*
@@ -285,6 +285,51 @@ function writeToFile(content, filePath) {
         file.Write(content);
         file.Close();
     }
+}
+
+/*
+ * 将任务数组序列化为Markdown表格
+ * @param tasks - 任务对象数组
+ * @return Markdown字符串
+ */
+function toMarkdownString(tasks) {
+    var lines = [];
+    lines.push("# Task And Issues For LLM");
+    lines.push("");
+    lines.push("| Name | Problem | ProblemNotes | ResolverNotes | ProblemType | Status | Object_ID |");
+    lines.push("| --- | --- | --- | --- | --- | --- | --- |");
+
+    for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
+        lines.push("| "
+            + toMarkdownCell(task.Name) + " | "
+            + toMarkdownCell(task.Problem) + " | "
+            + toMarkdownCell(task.ProblemNotes) + " | "
+            + toMarkdownCell(task.ResolverNotes) + " | "
+            + toMarkdownCell(task.ProblemType) + " | "
+            + toMarkdownCell(task.Status) + " | "
+            + toMarkdownCell(task.Object_ID) + " |");
+    }
+
+    return lines.join("\r\n") + "\r\n";
+}
+
+/*
+ * 转义Markdown单元格内容
+ * @param value - 单元格值
+ * @return 可安全写入Markdown表格的文本
+ */
+function toMarkdownCell(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    var s = String(value);
+    s = s.replace(/\|/g, "\\|");
+    s = s.replace(/\r\n/g, "<br>");
+    s = s.replace(/\n/g, "<br>");
+    s = s.replace(/\r/g, "<br>");
+    return s;
 }
 
 /*

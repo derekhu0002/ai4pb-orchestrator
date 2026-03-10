@@ -181,11 +181,11 @@
 
 ## 8) `iteration-issues-prompt.md`
 ### 用途
-用于“首轮验收后”的问题续作：读取 `design\tasks\taskandissues_for_LLM.json`，结合架构任务状态继续修复未完成项。
+用于“首轮验收后”的问题续作：读取 `design\tasks\taskandissues_for_LLM.md`，结合架构任务状态继续修复未完成项。
 
 ### 输入
 - 架构与任务数据：`design\KG\SystemArchitecture.json`
-- 问题清单：`design\tasks\taskandissues_for_LLM.json`
+- 问题清单：`design\tasks\taskandissues_for_LLM.md`
 
 ### 输出
 - 单份迭代续作报告（建议 markdown）：
