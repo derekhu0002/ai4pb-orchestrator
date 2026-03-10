@@ -2,7 +2,7 @@
   "name": "ai4pb-orchestrator",
   "displayName": "AI4PB Orchestrator DEV",
   "description": "Orchestrate EA export, architecture context refresh, prompt flow, and reporting for AI-For-Project-Building.",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "publisher": "derekhu",
   "repository": {
     "type": "git",
