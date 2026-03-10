@@ -111,7 +111,8 @@ function activate(context) {
     output.appendLine('AI4PB Orchestrator activated.');
     ensureWorkspaceSkillsInstalled();
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
-    const workflowViewProvider = new WorkflowViewProvider(context.extensionUri);
+    const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
+    const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion);
     registerPromptTools(context);
     context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
 }
@@ -164,8 +165,9 @@ function registerPromptTools(context) {
 }
 // @ArchitectureID: 1213
 class WorkflowViewProvider {
-    constructor(extensionUri) {
+    constructor(extensionUri, extensionVersion) {
         this.extensionUri = extensionUri;
+        this.extensionVersion = extensionVersion;
     }
     resolveWebviewView(webviewView) {
         this.webviewView = webviewView;
@@ -321,6 +323,7 @@ class WorkflowViewProvider {
     getHtml(webview) {
         const nonce = String(Date.now());
         const skillsJson = JSON.stringify(CHAT_SKILL_OPTIONS);
+        const versionText = this.extensionVersion;
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -432,10 +435,25 @@ class WorkflowViewProvider {
       opacity: 0.88;
     }
     .flow-tools {
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .title {
       font-size: 10px;
       opacity: 0.7;
     }
     .quick-btn {
+    .version-chip {
+      border: 1px solid var(--chat-border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
       border: 1px solid var(--chat-border);
       border-radius: 999px;
       padding: 4px 10px;
@@ -490,7 +508,10 @@ class WorkflowViewProvider {
 </head>
 <body>
   <div class="shell">
-    <div class="title">AI4PB Skill Chat</div>
+    <div class="title-row">
+      <div class="title">AI4PB Skill Chat</div>
+      <div class="version-chip">v${versionText}</div>
+    </div>
     <div class="thread" id="thread"></div>
     <div class="composer">
       <div class="skills" id="skills"></div>
@@ -511,7 +532,7 @@ class WorkflowViewProvider {
         <button id="sendBtn" class="send-btn">发送到 Copilot</button>
       </div>
     </div>
-    <p class="stamp">AI4PB Skill Chat</p>
+    <p class="stamp">AI4PB Skill Chat v${versionText}</p>
   </div>
 
   <script nonce="${nonce}">

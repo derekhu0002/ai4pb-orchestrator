@@ -113,7 +113,8 @@ export function activate(context: vscode.ExtensionContext): void {
   output.appendLine('AI4PB Orchestrator activated.');
   ensureWorkspaceSkillsInstalled();
   void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
-  const workflowViewProvider = new WorkflowViewProvider(context.extensionUri);
+  const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
+  const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion);
 
   registerPromptTools(context);
 
@@ -212,7 +213,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ai4pb.workflowView';
   private webviewView?: vscode.WebviewView;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly extensionVersion: string
+  ) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.webviewView = webviewView;
@@ -398,6 +402,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   private getHtml(webview: vscode.Webview): string {
     const nonce = String(Date.now());
     const skillsJson = JSON.stringify(CHAT_SKILL_OPTIONS);
+    const versionText = this.extensionVersion;
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -509,10 +514,25 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       opacity: 0.88;
     }
     .flow-tools {
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .title {
       font-size: 10px;
       opacity: 0.7;
     }
     .quick-btn {
+    .version-chip {
+      border: 1px solid var(--chat-border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
       border: 1px solid var(--chat-border);
       border-radius: 999px;
       padding: 4px 10px;
@@ -567,7 +587,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
   <div class="shell">
-    <div class="title">AI4PB Skill Chat</div>
+    <div class="title-row">
+      <div class="title">AI4PB Skill Chat</div>
+      <div class="version-chip">v${versionText}</div>
+    </div>
     <div class="thread" id="thread"></div>
     <div class="composer">
       <div class="skills" id="skills"></div>
@@ -588,7 +611,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         <button id="sendBtn" class="send-btn">发送到 Copilot</button>
       </div>
     </div>
-    <p class="stamp">AI4PB Skill Chat</p>
+    <p class="stamp">AI4PB Skill Chat v${versionText}</p>
   </div>
 
   <script nonce="${nonce}">
