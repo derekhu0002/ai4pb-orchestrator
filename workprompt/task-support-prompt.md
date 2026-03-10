@@ -25,7 +25,7 @@ For each task file, include the following sections in order:
 1. 任务名称、关联架构对象、负责人、优先级、时间窗口
 2. 任务目标与业务价值
 3. 输入信息与依赖项（上游数据、系统组件、接口）
-4. 架构元素级别的任务分解与拆解逻辑（详细阐述从整体任务分解到具体架构层面的每个子任务（如果当前任务的完成不涉及其他架构元素，也可以没有子任务）的逻辑、关联关系及技术理由，需明确指出该任务及其子任务所关联的架构元素名称和ID）
+4. 架构元素级别的任务分解与拆解逻辑（详细阐述从整体任务分解到具体架构层面的每个子任务的逻辑、关联关系及技术理由；**每个子任务必须显式关联到 KG 中的某个具体架构元素并指出其名称和ID（若当前架构中没有合适的元素，则说明需要新增）**；设计方案必须体现对 **Progressive Disclosure（渐进式架构揭示：逐层控制架构复杂度暴露）** 与 **Separation of Concerns（关注点分离）** 架构建模原则的遵守，并严格遵循 KG 中的 **Principle** 与 **Constraint** 元素所表达的架构原则与约束）
 5. 具体执行步骤（可操作、按顺序，需直接映射到上述架构元素的拆解）
 6. 交付物与验收标准
 7. 主要风险、缺口与缓解措施
@@ -47,6 +47,7 @@ After generating all task support files, produce a concise summary document in m
 
 ## Tone & Quality
 - Professional, clear, execution-oriented, and actionable.
+- **Architectural Principles:** All architectural solutions and task breakdowns MUST strictly adhere to **Progressive Disclosure** (architectural modeling principle: hiding system complexity behind clean interfaces and exposing lower-level structural details only when explicitly needed by the component) and **Separation of Concerns (SoC)** (ensuring decoupled, cohesive system components). You must also extract and strictly enforce any explicit architectural rules defined as **`Principle`** or **`Constraint`** elements within the provided Knowledge Graph.
 - **Visual & Concise Design Representations:** Maximize readability and conciseness by utilizing mathematical formulas (LaTeX/KaTeX), Mermaid diagrams (e.g., flowcharts, sequence diagrams, class diagrams), and tables when describing architectural logic, state transitions, data flows, and complex dependencies.
 - Do not leave generic placeholders; provide concrete, task-specific guidance inferred from architecture context.
 - If information is missing in JSON, state assumptions explicitly.

@@ -37,6 +37,13 @@ Before generating code, output a summary of the work you found in this format:
 # PHASE 2: IMPLEMENTATION
 Execute the tasks identified above.
 
+## TASK PREPARATION (REQUIRED)
+Before writing code for *any* task, you MUST check if a task support file exists:
+1. Search the `implementation\taskhelpinfos\` directory for a Markdown file that matches or refers to the task name.
+2. If the file is found, you MUST thoroughly read it.
+3. You MUST follow the architectural breakdown, the "Progressive Disclosure" and "Separation of Concerns" guidelines, execution steps, and conflict resolution guidance provided within that file.
+4. If no file is found, proceed with your best judgment based on the JSON task definition.
+
 ## STRICT RULES:
 1.  **Scope Containment:** Focus primarily on files associated with the active Elements. You may modify related components (e.g., shared utilities, configuration, new files) if they are necessary dependencies for the task.
 2.  **Traceability:** Every class/function must include: `// @ArchitectureID: [Element ID]`.
