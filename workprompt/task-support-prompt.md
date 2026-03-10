@@ -25,10 +25,11 @@ For each task file, include the following sections in order:
 1. 任务名称、关联架构对象、负责人、优先级、时间窗口
 2. 任务目标与业务价值
 3. 输入信息与依赖项（上游数据、系统组件、接口）
-4. 具体执行步骤（可操作、按顺序）
-5. 交付物与验收标准
-6. 主要风险、缺口与缓解措施
-7. 本周建议行动（next actions）
+4. 架构元素级别的任务分解与拆解逻辑（详细阐述从整体任务分解到具体架构层面的每个子任务（如果当前任务的完成不涉及其他架构元素，也可以没有子任务）的逻辑、关联关系及技术理由）
+5. 具体执行步骤（可操作、按顺序，需直接映射到上述架构元素的拆解）
+6. 交付物与验收标准
+7. 主要风险、缺口与缓解措施
+8. 本周建议行动（next actions）
 
 ## Cross-Reference Requirement
 After generating all task support files, produce a concise index table in markdown with:
