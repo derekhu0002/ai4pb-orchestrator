@@ -215,14 +215,16 @@ class WorkflowViewProvider {
             });
             return;
         }
-        const suggestion = await analyzeAutoSkillSuggestion(text);
+        const suggestions = await analyzeAutoSkillSuggestions(text);
         await this.webviewView?.webview.postMessage({
             type: 'autoSuggestion',
             text,
-            skill: suggestion.skill,
-            skillLabel: SKILL_DISPLAY_LABEL[suggestion.skill],
-            promptRef: SKILL_PROMPT_REFERENCE[suggestion.skill],
-            reason: suggestion.reason
+            suggestions: suggestions.map((suggestion) => ({
+                skill: suggestion.skill,
+                skillLabel: SKILL_DISPLAY_LABEL[suggestion.skill],
+                promptRef: SKILL_PROMPT_REFERENCE[suggestion.skill],
+                reason: suggestion.reason
+            }))
         });
     }
     // @ArchitectureID: 1213
@@ -619,27 +621,39 @@ class WorkflowViewProvider {
       card.className = 'confirm-card';
 
       const title = document.createElement('div');
-      title.textContent = '建议执行: ' + message.skillLabel + ' (' + message.promptRef + ')，是否执行？';
+      title.textContent = '建议执行以下动作，请选择一个确认发送到 Copilot：';
       card.appendChild(title);
 
-      const reason = document.createElement('div');
-      reason.className = 'confirm-reason';
-      reason.textContent = '分析依据: ' + (message.reason || '已根据输入内容完成自动分析。');
-      card.appendChild(reason);
+      const suggestions = Array.isArray(message.suggestions) ? message.suggestions : [];
+      suggestions.forEach((suggestion, index) => {
+        const option = document.createElement('div');
+        option.className = 'confirm-card';
 
-      const btn = document.createElement('button');
-      btn.className = 'confirm-btn';
-      btn.textContent = '确认执行';
-      btn.addEventListener('click', () => {
-        vscode.postMessage({
-          type: 'autoConfirm',
-          text: message.text,
-          skill: message.skill
+        const optionTitle = document.createElement('div');
+        optionTitle.textContent = String(index + 1) + '. ' + suggestion.skillLabel + ' (' + suggestion.promptRef + ')';
+        option.appendChild(optionTitle);
+
+        const reason = document.createElement('div');
+        reason.className = 'confirm-reason';
+        reason.textContent = '分析依据: ' + (suggestion.reason || '已根据输入内容完成自动分析。');
+        option.appendChild(reason);
+
+        const btn = document.createElement('button');
+        btn.className = 'confirm-btn';
+        btn.textContent = '确认执行';
+        btn.addEventListener('click', () => {
+          vscode.postMessage({
+            type: 'autoConfirm',
+            text: message.text,
+            skill: suggestion.skill
+          });
+          btn.disabled = true;
+          btn.textContent = '已确认，正在发送...';
         });
-        btn.disabled = true;
-        btn.textContent = '已确认，正在发送...';
+        option.appendChild(btn);
+
+        card.appendChild(option);
       });
-      card.appendChild(btn);
 
       bubble.appendChild(card);
       thread.appendChild(bubble);
@@ -801,12 +815,8 @@ function inferSkillFromText(input) {
     return 'init';
 }
 // @ArchitectureID: 1209
-async function analyzeAutoSkillSuggestion(userText) {
-    const fallbackSkill = inferSkillFromText(userText);
-    const fallback = {
-        skill: fallbackSkill,
-        reason: '模型不可用，已使用内置规则推断。'
-    };
+async function analyzeAutoSkillSuggestions(userText) {
+    const fallback = buildFallbackAutoSkillSuggestions(userText);
     try {
         const copilotModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
         const genericModels = copilotModels.length > 0 ? copilotModels : await vscode.lm.selectChatModels();
@@ -816,9 +826,10 @@ async function analyzeAutoSkillSuggestion(userText) {
         }
         const instruction = [
             '你是 AI4PB workflow router。',
-            '根据用户输入，在以下技能中选择一个最匹配的 key:',
+            '根据用户输入，在以下技能中选出最匹配的 3 个 key，并按优先级排序：',
             'init, audit, wrapup, iteration-summary, task-list, task-support, weekly-report, iteration-issues。',
-            '只返回 JSON，格式: {"skill":"<key>","reason":"<中文一句话理由>"}。',
+            '只返回 JSON 数组，格式: [{"skill":"<key>","reason":"<中文一句话理由>"}]。',
+            '如果不足 3 个，也至少返回 1 个。不要输出 markdown。',
             `用户输入: ${userText}`
         ].join('\n');
         const response = await model.sendRequest([
@@ -829,17 +840,22 @@ async function analyzeAutoSkillSuggestion(userText) {
             responseText += part;
         }
         const parsed = parseAutoSuggestionJson(responseText);
-        if (!parsed) {
+        if (!parsed || parsed.length === 0) {
             return fallback;
         }
-        const skill = normalizeSkillKey(parsed.skill);
-        if (!skill) {
-            return fallback;
-        }
-        return {
-            skill,
-            reason: parsed.reason || '已基于输入语义匹配到最合适流程。'
-        };
+        const normalized = parsed
+            .map((item) => {
+            const skill = normalizeSkillKey(item.skill);
+            if (!skill) {
+                return undefined;
+            }
+            return {
+                skill,
+                reason: item.reason || '已基于输入语义匹配到候选流程。'
+            };
+        })
+            .filter((item) => Boolean(item));
+        return normalized.length > 0 ? dedupeAutoSkillSuggestions(normalized) : fallback;
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -857,6 +873,11 @@ function parseAutoSuggestionJson(raw) {
     if (direct) {
         return direct;
     }
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket >= 0 && lastBracket > firstBracket) {
+        return safeParseJson(text.slice(firstBracket, lastBracket + 1));
+    }
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
     if (firstBrace < 0 || lastBrace <= firstBrace) {
@@ -868,14 +889,86 @@ function parseAutoSuggestionJson(raw) {
 function safeParseJson(raw) {
     try {
         const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            return parsed.filter((item) => item && typeof item === 'object');
+        }
         if (!parsed || typeof parsed !== 'object') {
             return undefined;
         }
-        return parsed;
+        return [parsed];
     }
     catch {
         return undefined;
     }
+}
+// @ArchitectureID: 1209
+function buildFallbackAutoSkillSuggestions(userText) {
+    const rankedSkills = rankSkillsFromText(userText);
+    return rankedSkills.slice(0, 3).map((skill, index) => ({
+        skill,
+        reason: index === 0 ? '模型不可用，已使用内置规则推断最优流程。' : '模型不可用，已提供备选流程供人工确认。'
+    }));
+}
+// @ArchitectureID: 1209
+function rankSkillsFromText(input) {
+    const text = input.toLowerCase();
+    const scores = new Map([
+        ['init', 0],
+        ['audit', 0],
+        ['wrapup', 0],
+        ['iteration-summary', 0],
+        ['task-list', 0],
+        ['task-support', 0],
+        ['weekly-report', 0],
+        ['iteration-issues', 0]
+    ]);
+    const addScore = (skill, value) => {
+        scores.set(skill, (scores.get(skill) ?? 0) + value);
+    };
+    if (/task\s*list|任务列表|待办清单|task-list/.test(text)) {
+        addScore('task-list', 5);
+    }
+    if (/task\s*support|任务支持|执行步骤|task-support|怎么做|如何实现/.test(text)) {
+        addScore('task-support', 5);
+    }
+    if (/weekly\s*report|周报|weekly-report|汇报/.test(text)) {
+        addScore('weekly-report', 5);
+    }
+    if (/issue|问题|缺陷|风险|阻塞|iteration|修复|bug/.test(text)) {
+        addScore('iteration-issues', 5);
+    }
+    if (/audit|对齐|审计|差异|reverse|实现了哪些|业务代码/.test(text)) {
+        addScore('audit', 5);
+    }
+    if (/wrap|收尾|总结|复盘/.test(text)) {
+        addScore('wrapup', 5);
+    }
+    if (/git\s*commit|提交信息|提交消息|提交/.test(text)) {
+        addScore('iteration-summary', 5);
+    }
+    if (/开始|启动|init|初始化|kickoff/.test(text)) {
+        addScore('init', 4);
+    }
+    addScore(inferSkillFromText(input), 2);
+    return Array.from(scores.entries())
+        .sort((left, right) => right[1] - left[1])
+        .map(([skill]) => skill);
+}
+// @ArchitectureID: 1209
+function dedupeAutoSkillSuggestions(suggestions) {
+    const seen = new Set();
+    const deduped = [];
+    for (const suggestion of suggestions) {
+        if (seen.has(suggestion.skill)) {
+            continue;
+        }
+        seen.add(suggestion.skill);
+        deduped.push(suggestion);
+        if (deduped.length >= 3) {
+            break;
+        }
+    }
+    return deduped;
 }
 // @ArchitectureID: 1209
 function buildSkillSeedText(skill, userText) {
