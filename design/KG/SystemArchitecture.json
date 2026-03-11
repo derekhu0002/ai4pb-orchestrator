@@ -261,7 +261,7 @@
 ,"attributes": [
 {
 "name": "init_prompt",
-"content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\workprompt\\\\initial-prompt.md\n\n# SKILL: AI4PB_INIT_SESSION\n\n## Skill Definition\n- Skill ID: `ai4pb-init`\n- Role: Architectural Implementation Engine\n- Primary Goal: Start an implementation session from architecture tasks and execute active items\n\n# ROLE\nYou are an **Architectural Implementation Engine**. \nYou operate in a strict Model-Driven Development (MDD) environment.\n\n# INPUT DATA\n1. **Architecture Source of Truth:** `design\\KG\\SystemArchitecture.json` (The JSON Model).\n\n# PHASE 0: ITERATION BASELINE TAG (MANDATORY)\nBefore scanning tasks or writing code, mark the current commit as this iteration start using a Git tag.\n\n1. Build a tag name with prefix `sprint-start-` (recommended format: `sprint-start-YYYY-MM-DD` or `sprint-start-YYYY-MM-DD-HHMMSS`).\n2. Create the tag on current `HEAD`.\n3. If the chosen tag already exists, create a new unique `sprint-start-*` tag instead of overwriting.\n4. Report the final tag name you created in your startup output.\n\n# PHASE 1: WORK MANIFEST EXTRACTION\n**Before writing code, you must scan the Architecture JSON to identify your tasks.**\n1.  **Scan:** Iterate through every Element in the JSON `elements` array.\n2.  **Extract:** Look for the attribute `project_info`.\n3.  **Filter:** Inside that attribute, look for the `tasks` list.\n    *   **Target:** Identify items where `status` is **NOT** \"Done\" or \"Complete\" (e.g., \"Proposed\", \"Active\", \"To Do\").\n4.  **Contextualize:** Link these tasks to their parent Element ID.\n\n**OUTPUT YOUR PLAN:**\nBefore generating code, output a summary of the work you found in this format:\n> \"I have scanned the Architecture. I found the following active tasks:\"\n> - **[Element ID: 1135]** Task: \"Implement retry logic\" (status: Active)\n> - **[Element ID: 1138]** Task: \"Fix NullPointer\" (status: Proposed)\n\n# PHASE 2: IMPLEMENTATION\nExecute the tasks identified above.\n\n## STRICT RULES:\n1.  **Scope Containment:** Focus primarily on files associated with the active Elements. You may modify related components (e.g., shared utilities, configuration, new files) if they are necessary dependencies for the task.\n2.  **Traceability:** Every class/function must include: `// @ArchitectureID: [Element ID]`.\n\n# PHASE 3: VERIFICATION\nFor every task you attempt:\n1.  Check the `acceptance_criteria` or `description` in the JSON task definition.\n2.  Ensure code satisfies these specific text requirements."
+"content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\workprompt\\\\initial-prompt.md\n\n# SKILL: AI4PB_INIT_SESSION\n\n## Skill Definition\n- Skill ID: `ai4pb-init`\n- Role: Architectural Implementation Engine\n- Primary Goal: Start an implementation session from architecture tasks and execute active items\n\n# ROLE\nYou are an **Architectural Implementation Engine**. \nYou operate in a strict Model-Driven Development (MDD) environment.\n\n# INPUT DATA\n1. **Architecture Source of Truth:** `design\\KG\\SystemArchitecture.json` (The JSON Model).\n\n# PHASE 0: ITERATION BASELINE TAG (MANDATORY)\nBefore scanning tasks or writing code, mark the current commit as this iteration start using a Git tag.\n\n1. Build a tag name with prefix `sprint-start-` (recommended format: `sprint-start-YYYY-MM-DD` or `sprint-start-YYYY-MM-DD-HHMMSS`).\n2. Create the tag on current `HEAD`.\n3. If the chosen tag already exists, create a new unique `sprint-start-*` tag instead of overwriting.\n4. Report the final tag name you created in your startup output.\n\n# PHASE 1: WORK MANIFEST EXTRACTION\n**Before writing code, you must scan the Architecture JSON to identify your tasks.**\n1.  **Scan:** Iterate through every Element in the JSON `elements` array.\n2.  **Extract:** Look for the attribute `project_info`.\n3.  **Filter:** Inside that attribute, look for the `tasks` list.\n    *   **Target:** Identify items where `status` is **NOT** \"Done\" or \"Complete\" (e.g., \"Proposed\", \"Active\", \"To Do\").\n4.  **Contextualize:** Link these tasks to their parent Element ID.\n\n**OUTPUT YOUR PLAN:**\nBefore generating code, output a summary of the work you found in this format:\n> \"I have scanned the Architecture. I found the following active tasks:\"\n> - **[Element ID: 1135]** Task: \"Implement retry logic\" (status: Active)\n> - **[Element ID: 1138]** Task: \"Fix NullPointer\" (status: Proposed)\n\n# PHASE 2: IMPLEMENTATION\nExecute the tasks identified above.\n\n## TASK PREPARATION (REQUIRED)\nBefore writing code for *any* task, you MUST check if a task support file exists:\n1. Search the `implementation\\taskhelpinfos\\` directory for a Markdown file that matches or refers to the task name.\n2. If the file is found, you MUST thoroughly read it.\n3. You MUST follow the architectural breakdown, the \"Progressive Disclosure\" and \"Separation of Concerns\" guidelines, execution steps, and conflict resolution guidance provided within that file.\n4. If no file is found, proceed with your best judgment based on the JSON task definition.\n\n## STRICT RULES:\n1.  **Scope Containment:** Focus primarily on files associated with the active Elements. You may modify related components (e.g., shared utilities, configuration, new files) if they are necessary dependencies for the task.\n2.  **Traceability:** Every class/function must include: `// @ArchitectureID: [Element ID]`.\n\n# PHASE 3: VERIFICATION\nFor every task you attempt:\n1.  Check the `acceptance_criteria` or `description` in the JSON task definition.\n2.  Ensure code satisfies these specific text requirements."
 }
 ]
 },
@@ -308,6 +308,21 @@
 "name": "AI for Business"
 ,"type": "Class"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/AI for Business"
+,"project_info": {
+"tasks": [
+{
+"name": "写下你的任务描述"
+,"type": "ToDo"
+,"status": "Active"
+,"description": "任务详细描述"
+,"start_date": "2026-3-11"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 ,"subdiagram_views": [
 {
 "view_id": "157",
@@ -392,8 +407,26 @@
 {
 "name": "code_paths"
 ,"description": "[\"src/extension.ts\", \"package.json\", \"README.md\", \"MARKETPLACE.md\"]"
+},
+{
+"name": "readme",
+"content": "Relative File Path:D:\\\\projects\\\\vscode-extension\\\\ai4pb-orchestrator\\\\README.md\n\n# AI4PB Orchestrator\r\n\r\nAI4PB Orchestrator 是面向系统工程师与研发团队的 VS Code 扩展工作流编排组件，旨在将 Sparx EA（ArchiMate）模型与 GitHub Copilot Chat 无缝衔接起来。实现一种基于 **模型驱动** 和 **SCRUM 敏捷实战** 的软件交付模式： “需求与架构建模 -> 知识图谱 JSON 导出 -> AI 辅助指导编码 -> 架构-代码对齐审计 -> 收尾评估与周报”。\r\n\r\n> 📘 **强烈推荐阅读**： 有关整个工作流机制设计原理、最佳实践排期和架构模型的建立规范，请参阅[**《AI4PB 开发交付方法论全指引》**](docs/getting-started/README.md)。\r\n\r\n## 扩展定位\r\n\r\n- 以 `design/KG/SystemArchitecture.json` 作为实现约束。\r\n- 通过侧边栏工作流动作降低操作门槛。\r\n- 通过 Prompt Tool + 报告产物保留迭代可追溯性。\r\n\r\n## 当前侧边栏动作\r\n\r\n当前 Workflow 动作已经移除“提示词集合”按钮，按 SCRUM 流程组织 Copilot 操作：\r\n\r\n1. `初始化 EA 模板`\r\n2. `导出选项`\r\n3. `打开 Copilot（Task List）`\r\n4. `打开 Copilot（Init Prompt）`\r\n5. `打开 Copilot（Task Support）`\r\n6. `打开 Copilot（Iteration Issues）`\r\n7. `打开 Copilot（Design Audit）`\r\n8. `打开 Copilot（Wrap-up）`\r\n9. `打开 Copilot（Iteration Summary）`\r\n10. `打开 Copilot（Weekly Report）`\r\n\r\n## Action -> Command 映射\r\n\r\n| 侧边栏动作 | Command ID | 说明 |\r\n| --- | --- | --- |\r\n| 初始化 EA 模板 | `ai4pb.initializeFromTemplate` | 复制 EA 模板到工作区根目录并命名为 `<workspace>.feap` |\r\n| 导出选项 | 内部动作 | 维护 `.aicodingconfig` 中维护模式与导出选项 |\r\n| 打开 Copilot（Task List） | `ai4pb.openCopilotWithTaskListPrompt` | 触发 `#ai4pb-task-list` |\r\n| 打开 Copilot（Init Prompt） | `ai4pb.openCopilotWithInitPrompt` | 触发 `#ai4pb-init` |\r\n| 打开 Copilot（Task Support） | `ai4pb.openCopilotWithTaskSupportPrompt` | 触发 `#ai4pb-task-support` |\r\n| 打开 Copilot（Iteration Issues） | `ai4pb.openCopilotWithIterationIssuesPrompt` | 触发 `#ai4pb-iteration-issues` |\r\n| 打开 Copilot（Design Audit） | `ai4pb.openCopilotWithDesignAuditPrompt` | 触发 `#ai4pb-audit` |\r\n| 打开 Copilot（Wrap-up） | `ai4pb.openCopilotWithWrapUpPrompt` | 触发 `#ai4pb-wrapup` |\r\n| 打开 Copilot（Iteration Summary） | `ai4pb.openCopilotWithIterationSummaryPrompt` | 触发 `#ai4pb-iteration-summary` |\r\n| 打开 Copilot（Weekly Report） | `ai4pb.openCopilotWithWeeklyReportPrompt` | 触发 `#ai4pb-weekly-report` |\r\n\r\n## Chat 请求路径说明\r\n\r\n侧边栏 Webview 的聊天请求由 `WorkflowViewProvider.handleChatRequest` 统一处理，支持两种模式：\r\n\r\n- 显式技能选择：用户在 UI 中选择 skill 时，直接使用该 skill（如 `task-list`、`audit`）。\r\n- 自动技能推断：未选择 skill 时，基于输入文本执行技能推断并自动路由到对应 prompt 引用。\r\n\r\n最终会拼装种子文本并调用 Copilot 打开流程（`openCopilotWithPromptReference`）。\r\n\r\n## Prompt Tools\r\n\r\n扩展内置以下可引用工具（Copilot Chat 中可用）：\r\n\r\n- `#ai4pb-init`\r\n- `#ai4pb-audit`\r\n- `#ai4pb-wrapup`\r\n- `#ai4pb-iteration-summary`\r\n- `#ai4pb-task-list`\r\n- `#ai4pb-task-support`\r\n- `#ai4pb-weekly-report`\r\n- `#ai4pb-iteration-issues`\r\n\r\n## 推荐流程\r\n\r\n1. 在 EA 中将需要分配的任务标记为对应的 TODO/Issue，并导出最新图谱到 `design/KG/SystemArchitecture.json`。\r\n2. 在 VS Code 设置或操作侧边栏 `导出选项`，对齐你的迭代策略。\r\n3. 遵循严格的 SCRUM 敏捷顺序执行 AI4PB Copilot 动作节点：`Task List` -> `Init` -> `Task Support` -> `Iteration Issues` -> `Audit` -> `Wrap-up` -> `Iteration Summary` -> `Weekly Report`。\r\n4. 审查 `implementation/`（产出业务资产）与 `design/temp/`、`TEMP/`（评估审计跟踪资产）内的最新文件产物，基于审计意见修正图纸并重新同频 EA。\r\n\r\n## 关键路径\r\n\r\n- 架构 JSON：`design/KG/SystemArchitecture.json`\r\n- 扩展入口：`src/extension.ts`\r\n- Prompt 资产与技能树：`.github/skills/*` 及 `workprompt/*.md`\r\n- Markdown 指南库：`docs/getting-started/`\r\n- 执行产出交付物：`implementation/*` , `TEMP/` 以及 `debug/`\r\n\r\n## 常见命令\r\n\r\n- 编译：`npm run compile`\r\n- 本地打包：`npm run release:vsix:nobump`\r\n- 发布打包（patch）：`npm run release:vsix`\r\n\r\n## FAQ\r\n\r\n### 为什么看不到最新架构内容？\r\n\r\n- 请先在 EA 中重新导出。\r\n- 检查 `design/KG/SystemArchitecture.json` 的更新时间。\r\n\r\n### Copilot 一键入口无响应怎么办？\r\n\r\n- 确保 VS Code 已安装并启用 GitHub Copilot Chat。\r\n- 在命令面板手动执行对应 `AI4PB: Open Copilot with ...` 命令确认可用性。\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n"
 }
 ]
+,"project_info": {
+"tasks": [
+{
+"name": "在AUTO模式下，插件收到用户在输入框中的输入后，需要通过后台AI大模型进行分析并给出执行建议，当用户确认后自动发送给COPILOT执行"
+,"type": "ToDo"
+,"status": "Active"
+,"start_date": "2026-3-11"
+,"due_date": "1899-12-30"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 ,"subdiagram_views": [
 {
 "view_id": "159",
@@ -1189,6 +1222,28 @@
 ,"target_id":"1222"
 ,"source_name":"Sparx EA"
 ,"target_name":"EA SQL Audit Queries"
+},
+{
+"id":"1110"
+,"statement":"Prompt Tool Registry --(ArchiMate_Access)--> Iteration Summary Prompt"
+,"name":"ArchiMate_Access"
+,"description": "Tool registry reads and serves iteration issue continuation prompt content."
+,"super_type": "ArchiMate_Access"
+,"source_id":"1219"
+,"target_id":"1224"
+,"source_name":"Prompt Tool Registry"
+,"target_name":"Iteration Summary Prompt"
+},
+{
+"id":"1111"
+,"statement":"Prompt Tool Registry --(ArchiMate_Access)--> Iteration Issues Prompt"
+,"name":"ArchiMate_Access"
+,"description": "Tool registry reads and serves iteration summary prompt content."
+,"super_type": "ArchiMate_Access"
+,"source_id":"1219"
+,"target_id":"1223"
+,"source_name":"Prompt Tool Registry"
+,"target_name":"Iteration Issues Prompt"
 }
 ],
 "views": [
@@ -1345,7 +1400,9 @@
 ]
 ,"included_relationships": [
 "1058",
-"1103"
+"1103",
+"1110",
+"1111"
 ]
 },
 {

@@ -4,12 +4,36 @@
 
 ## 3.1 架构分层体系 (Architecture Layers)
 
-根据 ArchiMate 标准与 AI4PB 的最佳实践，你需要进行分层次的建模：
-- **Strategy & Motivation**：目标与战略。
-- **Business Layer**：业务流程 (BusinessProcess)、业务节点；这定义了我们要*做什么*流程。
-- **Application Layer**：应用服务 (ApplicationService)、应用组件 (ApplicationComponent) 与数据对象 (DataObject)；这定义了用*什么软件实体*去支撑。
-- **Technology Layer**：技术组件系统 (SystemSoftware、Nodes 等)。
+根据 ArchiMate 标准与 AI4PB 的最佳实践，你需要进行分层次的建模，以确保系统的每个关注点（Concern）得到独立且完整的呈现：
 ![[Pasted image 20260310130404.png]]
+
+- **Archimate建模语言映射的本体结构**:
+-实体：
+![alt text](docs/getting-started/image-3.png)
+-关系：
+![alt text](docs/getting-started/image-4.png)
+
+- **Strategy & Motivation (战略与动机层)**：
+![alt text](docs/getting-started/image-5.png)
+  - **概念模型**：包含 `Goal` (目标), `Requirement` (需求), `Principle` (原则), `Constraint` (约束) 等。
+  - **核心作用**：定义系统“为什么”要这么做。AI 助手将遵循其中的 `Principle` 和 `Constraint` 生成代码，以符合架构准则。
+
+- **Business Layer (业务层)**：
+![alt text](docs/getting-started/image-6.png)
+  - **概念模型**：包含 `BusinessProcess` (业务流程), `BusinessActor` (业务角色), `BusinessService` (业务服务) 等。
+  - **核心作用**：定义我们要“做什么”流程以及谁在参与。它勾勒了业务的真实运转脉络，并为后续的应用设计提供边界参考。
+
+- **Application Layer (应用层)**：
+![alt text](docs/getting-started/image-7.png)
+  - **概念模型**：包含 `ApplicationComponent` (应用组件), `ApplicationService` (应用服务), `ApplicationInterface` (应用接口), `DataObject` (数据对象) 等。
+  - **核心作用**：定义用“什么软件实体”去支撑业务运作。这是 AI 助手重点关注的一层，代码中的模块、类、或微服务通常会与 `ApplicationComponent` 直接形成 Traceability（代码追溯）映射。
+
+- **Technology Layer (技术层)**：
+![alt text](docs/getting-started/image-8.png)
+  - **概念模型**：包含 `Node` (计算节点), `SystemSoftware` (系统软件, 如数据库/中间件), `Artifact` (部署伪影) 等。
+  - **核心作用**：定义应用运行在“什么物理或基础软件环境”之上。帮助规划 CI/CD 部署、服务依赖、环境隔离等工程运维诉求。
+
+> **提示：** 架构的分层不仅仅是画图，在 AI4PB 理念下，这些层级上的每一个组件模型都会作为一种“上下文屏障”，控制大模型生成代码时的视野，避免被全局复杂度淹没（即所谓的 *Progressive Disclosure 渐进式揭示* 原则）。
 
 ## 3.2 派发任务与指派 LLM (Tasks & Issues)
 
@@ -28,8 +52,7 @@
 AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
 
 1. 在 EA 中，选择你需要抽取的顶层包或关系图。
-2. 运行脚本：`project_auto_gen_suitable_for_LLM-V2-bootstrap.js`。
-   - 使用 bootstrap 模式可以确保所有模型使用的抽取逻辑一致并自动寻址到 `.vscode` 或者本地扩展安装点中的真实验本。
+2. 运行脚本：右键点击顶层`SystemArchitecture`视图，在弹出菜单中点击`project_auto_gen-FOR-LLMV2`子菜单。
 3. 检查生成产物：
    - 脚本将成功输出带有任务体系的 JSON 至 `design/KG/SystemArchitecture.json` （核心约束路径）。
    - 与此同时导出专门的任务文件 `design/tasks/taskandissues_for_LLM.md`。
