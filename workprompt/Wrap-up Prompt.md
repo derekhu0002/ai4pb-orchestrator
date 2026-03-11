@@ -10,6 +10,20 @@
 ## Task Status Sync (Session Delta)
 Re-scan `design\tasks\taskandissues_for_LLM.md` at wrap-up time and extract all `ToDos` and `Issues` entries.
 
+Use this fast-path order to load tasks quickly and reliably:
+1. **Primary source:** `design\tasks\taskandissues_for_LLM.md` (table rows).
+2. **Fallback source:** `design\KG\SystemArchitecture.json` -> `elements[*].project_info.tasks` only when the markdown source is missing/empty.
+
+Task parsing rules (mandatory):
+- Normalize fields across key styles:
+	- Name: `name` or `Name`
+	- Type: `type` or `Type` or `ProblemType`
+	- Status: `status` or `Status`
+	- Assignee: `assigned_to` or `AssignedTo`
+	- Progress: `progress` or `ResolverNotes`
+- Filter out empty placeholder tasks (for example empty name + empty status + empty type).
+- Do not treat `attributes[*].content` long prompt text as task payload.
+
 Review all code/file modifications that happened during this iteration before concluding task status, and obtain them via Git diff query first.
 Iteration start ref rule:
 - Prefer the latest Git tag matching `sprint-start*` as the iteration start ref (for example: `sprint-start-2026-03-09`).
