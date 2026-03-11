@@ -65,3 +65,13 @@ Before writing code for *any* task, you MUST check if a task support file exists
 For every task you attempt:
 1.  Check the `acceptance_criteria` or `description` in the JSON task definition.
 2.  Ensure code satisfies these specific text requirements.
+
+# PHASE 4: RESOLVER NOTES UPDATE (MANDATORY CONTEXT PRESERVATION)
+After you have verified the implementation for a task, you MUST update the `design\tasks\taskandissues_for_LLM.md` file to preserve context for later execution rounds:
+1. Locate the exact task entry you just worked on in `design\tasks\taskandissues_for_LLM.md`.
+2. Summarize your work directly into the execution context. Your summary MUST include:
+    - The specific task addressed and your technical approach.
+    - The changed files and verification evidence.
+    - The final result, along with any remaining blockers and next actions.
+3. **APPEND** this detailed summary to the existing `ResolverNotes` string for that specific task.
+4. **CRITICAL:** Do NOT overwrite or delete any existing text inside `ResolverNotes`. Always append your new entry, prepended with today's date (e.g., `\n[YYYY-MM-DD] from LLM: <Your detailed summary>`).
