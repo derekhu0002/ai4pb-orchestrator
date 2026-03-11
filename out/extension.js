@@ -40,6 +40,7 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const RELATIVE_PATHS = {
     architectureJson: 'design/KG/SystemArchitecture.json',
+    designTasksDir: 'design/tasks',
     aiConfig: '.aicodingconfig'
 };
 const BUNDLED_PATHS = {
@@ -1154,6 +1155,17 @@ function fileMtime(filePath) {
     }
     return fs.statSync(filePath).mtime;
 }
+function clearDirectoryContents(dirPath) {
+    if (!exists(dirPath)) {
+        return 0;
+    }
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+        const entryPath = path.join(dirPath, entry.name);
+        fs.rmSync(entryPath, { recursive: true, force: true });
+    }
+    return entries.length;
+}
 function toIsoLocal(date) {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().replace('T', ' ').substring(0, 19);
 }
@@ -1255,11 +1267,15 @@ async function startIterationFromModel() {
     try {
         const root = getWorkspaceRoot();
         const archPath = getArchitectureJsonPath(root);
+        const designTasksDir = resolvePath(root, RELATIVE_PATHS.designTasksDir);
         const initialPromptPath = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
         if (!exists(archPath)) {
             void vscode.window.showErrorMessage(`Architecture JSON not found: ${archPath}`);
             return;
         }
+        fs.mkdirSync(designTasksDir, { recursive: true });
+        const clearedItems = clearDirectoryContents(designTasksDir);
+        output.appendLine(`[AI4PB] Iteration init cleanup: cleared ${clearedItems} item(s) under ${designTasksDir}`);
         await openFileIfExists(archPath);
         await openFileIfExists(initialPromptPath);
         const stateDir = resolvePath(root, 'TEMP');
