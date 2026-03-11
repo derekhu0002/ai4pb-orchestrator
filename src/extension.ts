@@ -234,6 +234,11 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         return;
       }
 
+      if (message.type === 'autoConfirm') {
+        await this.handleAutoConfirm(message.text, message.skill);
+        return;
+      }
+
       if (message.type === 'statusAction' && message.key) {
         await this.handleStatusAction(message.key);
         return;
@@ -254,10 +259,44 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   // @ArchitectureID: 1209
   private async handleChatRequest(rawText?: string, rawSkill?: string): Promise<void> {
     const text = (rawText ?? '').trim();
+    const explicitSkill = normalizeSkillKey(rawSkill);
+
+    if (explicitSkill) {
+      const seedText = buildSkillSeedText(explicitSkill, text);
+      await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[explicitSkill]} skill`);
+      return;
+    }
+
+    if (!text) {
+      await this.webviewView?.webview.postMessage({
+        type: 'autoAnalysisError',
+        message: '请输入任务描述后再进行 AUTO 分析。'
+      });
+      return;
+    }
+
+    const suggestion = await analyzeAutoSkillSuggestion(text);
+    await this.webviewView?.webview.postMessage({
+      type: 'autoSuggestion',
+      text,
+      skill: suggestion.skill,
+      skillLabel: SKILL_DISPLAY_LABEL[suggestion.skill],
+      promptRef: SKILL_PROMPT_REFERENCE[suggestion.skill],
+      reason: suggestion.reason
+    });
+  }
+
+  // @ArchitectureID: 1213
+  private async handleAutoConfirm(rawText?: string, rawSkill?: string): Promise<void> {
+    const text = (rawText ?? '').trim();
     const selectedSkill = normalizeSkillKey(rawSkill) ?? inferSkillFromText(text);
     const seedText = buildSkillSeedText(selectedSkill, text);
-    const label = selectedSkill ? `${SKILL_DISPLAY_LABEL[selectedSkill]} skill` : 'auto skill';
-    await openCopilotWithPromptReference(seedText, label);
+    await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[selectedSkill]} skill (auto confirmed)`);
+    await this.webviewView?.webview.postMessage({
+      type: 'autoDispatchDone',
+      skill: selectedSkill,
+      skillLabel: SKILL_DISPLAY_LABEL[selectedSkill]
+    });
   }
 
   // @ArchitectureID: 1213
@@ -577,6 +616,25 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     .send-btn:hover {
       background: var(--vscode-button-hoverBackground, #1177bb);
     }
+    .confirm-card {
+      display: grid;
+      gap: 8px;
+    }
+    .confirm-reason {
+      font-size: 11px;
+      opacity: 0.82;
+      line-height: 1.45;
+    }
+    .confirm-btn {
+      justify-self: start;
+      border: 1px solid var(--vscode-button-background, #0e639c);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: color-mix(in srgb, var(--vscode-button-background, #0e639c) 22%, var(--chat-panel));
+      color: var(--vscode-foreground);
+      cursor: pointer;
+      font-size: 11px;
+    }
     .stamp {
       font-size: 10px;
       opacity: 0.6;
@@ -637,6 +695,41 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       thread.scrollTop = thread.scrollHeight;
     }
 
+    function appendAutoSuggestion(message) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ai';
+
+      const card = document.createElement('div');
+      card.className = 'confirm-card';
+
+      const title = document.createElement('div');
+      title.textContent = '建议执行: ' + message.skillLabel + ' (' + message.promptRef + ')，是否执行？';
+      card.appendChild(title);
+
+      const reason = document.createElement('div');
+      reason.className = 'confirm-reason';
+      reason.textContent = '分析依据: ' + (message.reason || '已根据输入内容完成自动分析。');
+      card.appendChild(reason);
+
+      const btn = document.createElement('button');
+      btn.className = 'confirm-btn';
+      btn.textContent = '确认执行';
+      btn.addEventListener('click', () => {
+        vscode.postMessage({
+          type: 'autoConfirm',
+          text: message.text,
+          skill: message.skill
+        });
+        btn.disabled = true;
+        btn.textContent = '已确认，正在发送...';
+      });
+      card.appendChild(btn);
+
+      bubble.appendChild(card);
+      thread.appendChild(bubble);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
     function updateSkillMeta() {
       skillMeta.textContent = '当前模式: ' + (state.selectedSkill ? state.selectedSkill : 'Auto Skill');
     }
@@ -676,8 +769,11 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       appendBubble('user', text || '[使用所选 SKILL 直接开始]');
 
-      const skillText = state.selectedSkill ? ('指定 SKILL: ' + state.selectedSkill) : '自动选择 SKILL';
-      appendBubble('ai', '已提交到 Copilot，模式: ' + skillText + '。');
+      if (state.selectedSkill) {
+        appendBubble('ai', '已提交到 Copilot，模式: 指定 SKILL: ' + state.selectedSkill + '。');
+      } else {
+        appendBubble('ai', 'AUTO 模式分析中，请稍候...');
+      }
 
       vscode.postMessage({
         type: 'chatRequest',
@@ -687,6 +783,21 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       promptInput.value = '';
     }
+
+    window.addEventListener('message', (event) => {
+      const message = event.data || {};
+      if (message.type === 'autoSuggestion') {
+        appendAutoSuggestion(message);
+        return;
+      }
+      if (message.type === 'autoDispatchDone') {
+        appendBubble('ai', '已确认并发送到 Copilot，执行技能: ' + message.skillLabel + '。');
+        return;
+      }
+      if (message.type === 'autoAnalysisError') {
+        appendBubble('ai', message.message || 'AUTO 分析失败，请重试或手动选择 SKILL。');
+      }
+    });
 
     sendBtn.addEventListener('click', sendRequest);
     initBtn.addEventListener('click', () => {
@@ -773,6 +884,104 @@ function inferSkillFromText(input: string): SkillKey {
     return 'iteration-summary';
   }
   return 'init';
+}
+
+type AutoSkillSuggestion = {
+  skill: SkillKey;
+  reason: string;
+};
+
+// @ArchitectureID: 1209
+async function analyzeAutoSkillSuggestion(userText: string): Promise<AutoSkillSuggestion> {
+  const fallbackSkill = inferSkillFromText(userText);
+  const fallback: AutoSkillSuggestion = {
+    skill: fallbackSkill,
+    reason: '模型不可用，已使用内置规则推断。'
+  };
+
+  try {
+    const copilotModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+    const genericModels = copilotModels.length > 0 ? copilotModels : await vscode.lm.selectChatModels();
+    const model = genericModels[0];
+    if (!model) {
+      return fallback;
+    }
+
+    const instruction = [
+      '你是 AI4PB workflow router。',
+      '根据用户输入，在以下技能中选择一个最匹配的 key:',
+      'init, audit, wrapup, iteration-summary, task-list, task-support, weekly-report, iteration-issues。',
+      '只返回 JSON，格式: {"skill":"<key>","reason":"<中文一句话理由>"}。',
+      `用户输入: ${userText}`
+    ].join('\n');
+
+    const response = await model.sendRequest([
+      vscode.LanguageModelChatMessage.User(instruction)
+    ]);
+
+    let responseText = '';
+    for await (const part of response.text) {
+      responseText += part;
+    }
+
+    const parsed = parseAutoSuggestionJson(responseText);
+    if (!parsed) {
+      return fallback;
+    }
+
+    const skill = normalizeSkillKey(parsed.skill);
+    if (!skill) {
+      return fallback;
+    }
+
+    return {
+      skill,
+      reason: parsed.reason || '已基于输入语义匹配到最合适流程。'
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    output.appendLine(`[AI4PB] AUTO intent analysis failed: ${message}`);
+    return fallback;
+  }
+}
+
+type ParsedAutoSuggestion = {
+  skill?: string;
+  reason?: string;
+};
+
+// @ArchitectureID: 1209
+function parseAutoSuggestionJson(raw: string): ParsedAutoSuggestion | undefined {
+  const text = raw.trim();
+  if (!text) {
+    return undefined;
+  }
+
+  const direct = safeParseJson(text);
+  if (direct) {
+    return direct;
+  }
+
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace < 0 || lastBrace <= firstBrace) {
+    return undefined;
+  }
+
+  return safeParseJson(text.slice(firstBrace, lastBrace + 1));
+}
+
+// @ArchitectureID: 1209
+function safeParseJson(raw: string): ParsedAutoSuggestion | undefined {
+  try {
+    const parsed = JSON.parse(raw) as ParsedAutoSuggestion;
+    if (!parsed || typeof parsed !== 'object') {
+      return undefined;
+    }
+    return parsed;
+  } catch {
+    return undefined;
+  }
 }
 
 // @ArchitectureID: 1209
