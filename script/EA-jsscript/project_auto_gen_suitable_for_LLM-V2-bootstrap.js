@@ -185,6 +185,7 @@ function getVsCodeExtensionRootCandidates() {
 		if (userProfile != "" && userProfile.indexOf("%USERPROFILE%") < 0) {
 			appendUniquePath(roots, userProfile + "\\.vscode\\extensions");
 			appendUniquePath(roots, userProfile + "\\.vscode-huawei\\extensions");
+			appendUniquePath(roots, userProfile + "\\.codearts\\extensions");
 		}
 	} catch (e) {
 		// ignore
