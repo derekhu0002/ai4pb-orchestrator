@@ -242,10 +242,6 @@ function getProjectinfo(tele) {
 				if (task.Resolver != "llm") {
 					continue;
 				}
-			} else {
-				if (task.Resolver == "llm") {
-					continue;
-				}
 			}
 			
 			var statata = '{\n"name": "' + jsonEscape(task.Name) + '"\n';
