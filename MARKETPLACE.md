@@ -101,6 +101,8 @@ AI4PB 方法：
 ## Documentation
 
 完整上手文档位于 docs/getting-started：
+- Getting Started 入口页：https://github.com/derekhu0002/ai4pb-orchestrator/blob/main/docs/getting-started/README.md
+- 完整上手指南（合并版）：https://github.com/derekhu0002/ai4pb-orchestrator/blob/main/docs/getting-started/00-getting-started-overview.md
 - docs/getting-started/README.md
 - docs/getting-started/01-introduction.md
 - docs/getting-started/02-prerequisites.md
