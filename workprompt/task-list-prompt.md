@@ -10,8 +10,21 @@ You are an expert Project Manager and Team Lead. I am providing you with a JSON 
 
 Based on the current state of this project, generate a **comprehensive and prioritized task list** that team members can quickly reference to understand their immediate work items.
 
+## Input Data
+1. `design\tasks\taskandissues_for_LLM.md`
+2. `design\KG\SystemArchitecture.json`
+
+## Source Usage Rules
+- You MUST use both input sources together.
+- Use `design\tasks\taskandissues_for_LLM.md` as the primary fast task index for task rows, current task fields, and `ResolverNotes` context when available.
+- Use `design\KG\SystemArchitecture.json` as the authoritative architecture source for component mapping, architecture element IDs, constraints, descriptions, and cross-element context.
+- If the markdown task file is missing or incomplete, fall back to the JSON task data for missing task fields.
+- If the two sources differ, prefer:
+	- task row content and execution context from `design\tasks\taskandissues_for_LLM.md`
+	- architecture structure and element metadata from `design\KG\SystemArchitecture.json`
+
 ## Scope
-- Extract all tasks under `project_info.tasks` across the input JSON.
+- Extract tasks from `design\tasks\taskandissues_for_LLM.md` and reconcile them with `design\KG\SystemArchitecture.json`.
 - First, ensure task support files are generated using the same input JSON and output to `implementation\taskhelpinfos`.
 - Produce a single, consolidated task list markdown file.
 - Output language must be Chinese.
@@ -56,7 +69,4 @@ Column rules:
 ## Tone & Quality
 - Clear, scannable, and action-oriented for team members.
 - Highlight urgency (use formatting like bold or special markers for due-within-7-days tasks).
-- If information is missing or inconsistent in JSON, state assumptions explicitly.
-
-## Input Data
-`design\KG\SystemArchitecture.json`
+- If information is missing or inconsistent across the markdown task file and JSON KG, state assumptions explicitly.

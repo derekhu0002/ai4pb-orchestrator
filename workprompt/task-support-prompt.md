@@ -6,10 +6,20 @@
 - Primary Goal: Generate per-task execution briefs that the next LLM can use directly for full-task implementation
 
 ## Input Data
-`design\KG\SystemArchitecture.json`
+1. `design\tasks\taskandissues_for_LLM.md`
+2. `design\KG\SystemArchitecture.json`
+
+## Source Usage Rules
+- You MUST use both input sources together.
+- Use `design\tasks\taskandissues_for_LLM.md` as the primary fast task index for task rows, task status, task notes, and execution context when available.
+- Use `design\KG\SystemArchitecture.json` as the authoritative architecture source for element IDs, architecture relationships, principles, constraints, descriptions, and system context.
+- If the markdown task file is missing or incomplete, fill missing task fields from the JSON KG task data.
+- If the two sources differ, prefer:
+   - task row content and execution context from `design\tasks\taskandissues_for_LLM.md`
+   - architecture structure and element metadata from `design\KG\SystemArchitecture.json`
 
 ## Task
-Read all tasks under `project_info.tasks` and generate one markdown file per task in `implementation\taskhelpinfos`.
+Read tasks from `design\tasks\taskandissues_for_LLM.md`, reconcile them with `design\KG\SystemArchitecture.json`, and generate one markdown file per task in `implementation\taskhelpinfos`.
 
 - Output language: Chinese
 - Output file rule: `{start_date}_{task_name_slug}.md`
