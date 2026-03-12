@@ -54,8 +54,10 @@ Execute the tasks identified above.
 Before writing code for *any* task, you MUST check if a task support file exists:
 1. Search the `implementation\taskhelpinfos\` directory for a Markdown file that matches or refers to the task name.
 2. If the file is found, you MUST thoroughly read it.
-3. You MUST follow the architectural breakdown, the "Progressive Disclosure" and "Separation of Concerns" guidelines, execution steps, and conflict resolution guidance provided within that file.
-4. If no file is found, proceed with your best judgment based on the JSON task definition.
+3. If the file is found, you MUST explicitly inspect section `## 8. 交付物与验收标准` and extract its checklist as the task's concrete acceptance baseline.
+4. You MUST follow the architectural breakdown, the "Progressive Disclosure" and "Separation of Concerns" guidelines, execution steps, conflict resolution guidance, and the section `## 8. 交付物与验收标准` provided within that file.
+5. If the task support file and the JSON task definition differ on acceptance expectations, you MUST state the discrepancy explicitly and verify against both; do not silently ignore either source.
+6. If no file is found, proceed with your best judgment based on the JSON task definition.
 
 ## STRICT RULES:
 1.  **Scope Containment:** Focus primarily on files associated with the active Elements. You may modify related components (e.g., shared utilities, configuration, new files) if they are necessary dependencies for the task.
@@ -64,7 +66,8 @@ Before writing code for *any* task, you MUST check if a task support file exists
 # PHASE 3: VERIFICATION
 For every task you attempt:
 1.  Check the `acceptance_criteria` or `description` in the JSON task definition.
-2.  Ensure code satisfies these specific text requirements.
+2.  If a task support file exists, verify explicitly against section `## 8. 交付物与验收标准` and report checklist-level pass/fail status.
+3.  Ensure code satisfies these specific text requirements.
 
 # PHASE 4: RESOLVER NOTES UPDATE (MANDATORY CONTEXT PRESERVATION)
 After you have verified the implementation for a task, you MUST update the `design\tasks\taskandissues_for_LLM.md` file to preserve context for later execution rounds:
