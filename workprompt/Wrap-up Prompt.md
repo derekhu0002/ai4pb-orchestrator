@@ -3,12 +3,12 @@
 ## Skill Definition
 - Skill ID: `ai4pb-wrapup`
 - Role: Architectural Implementation Engine
-- Primary Goal: Check and sync implementation status for all todos/issues at session wrap-up
+- Primary Goal: Check and sync implementation status for verified todos/issues at session wrap-up
 
 # SESSION WRAP-UP & SYNC
 
 ## Task Status Sync (Session Delta)
-Re-scan `design\tasks\taskandissues_for_LLM.md` at wrap-up time and extract all `ToDos` and `Issues` entries.
+Re-scan `design\tasks\taskandissues_for_LLM.md` at wrap-up time and extract only `ToDos` and `Issues` entries whose `Status` is `Verified`.
 
 Use this fast-path order to load tasks quickly and reliably:
 1. **Primary source:** `design\tasks\taskandissues_for_LLM.md` (table rows).
@@ -21,6 +21,7 @@ Task parsing rules (mandatory):
 	- Status: `status` or `Status`
 	- Assignee: `assigned_to` or `AssignedTo`
 	- Progress: `progress` or `ResolverNotes`
+- **Verified-only filter (mandatory):** keep only rows/items where `Status` is exactly `Verified`.
 - Filter out empty placeholder tasks (for example empty name + empty status + empty type).
 - Do not treat `attributes[*].content` long prompt text as task payload.
 
@@ -34,17 +35,17 @@ For each modification, classify it into one of the following:
 - **Supporting**: Indirect dependency/refactor/config/test update required by a todo/issue item.
 - **Unrelated/Potential Drift**: Not clearly tied to any todo/issue item (must be flagged for review).
 
-For every todo/issue item, link the relevant modifications and use them as evidence when assigning status.
+For every verified todo/issue item, link the relevant modifications and use them as evidence when assigning status.
 
-Then evaluate delivery fulfillment for each todo/issue item from that file. For every item, assign one conclusion:
+Then evaluate delivery fulfillment for each verified todo/issue item from that file. For every item, assign one conclusion:
 - **Done**: Fully implemented and validated.
 - **In Progress**: Partially implemented.
 - **Blocked**: Cannot complete due to constraints/dependencies.
 
-Include concise evidence for each todo/issue item (changed files, verification notes, blockers).
+Include concise evidence for each verified todo/issue item (changed files, verification notes, blockers).
 If any **Unrelated/Potential Drift** modifications exist, include them in a separate "Drift Review" section.
 
-If no todos/issues are found in the input file, explicitly state that no todos/issues were found in this wrap-up scan.
+If no verified todos/issues are found in the input file, explicitly state that no verified todos/issues were found in this wrap-up scan.
 
 ## Output Contract
 Produce one report with `Session todo/issue implementation status updates`.
