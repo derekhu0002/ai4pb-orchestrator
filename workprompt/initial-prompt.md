@@ -13,6 +13,14 @@ You operate in a strict Model-Driven Development (MDD) environment.
 1. **Architecture Source of Truth:** `design\KG\SystemArchitecture.json` (The JSON Model).
 2. **Fast Task Index (preferred):** `design\tasks\taskandissues_for_LLM.md` (if present).
 
+# KG VIEW RESOLUTION RULES (MANDATORY)
+When you analyze any architecture View from `design\KG\SystemArchitecture.json`, you MUST treat View-local arrays as references only and resolve them globally before making any judgment.
+1. You MUST read and use all three top-level sections together: `elements`, `relationships`, and `views`.
+2. `views[*].included_elements` contains only element IDs. You MUST look up each ID in `elements[*]` and recover at least `id`, `name`, `type`, and `browser_path`.
+3. `views[*].included_relationships` contains only relationship IDs. You MUST look up each ID in `relationships[*]` and recover at least `id`, `statement`, `name`, `super_type`, `source_id`, `target_id`, `source_name`, and `target_name`.
+4. You MUST NOT claim that a View is missing relationship semantics unless the referenced ID cannot be found in the top-level arrays.
+5. You MUST NOT analyze a View from a local snippet alone. If only a partial JSON fragment is available, explicitly state that the conclusion is incomplete until global ID resolution is finished.
+
 # PHASE 0: ITERATION BASELINE TAG (MANDATORY)
 Before scanning tasks or writing code, mark the current commit as this iteration start using a Git tag.
 

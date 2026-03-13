@@ -23,6 +23,12 @@ Based on the current state of this project, generate a **comprehensive and prior
 	- task row content and execution context from `design\tasks\taskandissues_for_LLM.md`
 	- architecture structure and element metadata from `design\KG\SystemArchitecture.json`
 
+## KG View Resolution Rules
+- If you analyze or mention a specific View, you MUST read `elements`, `relationships`, and `views` together.
+- `views[*].included_elements` and `views[*].included_relationships` are ID references only. You MUST reverse-lookup them in the top-level arrays before using them as evidence.
+- Do NOT say a View lacks semantic detail unless the referenced IDs cannot be resolved from the full KG.
+- If your input is only a View fragment rather than the full JSON, state that the analysis is partial.
+
 ## Scope
 - Extract tasks from `design\tasks\taskandissues_for_LLM.md` and reconcile them with `design\KG\SystemArchitecture.json`.
 - First, ensure task support files are generated using the same input JSON and output to `implementation\taskhelpinfos`.

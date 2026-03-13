@@ -45,3 +45,9 @@ Column rules:
 
 **Input Data:**
 `design\KG\SystemArchitecture.json`
+
+## KG View Resolution Rules
+- If you use any architecture View as supporting evidence in the weekly report, read `elements`, `relationships`, and `views` together.
+- Treat `included_elements` and `included_relationships` as ID references only, and reverse-lookup them in the top-level arrays before citing View scope, dependencies, or gaps.
+- Do NOT report missing View semantics unless the referenced IDs cannot be resolved from the full KG.
+- If only partial JSON content was available, explicitly label the affected inference as partial.

@@ -18,6 +18,13 @@
    - task row content and execution context from `design\tasks\taskandissues_for_LLM.md`
    - architecture structure and element metadata from `design\KG\SystemArchitecture.json`
 
+## KG View Resolution Rules
+- If you analyze any architecture View to derive task context, you MUST first resolve its IDs against the full KG.
+- Read `elements`, `relationships`, and `views` together; never analyze a View in isolation.
+- `included_elements` and `included_relationships` are references only. Reverse-lookup each ID before writing confirmed facts, constraints, dependencies, or risks.
+- Do NOT mark View semantics as missing unless the referenced IDs truly cannot be found in the top-level arrays.
+- If only partial JSON content is available, mark the affected conclusion as `需人工确认` rather than presenting it as confirmed.
+
 ## Task
 Read tasks from `design\tasks\taskandissues_for_LLM.md`, reconcile them with `design\KG\SystemArchitecture.json`, and generate one markdown file per task in `implementation\taskhelpinfos`.
 

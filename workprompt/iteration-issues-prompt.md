@@ -14,6 +14,14 @@ You are an **Architectural Implementation Engine** continuing a later iteration 
 1. Architecture source of truth: `design\KG\SystemArchitecture.json`
 2. Iteration issue list: `design\tasks\taskandissues_for_LLM.md`
 
+## KG View Resolution Rules (Mandatory)
+If you use any architecture View as evidence while continuing an issue, you MUST resolve View references globally before drawing conclusions.
+1. Read `elements`, `relationships`, and `views` together from `design\KG\SystemArchitecture.json`.
+2. Treat `included_elements` and `included_relationships` as ID references only, never as self-contained semantics.
+3. Reverse-lookup every referenced element ID in `elements[*]` and every referenced relationship ID in `relationships[*]` before reporting scope, constraints, dependencies, or gaps.
+4. Do NOT state that a View lacks semantic detail unless the referenced ID truly does not exist in the top-level arrays.
+5. If only a partial View snippet was available during analysis, state that limitation explicitly.
+
 ## Phase 1: Process Issue Backlog
 1. Load `design\tasks\taskandissues_for_LLM.md`.
 2. For each issue item, parse:

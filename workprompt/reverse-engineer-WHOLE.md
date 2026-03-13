@@ -14,6 +14,13 @@ You have just completed the coding implementation for **the system of this proje
 1.  **The Codebase:** The file structure, classes, API endpoints, database models, and configuration files you have just generated/analyzed.
 2.  **The Current Architecture:** **YOU MUST READ** the file `design\KG\SystemArchitecture.json` to understand the architecture.
 
+**KG View Resolution Rules (MANDATORY):**
+*   You MUST read `elements`, `relationships`, and `views` together before auditing any View.
+*   `views[*].included_elements` and `views[*].included_relationships` are ID references only, not self-contained semantics.
+*   Before drawing conclusions about a View, you MUST reverse-lookup every included element ID in `elements[*]` and every included relationship ID in `relationships[*]`.
+*   You MUST NOT claim that a View lacks relationship semantics unless the referenced relationship ID cannot be found in `relationships[*]`.
+*   If your current context includes only a partial JSON fragment, you MUST explicitly say the View analysis is incomplete until full ID resolution is performed.
+
 **Constraint:**
 **DO NOT** output the full JSON. Provide a structured **Audit & Change Report** in a temporary markdown file `design\temp\audit.md` only. I will use this report to manually update my modeling tool.
 
@@ -79,6 +86,7 @@ Reorganize the architecture structure proposal using **Progressive Disclosure** 
     *   Split overloaded Views into focused Views by concern (e.g., runtime flow, data access, security controls, async processing).
     *   Introduce drill-down structure: high-level overview Views plus detailed subordinate Views.
     *   For **every View** (existing and newly proposed), include viewpoint fields directly inside that View's description using: `Stakeholders`, `Concerns`, `Purpose`, `Scope` as a separate standalone viewpoint section.
+    *   Before proposing any View add/modify/split/merge action, reverse-lookup all referenced `included_elements` and `included_relationships` IDs against the top-level arrays so View scope decisions use fully resolved semantics.
 
 *   **Separation of Concerns Rules:**
     *   Separate capability concerns clearly (orchestration, plugin runtime, data governance, identity/access, observability, infrastructure).
@@ -99,6 +107,7 @@ Reorganize the architecture structure proposal using **Progressive Disclosure** 
     *   Do not delete information solely for simplification.
     *   Preserve architecture completeness while improving readability.
     *   Use current JSON structure terms: `elements`, `relationships`, `views`, `browser_path`.
+    *   When you discuss an existing View, distinguish clearly between `View-local IDs only` and `globally resolved relationship semantics`.
 
 **Output Format:**
 

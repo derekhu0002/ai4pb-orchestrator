@@ -10,6 +10,13 @@
 ## Task Status Sync (Session Delta)
 Re-scan `design\tasks\taskandissues_for_LLM.md` at wrap-up time and extract only `ToDos` and `Issues` entries whose `Status` is `Verified`.
 
+## KG View Resolution Rules
+If you inspect architecture Views while validating wrap-up evidence, you MUST resolve View references globally first.
+1. Read `elements`, `relationships`, and `views` together from `design\KG\SystemArchitecture.json`.
+2. Treat `included_elements` and `included_relationships` as ID references only.
+3. Reverse-lookup each referenced ID in the corresponding top-level array before using View content as evidence.
+4. Do NOT claim missing View semantics unless the referenced IDs cannot be found globally.
+
 Use this fast-path order to load tasks quickly and reliably:
 1. **Primary source:** `design\tasks\taskandissues_for_LLM.md` (table rows).
 2. **Fallback source:** `design\KG\SystemArchitecture.json` -> `elements[*].project_info.tasks` only when the markdown source is missing/empty.

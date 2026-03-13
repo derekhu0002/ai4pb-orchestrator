@@ -9,6 +9,13 @@
 - 输出语言：除非 Prompt 另有说明，建议中文
 - 路径统一使用相对路径，便于在仓库内协作与追踪
 
+## KG 视图解引用约定（强制）
+- `design\KG\SystemArchitecture.json` 采用引用式结构：`views[*].included_elements` 与 `views[*].included_relationships` 仅保存 ID。
+- 任何 Prompt 只要分析某个 View，都必须同时读取顶层 `elements`、`relationships`、`views` 三个数组。
+- 必须先对 View 中的元素 ID、关系 ID 做全局反查，再输出 View 语义、关系类型、依赖分析、缺口判断。
+- 不能因为 View 局部只看到 ID，就直接判断“语义缺失”。只有当顶层数组里也查不到对应 ID 时，才能认定 KG 不完整。
+- 如果执行时只拿到了 JSON 的局部片段，必须明确说明“当前结论基于局部，需完成全局 ID 解引用后再最终判断”。
+
 ## 输出边界（必须区分）
 
 为避免混淆，本仓库存在两类输出：
