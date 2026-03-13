@@ -125,9 +125,6 @@ Use the exact section order below.
 10. `## 9. 风险、阻塞与缓解措施`
     - 列出主要技术风险、依赖风险、信息缺口与缓解措施
 
-11. `## 10. 下一步建议`
-    - 只保留真正影响后续执行的行动项
-
 The full task support file must itself be complete and implementation-ready for the next LLM.
 
 ## Cross-Task Consistency Check
