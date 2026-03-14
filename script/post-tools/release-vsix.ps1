@@ -20,7 +20,7 @@ function Get-GitValue {
         [string[]]$GitArgs
     )
 
-    if (-not $gitExecutable) {
+    if (eal-not $gitExecutable) {
         return 'N/A'
     }
 
