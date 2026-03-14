@@ -194,7 +194,56 @@ function getVsCodeExtensionRootCandidates() {
 	return roots;
 }
 
-function getPluginManagedSharedScriptCandidates() {
+function extractVersionTextFromExtensionFolderName(folderName) {
+	if (folderName == null || folderName == "") {
+		return "";
+	}
+
+	var match = ("" + folderName).match(/ai4pb-orchestrator-([0-9]+(?:\.[0-9]+)*(?:-[A-Za-z0-9\.\-]+)?)$/i);
+	if (match && match.length > 1) {
+		return match[1];
+	}
+
+	return "";
+}
+
+function parseVersionParts(versionText) {
+	var parts = [];
+	if (versionText == null || versionText == "") {
+		return parts;
+	}
+
+	var tokens = ("" + versionText).split(/[^0-9]+/);
+	for (var i = 0; i < tokens.length; i++) {
+		if (tokens[i] != "") {
+			parts.push(parseInt(tokens[i], 10));
+		}
+	}
+
+	return parts;
+}
+
+function compareVersionTextsDesc(leftVersion, rightVersion) {
+	var leftParts = parseVersionParts(leftVersion);
+	var rightParts = parseVersionParts(rightVersion);
+	var maxLength = leftParts.length > rightParts.length ? leftParts.length : rightParts.length;
+
+	for (var i = 0; i < maxLength; i++) {
+		var leftValue = i < leftParts.length ? leftParts[i] : 0;
+		var rightValue = i < rightParts.length ? rightParts[i] : 0;
+
+		if (leftValue > rightValue) {
+			return -1;
+		}
+		if (leftValue < rightValue) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+function getProjectManagedSharedScriptCandidates() {
 	var candidates = [];
 	var rel = "script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js";
 
@@ -208,6 +257,14 @@ function getPluginManagedSharedScriptCandidates() {
 		appendUniquePath(candidates, level2 + "\\ai4pb-orchestrator\\" + rel);
 		appendUniquePath(candidates, level2 + "\\vscode-extension\\ai4pb-orchestrator\\" + rel);
 	}
+
+	return candidates;
+}
+
+function getInstalledExtensionSharedScriptCandidates() {
+	var candidates = [];
+	var rel = "script\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js";
+	var extensionEntries = [];
 
 	try {
 		var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -224,7 +281,11 @@ function getPluginManagedSharedScriptCandidates() {
 				var sub = subfolders.item();
 				var folderName = ("" + sub.Name).toLowerCase();
 				if (folderName.indexOf("ai4pb-orchestrator") >= 0) {
-					appendUniquePath(candidates, sub.Path + "\\" + rel);
+					extensionEntries.push({
+						path: sub.Path + "\\" + rel,
+						version: extractVersionTextFromExtensionFolderName(sub.Name),
+						folderName: "" + sub.Name
+					});
 				}
 			}
 		}
@@ -232,11 +293,39 @@ function getPluginManagedSharedScriptCandidates() {
 		// ignore
 	}
 
+	extensionEntries.sort(function(left, right) {
+		var versionOrder = compareVersionTextsDesc(left.version, right.version);
+		if (versionOrder != 0) {
+			return versionOrder;
+		}
+
+		var leftName = ("" + left.folderName).toLowerCase();
+		var rightName = ("" + right.folderName).toLowerCase();
+		if (leftName < rightName) {
+			return -1;
+		}
+		if (leftName > rightName) {
+			return 1;
+		}
+		return 0;
+	});
+
+	for (var j = 0; j < extensionEntries.length; j++) {
+		appendUniquePath(candidates, extensionEntries[j].path);
+	}
+
 	return candidates;
 }
 
 function getLocalSharedScriptCandidates() {
 	var candidates = [];
+	var pluginManaged = getInstalledExtensionSharedScriptCandidates();
+	var projectManaged = getProjectManagedSharedScriptCandidates();
+	var k;
+
+	for (k = 0; k < pluginManaged.length; k++) {
+		candidates.push(pluginManaged[k]);
+	}
 
 	if (SHARED_SCRIPT_LOCAL_FALLBACK_PATH != null && trimString(SHARED_SCRIPT_LOCAL_FALLBACK_PATH) != "") {
 		candidates.push(trimString(SHARED_SCRIPT_LOCAL_FALLBACK_PATH));
@@ -248,9 +337,8 @@ function getLocalSharedScriptCandidates() {
 		candidates.push(projectRoot + "tools\\EA-jsscript\\project_auto_gen_suitable_for_LLM-V2.js");
 	}
 
-	var pluginManaged = getPluginManagedSharedScriptCandidates();
-	for (var k = 0; k < pluginManaged.length; k++) {
-		candidates.push(pluginManaged[k]);
+	for (k = 0; k < projectManaged.length; k++) {
+		candidates.push(projectManaged[k]);
 	}
 
 	var unique = [];
@@ -391,6 +479,7 @@ function mainBootstrap() {
 	Repository.EnsureOutputVisible("Script");
 	Session.Output("Loading shared exporter script...");
 	Session.Output("Primary path: " + (trimString(SHARED_SCRIPT_PATH) != "" ? SHARED_SCRIPT_PATH : "<auto>"));
+	Session.Output("Shared script auto-discovery order: installed extension first, project paths second.");
 
 	var autoProjectPath = resolveProjectPathFromCurrentModel();
 	if (autoProjectPath != "") {

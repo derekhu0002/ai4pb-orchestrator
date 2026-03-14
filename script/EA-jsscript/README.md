@@ -18,8 +18,8 @@
 1. 在每个 EA 模型中仅导入并保留：`project_auto_gen_suitable_for_LLM-V2-bootstrap.js`
 2. 在 bootstrap 里设置：
   - `SHARED_SCRIPT_PATH` / `SHARED_SCRIPT_LOCAL_FALLBACK_PATH` 可留空（推荐）
-  - bootstrap 会优先从项目内候选路径自动查找共享脚本（如 `<projectPath>/script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js`）
-  - 若项目内不存在，会自动尝试从本机 `ai4pb-orchestrator` 仓库路径与 VS Code 扩展目录（`.vscode/extensions/*ai4pb-orchestrator*/...`）发现共享脚本
+  - bootstrap 会先从 VS Code 已安装扩展目录（`.vscode/extensions/*ai4pb-orchestrator*/...`）查找共享脚本，并按版本号降序选择最新版本
+  - 若扩展目录下未找到，再回退到项目内候选路径（如 `<projectPath>/script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js`）以及本机 `ai4pb-orchestrator` 仓库路径
   - `EA_AUTOGEN_CONFIG.projectPath` 会自动从当前 EA 模型文件所在目录推断（无需手填）
    - 可选：`PROJECT_CONFIG_FILE_PATH` 显式指定 `.aicodingconfig` 文件；留空则默认读取 `<projectPath>/.aicodingconfig`
 3. 日常只更新共享文件 `project_auto_gen_suitable_for_LLM-V2.js`，所有模型下次运行 bootstrap 时自动使用最新版本。
