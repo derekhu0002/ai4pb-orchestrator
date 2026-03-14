@@ -104,6 +104,18 @@ const GUIDED_DEFAULTS = {
     needbrowserlocation: true,
     maintenacetype: 'forllm'
 };
+const WORKFLOW_VIEW_STATE_KEY = 'ai4pb.workflowViewState';
+const DEFAULT_WORKFLOW_VIEW_STATE = {
+    selectedSkill: null,
+    draftText: '',
+    thread: [
+        {
+            kind: 'bubble',
+            role: 'ai',
+            text: '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。'
+        }
+    ]
+};
 let output;
 let extensionInstallRoot = '';
 function activate(context) {
@@ -113,7 +125,7 @@ function activate(context) {
     ensureWorkspaceSkillsInstalled();
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
     const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
-    const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion);
+    const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion, context);
     registerPromptTools(context);
     context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
 }
@@ -166,9 +178,10 @@ function registerPromptTools(context) {
 }
 // @ArchitectureID: 1213
 class WorkflowViewProvider {
-    constructor(extensionUri, extensionVersion) {
+    constructor(extensionUri, extensionVersion, context) {
         this.extensionUri = extensionUri;
         this.extensionVersion = extensionVersion;
+        this.context = context;
     }
     resolveWebviewView(webviewView) {
         this.webviewView = webviewView;
@@ -176,8 +189,12 @@ class WorkflowViewProvider {
             enableScripts: true,
             localResourceRoots: [this.extensionUri]
         };
-        webviewView.webview.html = this.getHtml(webviewView.webview);
+        webviewView.webview.html = this.getHtml(webviewView.webview, this.getSavedState());
         webviewView.webview.onDidReceiveMessage(async (message) => {
+            if (message.type === 'syncState' && message.state) {
+                await this.saveState(message.state);
+                return;
+            }
             if (message.type === 'chatRequest') {
                 await this.handleChatRequest(message.text, message.skill);
                 return;
@@ -199,6 +216,13 @@ class WorkflowViewProvider {
         webviewView.onDidDispose(() => {
             this.webviewView = undefined;
         });
+    }
+    getSavedState() {
+        const raw = this.context.workspaceState.get(WORKFLOW_VIEW_STATE_KEY);
+        return sanitizeWorkflowViewState(raw);
+    }
+    async saveState(raw) {
+        await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, sanitizeWorkflowViewState(raw));
     }
     // @ArchitectureID: 1209
     async handleChatRequest(rawText, rawSkill) {
@@ -357,9 +381,10 @@ class WorkflowViewProvider {
         return latestPath;
     }
     // @ArchitectureID: 1209
-    getHtml(webview) {
+    getHtml(webview, initialState) {
         const nonce = String(Date.now());
         const skillsJson = JSON.stringify(CHAT_SKILL_OPTIONS);
+        const initialStateJson = JSON.stringify(initialState);
         const versionText = this.extensionVersion;
         return `<!DOCTYPE html>
 <html lang="en">
@@ -593,9 +618,13 @@ class WorkflowViewProvider {
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
     const skills = ${skillsJson};
+    const initialState = ${initialStateJson};
+    const persistedState = vscode.getState();
+    const restoredState = persistedState && typeof persistedState === 'object' ? persistedState : initialState;
     const state = {
-      selectedSkill: null,
-      status: null
+      selectedSkill: restoredState.selectedSkill || null,
+      draftText: String(restoredState.draftText || ''),
+      thread: Array.isArray(restoredState.thread) ? restoredState.thread : []
     };
 
     const thread = document.getElementById('thread');
@@ -606,15 +635,30 @@ class WorkflowViewProvider {
     const initBtn = document.getElementById('initBtn');
     const configBtn = document.getElementById('configBtn');
 
+    function syncState() {
+      vscode.setState(state);
+      vscode.postMessage({
+        type: 'syncState',
+        state
+      });
+    }
+
     function appendBubble(role, text) {
       const bubble = document.createElement('div');
       bubble.className = 'bubble ' + role;
       bubble.textContent = text;
       thread.appendChild(bubble);
       thread.scrollTop = thread.scrollHeight;
+
+      state.thread.push({
+        kind: 'bubble',
+        role,
+        text: String(text || '')
+      });
+      syncState();
     }
 
-    function appendAutoSuggestion(message) {
+    function appendAutoSuggestion(message, skipPersist) {
       const bubble = document.createElement('div');
       bubble.className = 'bubble ai';
 
@@ -659,6 +703,20 @@ class WorkflowViewProvider {
       bubble.appendChild(card);
       thread.appendChild(bubble);
       thread.scrollTop = thread.scrollHeight;
+
+      if (!skipPersist) {
+        state.thread.push({
+          kind: 'autoSuggestion',
+          text: String(message.text || ''),
+          suggestions: suggestions.map((suggestion) => ({
+            skill: suggestion.skill,
+            skillLabel: suggestion.skillLabel,
+            promptRef: suggestion.promptRef,
+            reason: suggestion.reason || ''
+          }))
+        });
+        syncState();
+      }
     }
 
     function updateSkillMeta() {
@@ -675,6 +733,7 @@ class WorkflowViewProvider {
         state.selectedSkill = null;
         renderSkills();
         updateSkillMeta();
+        syncState();
       });
       skillsContainer.appendChild(autoBtn);
 
@@ -686,6 +745,7 @@ class WorkflowViewProvider {
           state.selectedSkill = skill.key;
           renderSkills();
           updateSkillMeta();
+          syncState();
         });
         skillsContainer.appendChild(button);
       });
@@ -713,6 +773,8 @@ class WorkflowViewProvider {
       });
 
       promptInput.value = '';
+      state.draftText = '';
+      syncState();
     }
 
     window.addEventListener('message', (event) => {
@@ -741,6 +803,11 @@ class WorkflowViewProvider {
       vscode.postMessage({ type: 'statusAction', key: 'options' });
     });
 
+    promptInput.addEventListener('input', () => {
+      state.draftText = String(promptInput.value || '');
+      syncState();
+    });
+
     promptInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -748,15 +815,99 @@ class WorkflowViewProvider {
       }
     });
 
-    appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
+    function restoreThread() {
+      const items = Array.isArray(state.thread) ? state.thread : [];
+      if (items.length === 0) {
+        appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
+        return;
+      }
+
+      items.forEach((item) => {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        if (item.kind === 'bubble') {
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble ' + item.role;
+          bubble.textContent = String(item.text || '');
+          thread.appendChild(bubble);
+          return;
+        }
+
+        if (item.kind === 'autoSuggestion') {
+          appendAutoSuggestion(item, true);
+        }
+      });
+
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    restoreThread();
+    promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
+    syncState();
   </script>
 </body>
 </html>`;
     }
 }
 WorkflowViewProvider.viewType = 'ai4pb.workflowView';
+function sanitizeWorkflowViewState(raw) {
+    if (!raw) {
+        return {
+            selectedSkill: DEFAULT_WORKFLOW_VIEW_STATE.selectedSkill,
+            draftText: DEFAULT_WORKFLOW_VIEW_STATE.draftText,
+            thread: DEFAULT_WORKFLOW_VIEW_STATE.thread.map((entry) => ({ ...entry }))
+        };
+    }
+    const selectedSkill = normalizeSkillKey(raw.selectedSkill ?? undefined) ?? null;
+    const draftText = typeof raw.draftText === 'string' ? raw.draftText : '';
+    const rawThread = Array.isArray(raw.thread) ? raw.thread : [];
+    const thread = [];
+    for (const item of rawThread) {
+        if (!item || typeof item !== 'object') {
+            continue;
+        }
+        if (item.kind === 'bubble') {
+            thread.push({
+                kind: 'bubble',
+                role: item.role === 'user' ? 'user' : 'ai',
+                text: typeof item.text === 'string' ? item.text : ''
+            });
+            continue;
+        }
+        if (item.kind === 'autoSuggestion') {
+            const suggestions = Array.isArray(item.suggestions)
+                ? item.suggestions
+                    .map((suggestion) => {
+                    const skill = normalizeSkillKey(typeof suggestion?.skill === 'string' ? suggestion.skill : undefined);
+                    if (!skill) {
+                        return undefined;
+                    }
+                    return {
+                        skill,
+                        skillLabel: typeof suggestion.skillLabel === 'string' ? suggestion.skillLabel : SKILL_DISPLAY_LABEL[skill],
+                        promptRef: typeof suggestion.promptRef === 'string' ? suggestion.promptRef : SKILL_PROMPT_REFERENCE[skill],
+                        reason: typeof suggestion.reason === 'string' ? suggestion.reason : ''
+                    };
+                })
+                    .filter((suggestion) => Boolean(suggestion))
+                : [];
+            thread.push({
+                kind: 'autoSuggestion',
+                text: typeof item.text === 'string' ? item.text : '',
+                suggestions
+            });
+        }
+    }
+    return {
+        selectedSkill,
+        draftText,
+        thread: thread.length > 0 ? thread : DEFAULT_WORKFLOW_VIEW_STATE.thread.map((entry) => ({ ...entry }))
+    };
+}
 // @ArchitectureID: 1209
 function normalizeSkillKey(value) {
     const normalized = (value ?? '').trim().toLowerCase();

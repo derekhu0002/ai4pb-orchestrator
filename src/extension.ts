@@ -105,6 +105,47 @@ const GUIDED_DEFAULTS = {
   maintenacetype: 'forllm'
 };
 
+const WORKFLOW_VIEW_STATE_KEY = 'ai4pb.workflowViewState';
+
+type ChatBubbleRole = 'user' | 'ai';
+
+type AutoSuggestionViewItem = {
+  skill: SkillKey;
+  skillLabel: string;
+  promptRef: string;
+  reason: string;
+};
+
+type WorkflowThreadEntry =
+  | {
+      kind: 'bubble';
+      role: ChatBubbleRole;
+      text: string;
+    }
+  | {
+      kind: 'autoSuggestion';
+      text: string;
+      suggestions: AutoSuggestionViewItem[];
+    };
+
+type WorkflowViewState = {
+  selectedSkill: SkillKey | null;
+  draftText: string;
+  thread: WorkflowThreadEntry[];
+};
+
+const DEFAULT_WORKFLOW_VIEW_STATE: WorkflowViewState = {
+  selectedSkill: null,
+  draftText: '',
+  thread: [
+    {
+      kind: 'bubble',
+      role: 'ai',
+      text: '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。'
+    }
+  ]
+};
+
 let output: vscode.OutputChannel;
 let extensionInstallRoot = '';
 
@@ -115,7 +156,7 @@ export function activate(context: vscode.ExtensionContext): void {
   ensureWorkspaceSkillsInstalled();
   void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
   const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
-  const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion);
+  const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion, context);
 
   registerPromptTools(context);
 
@@ -216,7 +257,8 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly extensionVersion: string
+    private readonly extensionVersion: string,
+    private readonly context: vscode.ExtensionContext
   ) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
@@ -227,9 +269,14 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.extensionUri]
     };
 
-    webviewView.webview.html = this.getHtml(webviewView.webview);
+    webviewView.webview.html = this.getHtml(webviewView.webview, this.getSavedState());
 
-    webviewView.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string; skill?: string; text?: string }) => {
+    webviewView.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string; skill?: string; text?: string; state?: WorkflowViewState }) => {
+      if (message.type === 'syncState' && message.state) {
+        await this.saveState(message.state);
+        return;
+      }
+
       if (message.type === 'chatRequest') {
         await this.handleChatRequest(message.text, message.skill);
         return;
@@ -255,6 +302,15 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     webviewView.onDidDispose(() => {
       this.webviewView = undefined;
     });
+  }
+
+  private getSavedState(): WorkflowViewState {
+    const raw = this.context.workspaceState.get<WorkflowViewState>(WORKFLOW_VIEW_STATE_KEY);
+    return sanitizeWorkflowViewState(raw);
+  }
+
+  private async saveState(raw: WorkflowViewState): Promise<void> {
+    await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, sanitizeWorkflowViewState(raw));
   }
 
   // @ArchitectureID: 1209
@@ -441,9 +497,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   }
 
   // @ArchitectureID: 1209
-  private getHtml(webview: vscode.Webview): string {
+  private getHtml(webview: vscode.Webview, initialState: WorkflowViewState): string {
     const nonce = String(Date.now());
     const skillsJson = JSON.stringify(CHAT_SKILL_OPTIONS);
+    const initialStateJson = JSON.stringify(initialState);
     const versionText = this.extensionVersion;
     return `<!DOCTYPE html>
 <html lang="en">
@@ -677,9 +734,13 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
     const skills = ${skillsJson};
+    const initialState = ${initialStateJson};
+    const persistedState = vscode.getState();
+    const restoredState = persistedState && typeof persistedState === 'object' ? persistedState : initialState;
     const state = {
-      selectedSkill: null,
-      status: null
+      selectedSkill: restoredState.selectedSkill || null,
+      draftText: String(restoredState.draftText || ''),
+      thread: Array.isArray(restoredState.thread) ? restoredState.thread : []
     };
 
     const thread = document.getElementById('thread');
@@ -690,15 +751,30 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const initBtn = document.getElementById('initBtn');
     const configBtn = document.getElementById('configBtn');
 
+    function syncState() {
+      vscode.setState(state);
+      vscode.postMessage({
+        type: 'syncState',
+        state
+      });
+    }
+
     function appendBubble(role, text) {
       const bubble = document.createElement('div');
       bubble.className = 'bubble ' + role;
       bubble.textContent = text;
       thread.appendChild(bubble);
       thread.scrollTop = thread.scrollHeight;
+
+      state.thread.push({
+        kind: 'bubble',
+        role,
+        text: String(text || '')
+      });
+      syncState();
     }
 
-    function appendAutoSuggestion(message) {
+    function appendAutoSuggestion(message, skipPersist) {
       const bubble = document.createElement('div');
       bubble.className = 'bubble ai';
 
@@ -743,6 +819,20 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       bubble.appendChild(card);
       thread.appendChild(bubble);
       thread.scrollTop = thread.scrollHeight;
+
+      if (!skipPersist) {
+        state.thread.push({
+          kind: 'autoSuggestion',
+          text: String(message.text || ''),
+          suggestions: suggestions.map((suggestion) => ({
+            skill: suggestion.skill,
+            skillLabel: suggestion.skillLabel,
+            promptRef: suggestion.promptRef,
+            reason: suggestion.reason || ''
+          }))
+        });
+        syncState();
+      }
     }
 
     function updateSkillMeta() {
@@ -759,6 +849,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         state.selectedSkill = null;
         renderSkills();
         updateSkillMeta();
+        syncState();
       });
       skillsContainer.appendChild(autoBtn);
 
@@ -770,6 +861,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
           state.selectedSkill = skill.key;
           renderSkills();
           updateSkillMeta();
+          syncState();
         });
         skillsContainer.appendChild(button);
       });
@@ -797,6 +889,8 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       });
 
       promptInput.value = '';
+      state.draftText = '';
+      syncState();
     }
 
     window.addEventListener('message', (event) => {
@@ -825,6 +919,11 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       vscode.postMessage({ type: 'statusAction', key: 'options' });
     });
 
+    promptInput.addEventListener('input', () => {
+      state.draftText = String(promptInput.value || '');
+      syncState();
+    });
+
     promptInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -832,14 +931,106 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
+    function restoreThread() {
+      const items = Array.isArray(state.thread) ? state.thread : [];
+      if (items.length === 0) {
+        appendBubble('ai', '欢迎使用 AI4PB Skill Chat。可以手动选择 SKILL，或直接输入自然语言由系统自动路由。');
+        return;
+      }
+
+      items.forEach((item) => {
+        if (!item || typeof item !== 'object') {
+          return;
+        }
+
+        if (item.kind === 'bubble') {
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble ' + item.role;
+          bubble.textContent = String(item.text || '');
+          thread.appendChild(bubble);
+          return;
+        }
+
+        if (item.kind === 'autoSuggestion') {
+          appendAutoSuggestion(item, true);
+        }
+      });
+
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    restoreThread();
+    promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
+    syncState();
   </script>
 </body>
 </html>`;
   }
 }
+
+  function sanitizeWorkflowViewState(raw: WorkflowViewState | undefined): WorkflowViewState {
+    if (!raw) {
+      return {
+        selectedSkill: DEFAULT_WORKFLOW_VIEW_STATE.selectedSkill,
+        draftText: DEFAULT_WORKFLOW_VIEW_STATE.draftText,
+        thread: DEFAULT_WORKFLOW_VIEW_STATE.thread.map((entry) => ({ ...entry }))
+      };
+    }
+
+    const selectedSkill = normalizeSkillKey(raw.selectedSkill ?? undefined) ?? null;
+    const draftText = typeof raw.draftText === 'string' ? raw.draftText : '';
+    const rawThread = Array.isArray(raw.thread) ? raw.thread : [];
+    const thread: WorkflowThreadEntry[] = [];
+
+    for (const item of rawThread) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+
+      if (item.kind === 'bubble') {
+        thread.push({
+          kind: 'bubble',
+          role: item.role === 'user' ? 'user' : 'ai',
+          text: typeof item.text === 'string' ? item.text : ''
+        });
+        continue;
+      }
+
+      if (item.kind === 'autoSuggestion') {
+        const suggestions = Array.isArray(item.suggestions)
+          ? item.suggestions
+              .map((suggestion) => {
+                const skill = normalizeSkillKey(typeof suggestion?.skill === 'string' ? suggestion.skill : undefined);
+                if (!skill) {
+                  return undefined;
+                }
+
+                return {
+                  skill,
+                  skillLabel: typeof suggestion.skillLabel === 'string' ? suggestion.skillLabel : SKILL_DISPLAY_LABEL[skill],
+                  promptRef: typeof suggestion.promptRef === 'string' ? suggestion.promptRef : SKILL_PROMPT_REFERENCE[skill],
+                  reason: typeof suggestion.reason === 'string' ? suggestion.reason : ''
+                };
+              })
+              .filter((suggestion): suggestion is AutoSuggestionViewItem => Boolean(suggestion))
+          : [];
+
+        thread.push({
+          kind: 'autoSuggestion',
+          text: typeof item.text === 'string' ? item.text : '',
+          suggestions
+        });
+      }
+    }
+
+    return {
+      selectedSkill,
+      draftText,
+      thread: thread.length > 0 ? thread : DEFAULT_WORKFLOW_VIEW_STATE.thread.map((entry) => ({ ...entry }))
+    };
+  }
 
 // @ArchitectureID: 1209
 function normalizeSkillKey(value?: string): SkillKey | undefined {
