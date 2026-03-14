@@ -162,7 +162,8 @@ const HELP_URLS = {
   } as Record<SkillKey, string>,
   config: {
     init: `${GITHUB_DOC_BASE_URL}/docs/getting-started/03-modeling-and-export.md`,
-    options: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`
+    options: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`,
+    query: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`
   }
 };
 
@@ -459,6 +460,14 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       if (key === 'options') {
         await configureGuidedOptions(root);
+        return;
+      }
+
+      if (key === 'queryOptions') {
+        await this.webviewView?.webview.postMessage({
+          type: 'configSummary',
+          text: buildGuidedOptionSummary(root)
+        });
         return;
       }
 
@@ -1428,6 +1437,18 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         });
         appendButtonWithHelp(actions, configBtn, helpUrls.config.options, '查看 EA 导出参数配置帮助');
 
+        const queryBtn = document.createElement('button');
+        queryBtn.className = 'quick-btn';
+        queryBtn.textContent = '参数查询';
+        queryBtn.addEventListener('click', () => {
+          state.menuOpen = false;
+          appendBubble('user', '[查询当前导出参数]');
+          vscode.postMessage({ type: 'statusAction', key: 'queryOptions' });
+          renderSkills();
+          syncState();
+        });
+        appendButtonWithHelp(actions, queryBtn, helpUrls.config.query, '查看参数查询帮助');
+
         panel.appendChild(actions);
         contextShell.appendChild(panel);
         return;
@@ -1539,6 +1560,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       const message = event.data || {};
       if (message.type === 'autoSuggestion') {
         appendAutoSuggestion(message);
+        return;
+      }
+      if (message.type === 'configSummary') {
+        appendBubble('ai', String(message.text || '当前未读取到参数配置。'));
         return;
       }
       if (message.type === 'autoDispatchDone') {
@@ -2032,6 +2057,83 @@ function getEffectiveGuidedOptions(config?: AiConfig): GuidedOptions {
         ? existingAutoGen.maintenacetype
         : GUIDED_DEFAULTS.maintenacetype
   };
+}
+
+function describeMaintenanceScope(scope: MaintenanceScope): { label: string; explanation: string } {
+  if (scope === 'All') {
+    return {
+      label: '全量任务视角',
+      explanation: '会纳入各类状态的维护任务，适合做全局盘点、历史复盘或跨阶段分析。'
+    };
+  }
+
+  if (scope === 'ActiveAndVerified') {
+    return {
+      label: '进行中与已核验任务',
+      explanation: '兼顾当前推进中的事项与已经核验通过的事项，适合做执行跟踪与交付复核。'
+    };
+  }
+
+  return {
+    label: '仅当前活跃任务',
+    explanation: '只纳入本期真正需要推进的任务，能减少上下文噪音，让 Copilot 更聚焦当前迭代。'
+  };
+}
+
+function describeMaintenanceType(value: string): { label: string; explanation: string } {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'forproject') {
+    return {
+      label: '项目协同模式',
+      explanation: '以项目团队协同推进为中心组织待处理内容，更适合面向人工协作的任务梳理。'
+    };
+  }
+
+  if (normalized === 'forllm' || normalized === 'llm') {
+    return {
+      label: 'AI处理模式',
+      explanation: '优先筛选适合 AI 参与处理的维护事项，便于 Copilot 聚焦自动化执行。'
+    };
+  }
+
+  return {
+    label: `自定义模式: ${value || '未设置'}`,
+    explanation: '当前使用的是团队自定义维护标签，请确认该分类与现有任务分派规则一致。'
+  };
+}
+
+function buildGuidedOptionSummary(root: string): string {
+  const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+  const configExists = exists(configPath);
+  const effectiveOptions = getEffectiveGuidedOptions(loadAiConfig(root));
+  const scopeInfo = describeMaintenanceScope(effectiveOptions.needallmaintenace);
+  const typeInfo = describeMaintenanceType(effectiveOptions.maintenacetype);
+  const architecturePath = getArchitectureJsonPath(root);
+
+  return [
+    '当前参数列表如下：',
+    '',
+    `1. 任务纳入范围: ${scopeInfo.label}`,
+    `业务含义: ${scopeInfo.explanation}`,
+    `当前配置值: ${effectiveOptions.needallmaintenace}`,
+    '',
+    `2. 页面定位信息: ${effectiveOptions.needbrowserlocation ? '已开启' : '未开启'}`,
+    `业务含义: ${effectiveOptions.needbrowserlocation
+      ? '导出结果会补充界面或浏览器定位信息，便于从模型对象追溯到页面上下文。'
+      : '导出结果不补充页面定位信息，适合控制上下文长度并保持输出更精简。'
+    }`,
+    `当前配置值: ${effectiveOptions.needbrowserlocation ? 'true' : 'false'}`,
+    '',
+    `3. 任务处理模式: ${typeInfo.label}`,
+    `业务含义: ${typeInfo.explanation}`,
+    `当前配置值: ${effectiveOptions.maintenacetype}`,
+    '',
+    `4. 架构语料路径: ${exists(architecturePath) ? '已定位' : '未找到'}`,
+    '业务含义: 该文件是后续流程、审计和任务生成时使用的基础架构语料来源。',
+    `当前路径: ${architecturePath}`,
+    '',
+    `参数来源: ${configExists ? configPath : '未找到 .aicodingconfig，当前显示的是扩展默认参数'}`
+  ].join('\n');
 }
 
 // @ArchitectureID: 1209
