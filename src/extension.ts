@@ -236,7 +236,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     output,
-    vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider),
+    vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider, { webviewOptions: { retainContextWhenHidden: true } }),
+    vscode.commands.registerCommand('ai4pb.openInEditor', () => workflowViewProvider.openInEditor()),
     vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate),
     vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext),
     vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel),
@@ -328,6 +329,73 @@ function registerPromptTools(context: vscode.ExtensionContext): void {
 class WorkflowViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ai4pb.workflowView';
   private webviewView?: vscode.WebviewView;
+  private panelWebview?: vscode.Webview;
+
+  private async postMessage(message: any, senderWebview?: vscode.Webview): Promise<void> {
+    const promises: Thenable<boolean>[] = [];
+    if (this.webviewView && this.webviewView.webview !== senderWebview) {
+      promises.push(this.webviewView.webview.postMessage(message));
+    }
+    if (this.panelWebview && this.panelWebview !== senderWebview) {
+      promises.push(this.panelWebview.postMessage(message));
+    }
+    await Promise.all(promises);
+  }
+
+  public openInEditor(): void {
+    const panel = vscode.window.createWebviewPanel(
+      'ai4pb.workflowEditor',
+      'AI4PB Workflow',
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        localResourceRoots: [this.extensionUri],
+        retainContextWhenHidden: true
+      }
+    );
+
+    panel.webview.html = this.getHtml(panel.webview, this.getSavedState());
+
+    panel.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string; skill?: string; text?: string; url?: string; state?: WorkflowViewState }) => {
+      if (message.type === 'syncState' && message.state) {
+        await this.saveState(message.state, panel.webview);
+        return;
+      }
+      if (message.type === 'openHelp' && message.url) {
+        await vscode.env.openExternal(vscode.Uri.parse(message.url));
+        return;
+      }
+      if (message.type === 'chatRequest') {
+        await this.handleChatRequest(message.text, message.skill);
+        return;
+      }
+      if (message.type === 'autoConfirm') {
+        await this.handleAutoConfirm(message.text, message.skill);
+        return;
+      }
+      if (message.type === 'statusAction' && message.key) {
+        await this.handleStatusAction(message.key);
+        return;
+      }
+      const command = message.command;
+      if (!command) {
+        return;
+      }
+      await vscode.commands.executeCommand(command);
+    });
+
+    panel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.visible) {
+        e.webviewPanel.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+      }
+    });
+
+    this.panelWebview = panel.webview;
+
+    panel.onDidDispose(() => {
+      this.panelWebview = undefined;
+    });
+  }
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -347,7 +415,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(async (message: { command?: string; type?: string; key?: string; skill?: string; text?: string; url?: string; state?: WorkflowViewState }) => {
       if (message.type === 'syncState' && message.state) {
-        await this.saveState(message.state);
+        await this.saveState(message.state, webviewView.webview);
         return;
       }
 
@@ -378,6 +446,12 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       await vscode.commands.executeCommand(command);
     });
 
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        webviewView.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+      }
+    });
+
     webviewView.onDidDispose(() => {
       this.webviewView = undefined;
     });
@@ -388,8 +462,10 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     return sanitizeWorkflowViewState(raw);
   }
 
-  private async saveState(raw: WorkflowViewState): Promise<void> {
-    await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, sanitizeWorkflowViewState(raw));
+  private async saveState(raw: WorkflowViewState, senderWebview?: vscode.Webview): Promise<void> {
+    const cleanState = sanitizeWorkflowViewState(raw);
+    await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, cleanState);
+    await this.postMessage({ type: 'updateState', state: cleanState }, senderWebview);
   }
 
   // @ArchitectureID: 1209
@@ -404,7 +480,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     }
 
     if (!text) {
-      await this.webviewView?.webview.postMessage({
+      await this.postMessage({
         type: 'autoAnalysisError',
         message: '请输入任务描述后再进行 AUTO 分析。'
       });
@@ -412,7 +488,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     }
 
     const suggestions = await analyzeAutoSkillSuggestions(text);
-    await this.webviewView?.webview.postMessage({
+    await this.postMessage({
       type: 'autoSuggestion',
       text,
       suggestions: suggestions.map((suggestion) => ({
@@ -430,7 +506,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const selectedSkill = normalizeSkillKey(rawSkill) ?? inferSkillFromText(text);
     const seedText = buildSkillSeedText(selectedSkill, text);
     await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[selectedSkill]} skill (auto confirmed)`);
-    await this.webviewView?.webview.postMessage({
+    await this.postMessage({
       type: 'autoDispatchDone',
       skill: selectedSkill,
       skillLabel: SKILL_DISPLAY_LABEL[selectedSkill]
@@ -464,7 +540,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       }
 
       if (key === 'queryOptions') {
-        await this.webviewView?.webview.postMessage({
+        await this.postMessage({
           type: 'configSummary',
           text: buildGuidedOptionSummary(root)
         });
@@ -1035,8 +1111,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const flows = ${flowsJson};
     const helpUrls = ${helpUrlsJson};
     const initialState = ${initialStateJson};
-    const persistedState = vscode.getState();
-    const restoredState = persistedState && typeof persistedState === 'object' ? persistedState : initialState;
+    const restoredState = initialState;
     const state = {
       activeMenu: restoredState.activeMenu || (restoredState.expandedConfig ? 'config' : (restoredState.selectedFlow || restoredState.expandedFlow ? 'flow' : 'auto')),
       confirmedMenu: restoredState.confirmedMenu === 'auto' || restoredState.confirmedMenu === 'flow'
@@ -1558,6 +1633,15 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     window.addEventListener('message', (event) => {
       const message = event.data || {};
+      if (message.type === 'updateState') {
+        Object.assign(state, message.state);
+        thread.innerHTML = '';
+        restoreThread();
+        promptInput.value = state.draftText;
+        renderSkills();
+        updateSkillMeta();
+        return;
+      }
       if (message.type === 'autoSuggestion') {
         appendAutoSuggestion(message);
         return;
@@ -1652,7 +1736,6 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
-    syncState();
   </script>
 </body>
 </html>`;

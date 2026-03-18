@@ -184,7 +184,7 @@ function activate(context) {
     const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
     const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion, context);
     registerPromptTools(context);
-    context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
+    context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider, { webviewOptions: { retainContextWhenHidden: true } }), vscode.commands.registerCommand('ai4pb.openInEditor', () => workflowViewProvider.openInEditor()), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
 }
 function deactivate() {
     output?.dispose();
@@ -235,21 +235,26 @@ function registerPromptTools(context) {
 }
 // @ArchitectureID: 1213
 class WorkflowViewProvider {
-    constructor(extensionUri, extensionVersion, context) {
-        this.extensionUri = extensionUri;
-        this.extensionVersion = extensionVersion;
-        this.context = context;
+    async postMessage(message, senderWebview) {
+        const promises = [];
+        if (this.webviewView && this.webviewView.webview !== senderWebview) {
+            promises.push(this.webviewView.webview.postMessage(message));
+        }
+        if (this.panelWebview && this.panelWebview !== senderWebview) {
+            promises.push(this.panelWebview.postMessage(message));
+        }
+        await Promise.all(promises);
     }
-    resolveWebviewView(webviewView) {
-        this.webviewView = webviewView;
-        webviewView.webview.options = {
+    openInEditor() {
+        const panel = vscode.window.createWebviewPanel('ai4pb.workflowEditor', 'AI4PB Workflow', vscode.ViewColumn.One, {
             enableScripts: true,
-            localResourceRoots: [this.extensionUri]
-        };
-        webviewView.webview.html = this.getHtml(webviewView.webview, this.getSavedState());
-        webviewView.webview.onDidReceiveMessage(async (message) => {
+            localResourceRoots: [this.extensionUri],
+            retainContextWhenHidden: true
+        });
+        panel.webview.html = this.getHtml(panel.webview, this.getSavedState());
+        panel.webview.onDidReceiveMessage(async (message) => {
             if (message.type === 'syncState' && message.state) {
-                await this.saveState(message.state);
+                await this.saveState(message.state, panel.webview);
                 return;
             }
             if (message.type === 'openHelp' && message.url) {
@@ -274,6 +279,60 @@ class WorkflowViewProvider {
             }
             await vscode.commands.executeCommand(command);
         });
+        panel.onDidChangeViewState((e) => {
+            if (e.webviewPanel.visible) {
+                e.webviewPanel.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+            }
+        });
+        this.panelWebview = panel.webview;
+        panel.onDidDispose(() => {
+            this.panelWebview = undefined;
+        });
+    }
+    constructor(extensionUri, extensionVersion, context) {
+        this.extensionUri = extensionUri;
+        this.extensionVersion = extensionVersion;
+        this.context = context;
+    }
+    resolveWebviewView(webviewView) {
+        this.webviewView = webviewView;
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this.extensionUri]
+        };
+        webviewView.webview.html = this.getHtml(webviewView.webview, this.getSavedState());
+        webviewView.webview.onDidReceiveMessage(async (message) => {
+            if (message.type === 'syncState' && message.state) {
+                await this.saveState(message.state, webviewView.webview);
+                return;
+            }
+            if (message.type === 'openHelp' && message.url) {
+                await vscode.env.openExternal(vscode.Uri.parse(message.url));
+                return;
+            }
+            if (message.type === 'chatRequest') {
+                await this.handleChatRequest(message.text, message.skill);
+                return;
+            }
+            if (message.type === 'autoConfirm') {
+                await this.handleAutoConfirm(message.text, message.skill);
+                return;
+            }
+            if (message.type === 'statusAction' && message.key) {
+                await this.handleStatusAction(message.key);
+                return;
+            }
+            const command = message.command;
+            if (!command) {
+                return;
+            }
+            await vscode.commands.executeCommand(command);
+        });
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible) {
+                webviewView.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+            }
+        });
         webviewView.onDidDispose(() => {
             this.webviewView = undefined;
         });
@@ -282,8 +341,10 @@ class WorkflowViewProvider {
         const raw = this.context.workspaceState.get(WORKFLOW_VIEW_STATE_KEY);
         return sanitizeWorkflowViewState(raw);
     }
-    async saveState(raw) {
-        await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, sanitizeWorkflowViewState(raw));
+    async saveState(raw, senderWebview) {
+        const cleanState = sanitizeWorkflowViewState(raw);
+        await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, cleanState);
+        await this.postMessage({ type: 'updateState', state: cleanState }, senderWebview);
     }
     // @ArchitectureID: 1209
     async handleChatRequest(rawText, rawSkill) {
@@ -295,14 +356,14 @@ class WorkflowViewProvider {
             return;
         }
         if (!text) {
-            await this.webviewView?.webview.postMessage({
+            await this.postMessage({
                 type: 'autoAnalysisError',
                 message: '请输入任务描述后再进行 AUTO 分析。'
             });
             return;
         }
         const suggestions = await analyzeAutoSkillSuggestions(text);
-        await this.webviewView?.webview.postMessage({
+        await this.postMessage({
             type: 'autoSuggestion',
             text,
             suggestions: suggestions.map((suggestion) => ({
@@ -319,7 +380,7 @@ class WorkflowViewProvider {
         const selectedSkill = normalizeSkillKey(rawSkill) ?? inferSkillFromText(text);
         const seedText = buildSkillSeedText(selectedSkill, text);
         await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[selectedSkill]} skill (auto confirmed)`);
-        await this.webviewView?.webview.postMessage({
+        await this.postMessage({
             type: 'autoDispatchDone',
             skill: selectedSkill,
             skillLabel: SKILL_DISPLAY_LABEL[selectedSkill]
@@ -349,7 +410,7 @@ class WorkflowViewProvider {
                 return;
             }
             if (key === 'queryOptions') {
-                await this.webviewView?.webview.postMessage({
+                await this.postMessage({
                     type: 'configSummary',
                     text: buildGuidedOptionSummary(root)
                 });
@@ -900,8 +961,7 @@ class WorkflowViewProvider {
     const flows = ${flowsJson};
     const helpUrls = ${helpUrlsJson};
     const initialState = ${initialStateJson};
-    const persistedState = vscode.getState();
-    const restoredState = persistedState && typeof persistedState === 'object' ? persistedState : initialState;
+    const restoredState = initialState;
     const state = {
       activeMenu: restoredState.activeMenu || (restoredState.expandedConfig ? 'config' : (restoredState.selectedFlow || restoredState.expandedFlow ? 'flow' : 'auto')),
       confirmedMenu: restoredState.confirmedMenu === 'auto' || restoredState.confirmedMenu === 'flow'
@@ -1423,6 +1483,15 @@ class WorkflowViewProvider {
 
     window.addEventListener('message', (event) => {
       const message = event.data || {};
+      if (message.type === 'updateState') {
+        Object.assign(state, message.state);
+        thread.innerHTML = '';
+        restoreThread();
+        promptInput.value = state.draftText;
+        renderSkills();
+        updateSkillMeta();
+        return;
+      }
       if (message.type === 'autoSuggestion') {
         appendAutoSuggestion(message);
         return;
@@ -1517,7 +1586,6 @@ class WorkflowViewProvider {
     promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
-    syncState();
   </script>
 </body>
 </html>`;
