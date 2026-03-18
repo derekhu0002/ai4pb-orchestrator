@@ -1,4 +1,4 @@
-﻿# Task And Issues For LLM
+# Task And Issues For LLM
 
 | Name | Problem | ProblemNotes | ResolverNotes | ProblemType | Status | Object_ID |
 | --- | --- | --- | --- | --- | --- | --- |
