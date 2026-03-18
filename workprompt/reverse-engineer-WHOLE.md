@@ -24,7 +24,7 @@ You have just completed the coding implementation for **the system of this proje
 **Constraint:**
 **DO NOT** output the full JSON. Provide a structured **Audit & Change Report** in a temporary markdown file `design\temp\audit.md` only. I will use this report to manually update my modeling tool.
 
-**Task 1: Traceability Recovery & Architecture Audit (The "Diff" Report)**
+**Task 1: Traceability Recovery & Architecture Audit**
 Compare the `design\KG\SystemArchitecture.json` content against your actual code implementation.
 
 *   **Traceability Recovery (CRITICAL):**
