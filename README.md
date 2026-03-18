@@ -179,6 +179,12 @@ AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
 
 当在 Chat 中 @Copilot 并引用 `#ai4pb-xxx` 时，Copilot 相当于获得了这套架构指南和专家级角色设定，不会偏题瞎写。
 
+## 4.4 扩展运行架构 (Extension Runtime Architecture)
+
+在 AI4PB Orchestrator 的底层交互架构中，用户在侧边栏的交互会通过视图层驱动底层的自动化路由：
+- **WorkflowViewProvider (视图层)**：负责呈现 AI4PB 专属的 SCRUM 活动面板，监听当前工作区的环境与架构文件状态，提供各类操作下达入口。
+- **AUTO Skill Router (自动技能路由层)**：当用户在 `WorkflowViewProvider` 中点击如“执行架构-代码对齐审计”等按钮时，视图层会向后台发出指令，触发 **AUTO Skill Router** 进行动态路由调度。Router 自动组装当前最新的 `SystemArchitecture.json` 作为上下文，利用 `Prompt Tool Registry Service` 将对应的系统级专家 Prompt 加载到 GitHub Copilot 的实际 Chat 会话中，从而实现免配置的一键式模型指令派发。
+
 # 5. SCRUM 敏捷执行工作流 (SCRUM Workflow)
 
 AI4PB 最核心的工作模式，即是依据下述按部就班的 SCRUM 步序进行 AI 辅助工程研发：
