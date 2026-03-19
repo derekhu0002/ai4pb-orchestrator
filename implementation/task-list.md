@@ -1,36 +1,33 @@
-# AI4PB 任务中心 (Task List)
+# AI4PB 综合任务清单
 
-**报告生成日期:** 2026-03-11
+## 头部信息
 
-## 任务概况概览
-- **总任务数**: 1
-- **状态分布**: Active (1)
-- **优先级分布**: Low (1)
+- 报告生成日期：2026-03-19
+- 总任务数：1
+- 状态分布：Active 1
+- 优先级分布：Low 1
 
----
+## 任务列表
 
-## 优先级任务列表
+| Task Name | Associated Component | Assignee(s) | Priority | Status | Start Date | Due Date | Days Until Due | Key Deliverable | Task Help Link |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| implement a router to adapt different ai coding agent. | Executor_Router (ID: 1227) | llm | Low | Active | 2026-3-18 | 2026-3-18 | -1 | 建立基于 .aicodingconfig 的代理执行路由。保持 Copilot 现有 prompt reference 链路不变，并补齐 OpenCode 的一次性 CLI 适配与错误透传。 | [2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md](taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md) |
 
-| Task Name                                                            | Associated Component | Assignee(s) | Priority | Status | Start Date | Due Date   | Days Until Due | Key Deliverable                            | Task Help Link                                                                                                              |
-| :------------------------------------------------------------------- | :------------------- | :---------- | :------- | :----- | :--------- | :--------- | :------------- | :----------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------- |
-| 在AUTO模式下，插件收到用户在输入框中的输入后，需要通过后台AI大模型进行分析并给出执行建议，当用户确认后自动发送给COPILOT执行 | AI4PB VS插件           | llm         | Low      | Active | 2026-3-11  | 1899-12-30 | N/A (无效截止日期)   | 完成自动模式意图分析及分发流程到Copilot的开发并实现Webview页面确认机制 | [2026-03-11_在AUTO模式下_...](taskhelpinfos/2026-03-11_在AUTO模式下_插件收到用户在输入框中的输入后_需要通过后台AI大模型进行分析并给出执行建议_当用户确认后自动发送给COPILOT执行.md) |
+## 汇总
 
----
+- 按状态统计：Active 1
+- 按优先级统计：Low 1
+- 按负责人统计：llm 1
 
-## 任务分布侧写摘要
+## 7日内到期任务
 
-### 状态分布计次
-- Active: 1
+- **implement a router to adapt different ai coding agent.**：已逾期 1 天，截止日期为 2026-3-18。
 
-### 优先级分布计次
-- Low: 1
+## 无负责人任务
 
-### 负责人分发计次
-- llm: 1
+- 无
 
-### 临期高危任务（7日内截止）
-- *暂无七日内到期的高优先级任务。*
+## 假设说明
 
-### 数据连贯性及缺口报警
-- *暂无未指定负责人的任务。*
-- *注：系统检测到 `1899-12-30` 的 Due Date 通常系 EA 等工具导出的默认占位空值，请留意此项以备重新规划。*
+- markdown 任务索引仅提供任务行与 ResolverNotes 上下文，负责人、优先级、起止日期等缺失字段已按 design/KG/SystemArchitecture.json 中 Executor_Router (1227) 的 project_info.tasks 回填。
+- Days Until Due 按当前会话日期 2026-03-19 计算；提示词内嵌日期与当前会话日期不一致时，以当前会话日期为准。

@@ -600,9 +600,9 @@
 "name": "implement a router to adapt different ai coding agent."
 ,"type": "ToDo"
 ,"status": "Active"
-,"description": "- .aicodingconfig 配置字段的具体 schema (有关 Agent 选择)配置字段为：{\"AGENT_ROUTER_CONFIG\": {\"default_agent\": \"copilot\", \"task_specific_agents\": {}}}，后续供人工核对。\r\n- 新代理明确使用OpenCode(见https://opencode.ai/docs/zh-cn/)，我希望使用它的CLI对它进行调用；"
+,"description": "- .aicodingconfig 配置字段的具体 schema (有关 Agent 选择)配置字段按任务说明采用最小假设：{\"AGENT_ROUTER_CONFIG\":{\"default_agent\":\"copilot\",\"task_specific_agents\":{}}}，并保留扩展位。\r\n- 新代理明确使用OpenCode(见https://opencode.ai/docs/zh-cn/)，我希望使用它的CLI对它进行调用；\r\n-  Copilot 继续使用现有 prompt reference，OpenCode 走独立命令执行链。\r\n- task_specific_agents 的键应按技能名进行匹配，以当前扩展已有技能标识为准，并在实现时统一归一化。\r\n- OpenCode CLI 的实际调用命令、参数格式、返回码约定、认证方式和 Windows 路径处理先实现命令构造与错误透传的适配层，待人工补充真实 CLI 契约。\r\n- OpenCode 适配本轮先支持一次性执行与错误透传；更高级的会话控制标记为后续增强项。"
 ,"start_date": "2026-3-18"
-,"due_date": "1899-12-30"
+,"due_date": "2026-3-18"
 ,"reporter": "derek"
 ,"priority": "Low",
 "assigned_to": "llm"
@@ -615,6 +615,12 @@
 "name": "Open Code AI Coding Agent"
 ,"type": "ArchiMate_ApplicationComponent"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Application/Application/Open Code AI Coding Agent"
+,"subdiagram_views": [
+{
+"view_id": "166",
+"view_name": "Open Code AI Coding Agent"
+}
+]
 },
 {
 "id": "1229",
@@ -634,6 +640,19 @@
 "view_name": "AI Coding Agent"
 }
 ]
+},
+{
+"id": "1231",
+"name": ".aicodingconfig"
+,"type": "ArchiMate_DataObject"
+,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Application/Application/AI4PB VS插件/.aicodingconfig"
+,"description": "{\r\n  \"EA_AUTOGEN_CONFIG\": {\r\n    \"needallmaintenace\": \"onlyActive\",\r\n    \"needbrowserlocation\": true,\r\n    \"maintenacetype\": \"forllm\"\r\n  },\r\n\"AGENT_ROUTER_CONFIG\":{\"default_agent\":\"copilot\",\"task_specific_agents\":{}}\r\n}"
+},
+{
+"id": "1232",
+"name": "OpenCode CLI 适配器"
+,"type": "ArchiMate_ApplicationComponent"
+,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Application/Application/Open Code AI Coding Agent/OpenCode CLI 适配器"
 }
 ],
 "relationships": [
@@ -1432,7 +1451,8 @@
 ,"parent_element_name": "AI4PB VS插件"
 ,"included_elements": [
 "1213",
-"1209"
+"1209",
+"1231"
 ]
 ,"included_relationships": [
 "1098"
@@ -1470,6 +1490,19 @@
 "1106",
 "1107",
 "1108"
+]
+},
+{
+"view_id": "166",
+"view_name": "Open Code AI Coding Agent"
+,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Application/Application/Open Code AI Coding Agent/Open Code AI Coding Agent"
+,"parent_element_id": "1228"
+,"parent_element_name": "Open Code AI Coding Agent"
+,"included_elements": [
+"1232"
+]
+,"included_relationships": [
+
 ]
 },
 {
