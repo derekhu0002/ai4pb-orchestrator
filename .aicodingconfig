@@ -6,6 +6,17 @@
   },
   "AGENT_ROUTER_CONFIG": {
     "default_agent": "copilot",
-    "task_specific_agents": {}
+    "task_specific_agents": {
+      "task-list": "opencode"
+    },
+    "opencode": {
+      "transport": "server",
+      "timeoutMs": 600000,
+      "server": {
+        "baseUrl": "http://127.0.0.1:4096",
+        "directory": "{workspaceRoot}",
+        "sessionTitle": "AI4PB {label}"
+      }
+    }
   }
 }

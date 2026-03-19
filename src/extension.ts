@@ -1,17 +1,37 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
+import * as http from 'http';
+import * as https from 'https';
 import * as path from 'path';
 
 type AgentExecutor = 'copilot' | 'opencode';
 
+type OpenCodeTransport = 'cli' | 'server';
+
+type OpenCodeExecutionHost = 'native' | 'wsl' | 'auto';
+
+type OpenCodeServerConfig = {
+  baseUrl?: string;
+  username?: string;
+  password?: string;
+  sessionTitle?: string;
+  directory?: string;
+  workspace?: string;
+};
+
 type OpenCodeCliConfig = {
+  transport?: string;
   command?: string;
   args?: string[];
   cwd?: string;
   env?: Record<string, string>;
   timeoutMs?: number;
   promptToStdin?: boolean;
+  executionHost?: string;
+  wslDistribution?: string;
+  wslUseLoginShell?: boolean;
+  server?: OpenCodeServerConfig;
 };
 
 type AgentRouterConfig = {
@@ -685,6 +705,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const flowsJson = JSON.stringify(WORKFLOW_FLOW_OPTIONS);
     const helpUrlsJson = JSON.stringify(HELP_URLS);
     const initialStateJson = JSON.stringify(initialState);
+    const skillAgentLabelsJson = JSON.stringify(getSkillAgentDisplayMapForWorkspace());
     const versionText = this.extensionVersion;
     return `<!DOCTYPE html>
 <html lang="en">
@@ -939,6 +960,23 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       flex-wrap: wrap;
       gap: 6px;
     }
+    .skill-chip-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .agent-badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid color-mix(in srgb, var(--vscode-button-background) 40%, transparent);
+      border-radius: 999px;
+      padding: 1px 7px;
+      background: color-mix(in srgb, var(--vscode-button-background) 16%, var(--chat-panel));
+      font-size: 10px;
+      line-height: 1.35;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
     .skill-chip {
       border: 1px solid var(--chat-border);
       background: color-mix(in srgb, var(--chat-panel) 76%, transparent);
@@ -1117,7 +1155,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       <textarea id="promptInput" placeholder="输入业务诉求，或先选择一个流程环节再发送。"></textarea>
       <div class="composer-row">
         <div class="button-with-help">
-          <button id="sendBtn" class="send-btn">发送至 Copilot</button>
+          <button id="sendBtn" class="send-btn">发送至当前代理</button>
           <button id="sendHelpBtn" class="help-btn" title="查看发送帮助">?</button>
         </div>
       </div>
@@ -1131,6 +1169,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const flows = ${flowsJson};
     const helpUrls = ${helpUrlsJson};
     const initialState = ${initialStateJson};
+    const skillAgentLabels = ${skillAgentLabelsJson};
     const restoredState = initialState;
     const state = {
       activeMenu: restoredState.activeMenu || (restoredState.expandedConfig ? 'config' : (restoredState.selectedFlow || restoredState.expandedFlow ? 'flow' : 'auto')),
@@ -1152,6 +1191,18 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
     const sendHelpBtn = document.getElementById('sendHelpBtn');
+
+    function getAgentLabelForSkill(skillKey) {
+      if (!skillKey) {
+        return '当前代理';
+      }
+      return skillAgentLabels[skillKey] || '当前代理';
+    }
+
+    function updateSendButtonLabel() {
+      const effectiveSkill = state.activeMenu === 'flow' ? state.selectedSkill : null;
+      sendBtn.textContent = effectiveSkill ? ('发送至 ' + getAgentLabelForSkill(effectiveSkill)) : '发送至当前代理';
+    }
 
     function getStatusIcon(kind) {
       if (kind === 'mode') {
@@ -1382,7 +1433,8 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         renderStatusBanner('当前工作状态', [
           { kind: 'mode', text: '已确认流程' },
           { kind: 'flow', text: currentFlow.label },
-          { kind: 'step', text: currentStep.label }
+          { kind: 'step', text: currentStep.label },
+          { kind: 'hint', text: '执行代理: ' + getAgentLabelForSkill(currentStep.key) }
         ]);
         return;
       }
@@ -1601,7 +1653,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         const button = document.createElement('button');
         const isActive = state.selectedFlow === expandedFlow.key && state.selectedSkill === step.key;
         button.className = 'skill-chip flow-step' + (isActive ? ' active' : '');
-        button.textContent = String(index + 1) + '. ' + step.label;
+        button.innerHTML = '<span class="skill-chip-content"><span>' + String(index + 1) + '. ' + step.label + '</span><span class="agent-badge">' + getAgentLabelForSkill(step.key) + '</span></span>';
         button.addEventListener('click', () => {
           state.activeMenu = 'flow';
           state.confirmedMenu = 'flow';
@@ -1617,6 +1669,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       });
 
       panel.appendChild(row);
+
       contextShell.appendChild(panel);
     }
 
@@ -1635,7 +1688,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         const currentStep = getCurrentStep();
         const flowText = currentFlow ? currentFlow.label : '未命名流程';
         const stepText = currentStep ? currentStep.label : effectiveSkill;
-        appendBubble('ai', '已提交到 Copilot，当前流程: ' + flowText + '，当前环节: ' + stepText + '。');
+        appendBubble('ai', '已提交到' + getAgentLabelForSkill(effectiveSkill) + '，当前流程: ' + flowText + '，当前环节: ' + stepText + '。');
       } else {
         appendBubble('ai', '智能路由分析中，请稍候...');
       }
@@ -1660,6 +1713,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         promptInput.value = state.draftText;
         renderSkills();
         updateSkillMeta();
+        updateSendButtonLabel();
         return;
       }
       if (message.type === 'autoSuggestion') {
@@ -1671,7 +1725,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         return;
       }
       if (message.type === 'autoDispatchDone') {
-        appendBubble('ai', '已确认并发送到 Copilot，执行技能: ' + message.skillLabel + '。');
+        appendBubble('ai', '已确认并发送到' + getAgentLabelForSkill(message.skill) + '，执行技能: ' + message.skillLabel + '。');
         return;
       }
       if (message.type === 'autoAnalysisError') {
@@ -1756,6 +1810,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
+    updateSendButtonLabel();
   </script>
 </body>
 </html>`;
@@ -1909,10 +1964,24 @@ type AutoSkillSuggestion = {
   reason: string;
 };
 
+type EffectiveOpenCodeServerConfig = {
+  baseUrl: string;
+  username: string;
+  password: string;
+  sessionTitle: string;
+  directory: string;
+  workspace: string;
+};
+
+type EffectiveOpenCodeConfig = Required<Omit<OpenCodeCliConfig, 'transport' | 'server'>> & {
+  transport: OpenCodeTransport;
+  server: EffectiveOpenCodeServerConfig;
+};
+
 type EffectiveAgentRouterConfig = {
   defaultAgent: AgentExecutor;
   taskSpecificAgents: Record<string, AgentExecutor>;
-  opencode: Required<OpenCodeCliConfig>;
+  opencode: EffectiveOpenCodeConfig;
 };
 
 type OpenCodeExecutionContext = {
@@ -1923,19 +1992,56 @@ type OpenCodeExecutionContext = {
 };
 
 type OpenCodeInvocation = {
+  transport: OpenCodeTransport;
   command: string;
   args: string[];
   cwd: string;
   env: NodeJS.ProcessEnv;
+  configuredEnv: Record<string, string>;
   promptToStdin: boolean;
   promptPayload: string;
   timeoutMs: number;
+  executionHost: OpenCodeExecutionHost;
+  wslDistribution?: string;
+  wslUseLoginShell: boolean;
+  serverBaseUrl: string;
+  serverUsername: string;
+  serverPassword: string;
+  serverSessionTitle: string;
+  serverDirectory: string;
+  serverWorkspace: string;
 };
 
 type OpenCodeCommandResult = {
   exitCode: number;
   stdout: string;
   stderr: string;
+};
+
+type OpenCodeStreamHandlers = {
+  onStdoutChunk?: (chunk: string) => void;
+  onStderrChunk?: (chunk: string) => void;
+};
+
+type OpenCodeServerHealth = {
+  healthy?: boolean;
+  version?: string;
+};
+
+type OpenCodeServerSession = {
+  id?: string;
+  title?: string;
+};
+
+type OpenCodeServerPromptResponse = {
+  info?: {
+    id?: string;
+    error?: {
+      name?: string;
+      message?: string;
+    };
+  };
+  parts?: unknown[];
 };
 
 // @ArchitectureID: 1209
@@ -2170,6 +2276,232 @@ function normalizeSkillRoutingKey(value?: string): string | undefined {
   return trimmed.toLowerCase().replace(/[\s_]+/g, '-');
 }
 
+function normalizeOpenCodeExecutionHost(value?: string): OpenCodeExecutionHost | undefined {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'native':
+      return 'native';
+    case 'wsl':
+      return 'wsl';
+    case 'auto':
+      return 'auto';
+    default:
+      return undefined;
+  }
+}
+
+function normalizeOpenCodeTransport(value?: string): OpenCodeTransport | undefined {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'cli':
+      return 'cli';
+    case 'server':
+      return 'server';
+    default:
+      return undefined;
+  }
+}
+
+function isBareCommandName(command: string): boolean {
+  return !/[\\/]/.test(command) && path.basename(command) === command;
+}
+
+function toWslPath(inputPath: string): string {
+  if (!inputPath) {
+    return inputPath;
+  }
+
+  const normalized = inputPath.replace(/\\/g, '/');
+  const driveMatch = normalized.match(/^([A-Za-z]):\/(.*)$/);
+  if (driveMatch) {
+    const driveLetter = driveMatch[1].toLowerCase();
+    const rest = driveMatch[2] ?? '';
+    return `/mnt/${driveLetter}/${rest}`;
+  }
+
+  return normalized;
+}
+
+function quotePosixShellArg(value: string): string {
+  if (value.length === 0) {
+    return "''";
+  }
+
+  return `'${value.replace(/'/g, `'"'"'`)}'`;
+}
+
+function isCommandNotFoundFailure(errorText: string, exitCode: number): boolean {
+  if (exitCode === 127) {
+    return true;
+  }
+
+  return /(command not found|not recognized as an internal or external command|no such file or directory)/i.test(errorText);
+}
+
+function stripKnownWslWarnings(text: string): string {
+  if (!text) {
+    return text;
+  }
+
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !/^wsl:/i.test(line.trim()))
+    .join('\n')
+    .trim();
+}
+
+function decodeProcessChunk(chunk: Buffer | string): string {
+  if (typeof chunk === 'string') {
+    return chunk;
+  }
+
+  if (chunk.length >= 2) {
+    let nullByteCount = 0;
+    for (let index = 1; index < chunk.length; index += 2) {
+      if (chunk[index] === 0) {
+        nullByteCount += 1;
+      }
+    }
+
+    if (nullByteCount >= Math.floor(chunk.length / 4)) {
+      return chunk.toString('utf16le').replace(/\u0000/g, '');
+    }
+  }
+
+  return chunk.toString('utf8');
+}
+
+function normalizeOpenCodeBaseUrl(value?: string): string {
+  const trimmed = (value ?? '').trim();
+  const fallback = 'http://127.0.0.1:4096';
+  return (trimmed || fallback).replace(/\/+$/, '');
+}
+
+function buildOpenCodeServerUrl(baseUrl: string, routePath: string, query?: Record<string, string>): string {
+  const url = new URL(routePath, `${normalizeOpenCodeBaseUrl(baseUrl)}/`);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value.trim().length > 0) {
+        url.searchParams.set(key, value);
+      }
+    }
+  }
+
+  return url.toString();
+}
+
+function buildOpenCodeServerAuthHeader(username: string, password: string): string | undefined {
+  if (!password) {
+    return undefined;
+  }
+
+  const resolvedUsername = username || 'opencode';
+  return `Basic ${Buffer.from(`${resolvedUsername}:${password}`, 'utf8').toString('base64')}`;
+}
+
+function summarizeHttpErrorBody(bodyText: string): string {
+  const compact = bodyText.replace(/\s+/g, ' ').trim();
+  if (!compact) {
+    return '<empty>';
+  }
+  return compact.length > 400 ? `${compact.slice(0, 400)}...` : compact;
+}
+
+function extractTextFromOpenCodeParts(parts: unknown[]): string {
+  const texts: string[] = [];
+
+  for (const part of parts) {
+    if (!part || typeof part !== 'object') {
+      continue;
+    }
+
+    const candidate = part as Record<string, unknown>;
+    if (typeof candidate.text === 'string' && candidate.text.trim().length > 0) {
+      texts.push(candidate.text.trim());
+    }
+  }
+
+  return texts.join('\n\n').trim();
+}
+
+function requestOpenCodeServer(
+  method: string,
+  urlString: string,
+  headers: Record<string, string>,
+  bodyText: string | undefined,
+  timeoutMs: number
+): Promise<{ statusCode: number; bodyText: string }> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlString);
+    const isHttps = url.protocol === 'https:';
+    const requestHeaders = { ...headers };
+    if (bodyText !== undefined) {
+      requestHeaders['Content-Type'] = requestHeaders['Content-Type'] ?? 'application/json';
+      requestHeaders['Content-Length'] = Buffer.byteLength(bodyText, 'utf8').toString();
+    }
+
+    const requestOptions: http.RequestOptions = {
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port ? Number(url.port) : undefined,
+      path: `${url.pathname}${url.search}`,
+      method,
+      headers: requestHeaders
+    };
+
+    const requestImpl = isHttps ? https.request : http.request;
+    const req = requestImpl(requestOptions, (response) => {
+      const chunks: Buffer[] = [];
+      response.on('data', (chunk: Buffer | string) => {
+        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+      });
+      response.on('end', () => {
+        resolve({
+          statusCode: response.statusCode ?? 0,
+          bodyText: Buffer.concat(chunks).toString('utf8')
+        });
+      });
+    });
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`OpenCode server request timed out after ${timeoutMs}ms.`));
+    });
+
+    req.on('error', reject);
+
+    if (bodyText !== undefined) {
+      req.write(bodyText);
+    }
+
+    req.end();
+  });
+}
+
+async function requestOpenCodeServerJson<T>(
+  method: string,
+  urlString: string,
+  headers: Record<string, string>,
+  body: unknown,
+  timeoutMs: number
+): Promise<T> {
+  const bodyText = body === undefined ? undefined : JSON.stringify(body);
+  const response = await requestOpenCodeServer(method, urlString, headers, bodyText, timeoutMs);
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    const pathLabel = `${method} ${new URL(urlString).pathname}`;
+    throw new Error(`OpenCode server ${pathLabel} failed with status ${response.statusCode}: ${summarizeHttpErrorBody(response.bodyText)}`);
+  }
+
+  if (!response.bodyText.trim()) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(response.bodyText) as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`OpenCode server returned invalid JSON for ${method} ${new URL(urlString).pathname}: ${message}`);
+  }
+}
+
 // @ArchitectureID: 1231
 function getEffectiveAgentRouterConfig(config?: AiConfig): EffectiveAgentRouterConfig {
   const routerConfig = config?.AGENT_ROUTER_CONFIG;
@@ -2189,17 +2521,34 @@ function getEffectiveAgentRouterConfig(config?: AiConfig): EffectiveAgentRouterC
   );
 
   const opencode = routerConfig?.opencode;
+  const opencodeServer = opencode?.server;
 
   return {
     defaultAgent,
     taskSpecificAgents,
     opencode: {
+      transport: normalizeOpenCodeTransport(opencode?.transport) ?? 'cli',
       command: typeof opencode?.command === 'string' && opencode.command.trim().length > 0 ? opencode.command : 'opencode',
-      args: Array.isArray(opencode?.args) && opencode.args.length > 0 ? opencode.args : ['run', '--prompt', '{prompt}'],
+      args: Array.isArray(opencode?.args) && opencode.args.length > 0 ? opencode.args : ['run', '{prompt}'],
       cwd: typeof opencode?.cwd === 'string' && opencode.cwd.trim().length > 0 ? opencode.cwd : '{workspaceRoot}',
       env: opencode?.env ?? {},
-      timeoutMs: typeof opencode?.timeoutMs === 'number' && opencode.timeoutMs > 0 ? opencode.timeoutMs : 120000,
-      promptToStdin: typeof opencode?.promptToStdin === 'boolean' ? opencode.promptToStdin : false
+      timeoutMs: typeof opencode?.timeoutMs === 'number' && opencode.timeoutMs > 0 ? opencode.timeoutMs : 600000,
+      promptToStdin: typeof opencode?.promptToStdin === 'boolean' ? opencode.promptToStdin : false,
+      executionHost: normalizeOpenCodeExecutionHost(opencode?.executionHost) ?? (process.platform === 'win32' ? 'auto' : 'native'),
+      wslDistribution: typeof opencode?.wslDistribution === 'string' && opencode.wslDistribution.trim().length > 0 ? opencode.wslDistribution.trim() : '',
+      wslUseLoginShell: typeof opencode?.wslUseLoginShell === 'boolean' ? opencode.wslUseLoginShell : true,
+      server: {
+        baseUrl: normalizeOpenCodeBaseUrl(opencodeServer?.baseUrl),
+        username: typeof opencodeServer?.username === 'string' ? opencodeServer.username.trim() : '',
+        password: typeof opencodeServer?.password === 'string' ? opencodeServer.password : '',
+        sessionTitle: typeof opencodeServer?.sessionTitle === 'string' && opencodeServer.sessionTitle.trim().length > 0
+          ? opencodeServer.sessionTitle
+          : 'AI4PB {label}',
+        directory: typeof opencodeServer?.directory === 'string' && opencodeServer.directory.trim().length > 0
+          ? opencodeServer.directory
+          : '{workspaceRoot}',
+        workspace: typeof opencodeServer?.workspace === 'string' ? opencodeServer.workspace : ''
+      }
     }
   };
 }
@@ -2213,6 +2562,26 @@ function resolveAgentExecutorForSkill(skill: SkillKey | undefined, config?: AiCo
   }
 
   return routerConfig.defaultAgent;
+}
+
+function getAgentDisplayLabel(agent: AgentExecutor): string {
+  return agent === 'opencode' ? 'OpenCode' : 'Copilot';
+}
+
+function buildSkillAgentDisplayMap(config?: AiConfig): Record<SkillKey, string> {
+  return (Object.keys(SKILL_PROMPT_REFERENCE) as SkillKey[]).reduce<Record<SkillKey, string>>((accumulator, skill) => {
+    accumulator[skill] = getAgentDisplayLabel(resolveAgentExecutorForSkill(skill, config));
+    return accumulator;
+  }, {} as Record<SkillKey, string>);
+}
+
+function getSkillAgentDisplayMapForWorkspace(): Record<SkillKey, string> {
+  try {
+    const root = getWorkspaceRoot();
+    return buildSkillAgentDisplayMap(loadAiConfig(root));
+  } catch {
+    return buildSkillAgentDisplayMap(undefined);
+  }
 }
 
 // @ArchitectureID: 1232
@@ -2229,28 +2598,119 @@ function replaceOpenCodeTemplate(input: string, context: OpenCodeExecutionContex
 function buildOpenCodeInvocation(context: OpenCodeExecutionContext, config?: AiConfig): OpenCodeInvocation {
   const routerConfig = getEffectiveAgentRouterConfig(config);
   const opencodeConfig = routerConfig.opencode;
-  const env = Object.entries(opencodeConfig.env).reduce<NodeJS.ProcessEnv>((accumulator, [key, value]) => {
+  const configuredEnv = Object.entries(opencodeConfig.env).reduce<Record<string, string>>((accumulator, [key, value]) => {
     accumulator[key] = replaceOpenCodeTemplate(value, context);
+    return accumulator;
+  }, {});
+  const env = Object.entries(configuredEnv).reduce<NodeJS.ProcessEnv>((accumulator, [key, value]) => {
+    accumulator[key] = value;
     return accumulator;
   }, { ...process.env });
 
   return {
+    transport: opencodeConfig.transport,
     command: replaceOpenCodeTemplate(opencodeConfig.command, context),
     args: opencodeConfig.args.map((arg) => replaceOpenCodeTemplate(arg, context)),
     cwd: replaceOpenCodeTemplate(opencodeConfig.cwd, context),
     env,
+    configuredEnv,
     promptToStdin: opencodeConfig.promptToStdin,
     promptPayload: context.seedText,
-    timeoutMs: opencodeConfig.timeoutMs
+    timeoutMs: opencodeConfig.timeoutMs,
+    executionHost: normalizeOpenCodeExecutionHost(opencodeConfig.executionHost) ?? (process.platform === 'win32' ? 'auto' : 'native'),
+    wslDistribution: opencodeConfig.wslDistribution || undefined,
+    wslUseLoginShell: opencodeConfig.wslUseLoginShell,
+    serverBaseUrl: replaceOpenCodeTemplate(opencodeConfig.server.baseUrl, context),
+    serverUsername: replaceOpenCodeTemplate(opencodeConfig.server.username, context),
+    serverPassword: replaceOpenCodeTemplate(opencodeConfig.server.password, context),
+    serverSessionTitle: replaceOpenCodeTemplate(opencodeConfig.server.sessionTitle, context),
+    serverDirectory: replaceOpenCodeTemplate(opencodeConfig.server.directory, context),
+    serverWorkspace: replaceOpenCodeTemplate(opencodeConfig.server.workspace, context)
+  };
+}
+
+async function runOpenCodeServerInvocation(
+  invocation: OpenCodeInvocation,
+  streamHandlers?: OpenCodeStreamHandlers
+): Promise<OpenCodeCommandResult> {
+  const authHeader = buildOpenCodeServerAuthHeader(invocation.serverUsername, invocation.serverPassword);
+  const headers: Record<string, string> = authHeader ? { Authorization: authHeader } : {};
+
+  streamHandlers?.onStdoutChunk?.(`Connecting to OpenCode server: ${invocation.serverBaseUrl}\n`);
+  const health = await requestOpenCodeServerJson<OpenCodeServerHealth>(
+    'GET',
+    buildOpenCodeServerUrl(invocation.serverBaseUrl, '/global/health'),
+    headers,
+    undefined,
+    invocation.timeoutMs
+  );
+
+  if (!health?.healthy) {
+    throw new Error(`OpenCode server is unhealthy at ${invocation.serverBaseUrl}.`);
+  }
+
+  streamHandlers?.onStdoutChunk?.(`OpenCode server healthy, version=${health.version ?? 'unknown'}\n`);
+  const session = await requestOpenCodeServerJson<OpenCodeServerSession>(
+    'POST',
+    buildOpenCodeServerUrl(invocation.serverBaseUrl, '/session'),
+    headers,
+    { title: invocation.serverSessionTitle },
+    invocation.timeoutMs
+  );
+
+  if (!session?.id) {
+    throw new Error('OpenCode server did not return a session id.');
+  }
+
+  streamHandlers?.onStdoutChunk?.(`OpenCode session created: ${session.id}\n`);
+  const promptResponse = await requestOpenCodeServerJson<OpenCodeServerPromptResponse>(
+    'POST',
+    buildOpenCodeServerUrl(invocation.serverBaseUrl, `/session/${encodeURIComponent(session.id)}/message`, {
+      directory: invocation.serverDirectory,
+      workspace: invocation.serverWorkspace
+    }),
+    headers,
+    {
+      parts: [{ type: 'text', text: invocation.promptPayload }]
+    },
+    invocation.timeoutMs
+  );
+
+  const responseText = extractTextFromOpenCodeParts(promptResponse.parts ?? []);
+  const responseError = promptResponse.info?.error?.message?.trim() ?? '';
+
+  if (responseError) {
+    streamHandlers?.onStderrChunk?.(`${responseError}\n`);
+    return {
+      exitCode: 1,
+      stdout: responseText,
+      stderr: responseError
+    };
+  }
+
+  streamHandlers?.onStdoutChunk?.(`OpenCode server response received for session ${session.id}\n`);
+  return {
+    exitCode: 0,
+    stdout: responseText || JSON.stringify(promptResponse, null, 2),
+    stderr: ''
   };
 }
 
 // @ArchitectureID: 1232
-function runOpenCodeInvocation(invocation: OpenCodeInvocation): Promise<OpenCodeCommandResult> {
+function executeOpenCodeSpawn(
+  command: string,
+  args: string[],
+  cwd: string | undefined,
+  env: NodeJS.ProcessEnv,
+  promptToStdin: boolean,
+  promptPayload: string,
+  timeoutMs: number,
+  streamHandlers?: OpenCodeStreamHandlers
+): Promise<OpenCodeCommandResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(invocation.command, invocation.args, {
-      cwd: invocation.cwd,
-      env: invocation.env,
+    const child = spawn(command, args, {
+      cwd,
+      env,
       shell: false,
       windowsHide: true
     });
@@ -2262,14 +2722,18 @@ function runOpenCodeInvocation(invocation: OpenCodeInvocation): Promise<OpenCode
     const timer = setTimeout(() => {
       didTimeOut = true;
       child.kill();
-    }, invocation.timeoutMs);
+    }, timeoutMs);
 
     child.stdout.on('data', (chunk: Buffer | string) => {
-      stdout += chunk.toString();
+      const text = decodeProcessChunk(chunk);
+      stdout += text;
+      streamHandlers?.onStdoutChunk?.(text);
     });
 
     child.stderr.on('data', (chunk: Buffer | string) => {
-      stderr += chunk.toString();
+      const text = decodeProcessChunk(chunk);
+      stderr += text;
+      streamHandlers?.onStderrChunk?.(text);
     });
 
     child.on('error', (error) => {
@@ -2279,23 +2743,94 @@ function runOpenCodeInvocation(invocation: OpenCodeInvocation): Promise<OpenCode
 
     child.on('close', (code) => {
       clearTimeout(timer);
+      const normalizedStdout = stdout.trim();
+      const normalizedStderr = stripKnownWslWarnings(stderr);
       if (didTimeOut) {
-        reject(new Error(`OpenCode CLI timed out after ${invocation.timeoutMs}ms. stdout=${stdout.trim() || '<empty>'}; stderr=${stderr.trim() || '<empty>'}`));
+        reject(new Error(`OpenCode CLI timed out after ${timeoutMs}ms. stdout=${normalizedStdout || '<empty>'}; stderr=${normalizedStderr || '<empty>'}`));
         return;
       }
 
       resolve({
         exitCode: code ?? -1,
-        stdout: stdout.trim(),
-        stderr: stderr.trim()
+        stdout: normalizedStdout,
+        stderr: normalizedStderr
       });
     });
 
-    if (invocation.promptToStdin && child.stdin) {
-      child.stdin.write(invocation.promptPayload);
+    if (promptToStdin && child.stdin) {
+      child.stdin.write(promptPayload);
       child.stdin.end();
     }
   });
+}
+
+function buildWslOpenCodeSpawn(invocation: OpenCodeInvocation): { command: string; args: string[]; env: NodeJS.ProcessEnv } {
+  const segments: string[] = [];
+  const wslCwd = toWslPath(invocation.cwd);
+  if (wslCwd) {
+    segments.push(`cd ${quotePosixShellArg(wslCwd)}`);
+  }
+
+  // Avoid login-shell MOTD noise and ensure the default OpenCode install path is available.
+  segments.push('export PATH="$HOME/.opencode/bin:$PATH"');
+
+  const envSegments = Object.entries(invocation.configuredEnv).map(
+    ([key, value]) => `${key}=${quotePosixShellArg(value)}`
+  );
+  const commandSegments = [invocation.command, ...invocation.args].map((part) => quotePosixShellArg(part));
+  const execSegment = `${envSegments.join(' ')} ${commandSegments.join(' ')}`.trim();
+  segments.push(execSegment);
+
+  const args: string[] = [];
+  if (invocation.wslDistribution) {
+    args.push('--distribution', invocation.wslDistribution);
+  }
+  args.push('bash', '-lc', segments.join(' && '));
+
+  return {
+    command: 'wsl.exe',
+    args,
+    env: { ...process.env }
+  };
+}
+
+async function runOpenCodeInvocation(invocation: OpenCodeInvocation, streamHandlers?: OpenCodeStreamHandlers): Promise<OpenCodeCommandResult> {
+  if (invocation.transport === 'server') {
+    return runOpenCodeServerInvocation(invocation, streamHandlers);
+  }
+
+  const shouldTryWslFirst =
+    invocation.executionHost === 'wsl' ||
+    (invocation.executionHost === 'auto' && process.platform === 'win32' && isBareCommandName(invocation.command));
+
+  if (shouldTryWslFirst) {
+    const wslSpawn = buildWslOpenCodeSpawn(invocation);
+    const wslResult = await executeOpenCodeSpawn(
+      wslSpawn.command,
+      wslSpawn.args,
+      undefined,
+      wslSpawn.env,
+      false,
+      invocation.promptPayload,
+      invocation.timeoutMs,
+      streamHandlers
+    );
+
+    if (invocation.executionHost === 'wsl' || !isCommandNotFoundFailure(`${wslResult.stdout}\n${wslResult.stderr}`, wslResult.exitCode)) {
+      return wslResult;
+    }
+  }
+
+  return executeOpenCodeSpawn(
+    invocation.command,
+    invocation.args,
+    invocation.cwd,
+    invocation.env,
+    invocation.promptToStdin,
+    invocation.promptPayload,
+    invocation.timeoutMs,
+    streamHandlers
+  );
 }
 
 function getWorkspaceRoot(): string {
@@ -3099,11 +3634,37 @@ async function openOpenCodeWithPrompt(
 ): Promise<void> {
   const invocation = buildOpenCodeInvocation({ root, seedText, label, skill }, config);
 
-  output.appendLine(`[AI4PB] OpenCode command: ${invocation.command} ${invocation.args.join(' ')}`);
-  output.appendLine(`[AI4PB] OpenCode cwd: ${invocation.cwd}`);
+  output.show(true);
+  output.appendLine(`[AI4PB] OpenCode transport: ${invocation.transport}`);
+  if (invocation.transport === 'server') {
+    output.appendLine(`[AI4PB] OpenCode server: ${invocation.serverBaseUrl}`);
+    output.appendLine(`[AI4PB] OpenCode server directory: ${invocation.serverDirectory}`);
+    if (invocation.serverWorkspace) {
+      output.appendLine(`[AI4PB] OpenCode server workspace: ${invocation.serverWorkspace}`);
+    }
+  } else {
+    output.appendLine(`[AI4PB] OpenCode command: ${invocation.command} ${invocation.args.join(' ')}`);
+    output.appendLine(`[AI4PB] OpenCode cwd: ${invocation.cwd}`);
+    output.appendLine(`[AI4PB] OpenCode execution host: ${invocation.executionHost}`);
+    if (invocation.wslDistribution) {
+      output.appendLine(`[AI4PB] OpenCode WSL distribution: ${invocation.wslDistribution}`);
+    }
+  }
+  output.appendLine('[AI4PB] OpenCode stream started');
 
   try {
-    const result = await runOpenCodeInvocation(invocation);
+    const result = await runOpenCodeInvocation(invocation, {
+      onStdoutChunk: (chunk) => {
+        output.append(`[AI4PB][OpenCode stdout] ${chunk}`);
+      },
+      onStderrChunk: (chunk) => {
+        const cleanedChunk = stripKnownWslWarnings(chunk);
+        if (cleanedChunk) {
+          output.append(`[AI4PB][OpenCode stderr] ${cleanedChunk}`);
+        }
+      }
+    });
+    output.appendLine('\n[AI4PB] OpenCode stream completed');
     if (result.stdout) {
       output.appendLine(`[AI4PB] OpenCode stdout:\n${result.stdout}`);
     }
@@ -3118,11 +3679,11 @@ async function openOpenCodeWithPrompt(
       return;
     }
 
-    void vscode.window.showInformationMessage(`AI4PB routed ${label} to OpenCode CLI successfully.`);
+    void vscode.window.showInformationMessage(`AI4PB routed ${label} to OpenCode successfully.`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.appendLine(`[AI4PB] OpenCode execution failed: ${message}`);
-    void vscode.window.showErrorMessage(`AI4PB failed to execute OpenCode CLI: ${message}`);
+    void vscode.window.showErrorMessage(`AI4PB failed to execute OpenCode: ${message}`);
   }
 }
 
