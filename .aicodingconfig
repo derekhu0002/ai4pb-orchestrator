@@ -3,5 +3,9 @@
     "needallmaintenace": "onlyActive",
     "needbrowserlocation": true,
     "maintenacetype": "forllm"
+  },
+  "AGENT_ROUTER_CONFIG": {
+    "default_agent": "copilot",
+    "task_specific_agents": {}
   }
 }

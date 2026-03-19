@@ -1,6 +1,24 @@
 import * as vscode from 'vscode';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+
+type AgentExecutor = 'copilot' | 'opencode';
+
+type OpenCodeCliConfig = {
+  command?: string;
+  args?: string[];
+  cwd?: string;
+  env?: Record<string, string>;
+  timeoutMs?: number;
+  promptToStdin?: boolean;
+};
+
+type AgentRouterConfig = {
+  default_agent?: string;
+  task_specific_agents?: Record<string, string>;
+  opencode?: OpenCodeCliConfig;
+};
 
 type AiConfig = {
   EA_AUTOGEN_CONFIG?: {
@@ -12,6 +30,7 @@ type AiConfig = {
     maintenacetype?: string;
     architectureJsonPath?: string;
   };
+  AGENT_ROUTER_CONFIG?: AgentRouterConfig;
 };
 
 type MaintenanceScope = 'onlyActive' | 'ActiveAndVerified' | 'All';
@@ -25,7 +44,8 @@ type GuidedOptions = {
 const RELATIVE_PATHS = {
   architectureJson: 'design/KG/SystemArchitecture.json',
   designTasksDir: 'design/tasks',
-  aiConfig: '.aicodingconfig'
+  aiConfig: '.aicodingconfig',
+  aiConfigJson: '.aicodingconfig.json'
 };
 
 const BUNDLED_PATHS = {
@@ -475,7 +495,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     if (explicitSkill) {
       const seedText = buildSkillSeedText(explicitSkill, text);
-      await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[explicitSkill]} skill`);
+      await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[explicitSkill]} skill`, explicitSkill);
       return;
     }
 
@@ -505,7 +525,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const text = (rawText ?? '').trim();
     const selectedSkill = normalizeSkillKey(rawSkill) ?? inferSkillFromText(text);
     const seedText = buildSkillSeedText(selectedSkill, text);
-    await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[selectedSkill]} skill (auto confirmed)`);
+    await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[selectedSkill]} skill (auto confirmed)`, selectedSkill);
     await this.postMessage({
       type: 'autoDispatchDone',
       skill: selectedSkill,
@@ -1889,6 +1909,35 @@ type AutoSkillSuggestion = {
   reason: string;
 };
 
+type EffectiveAgentRouterConfig = {
+  defaultAgent: AgentExecutor;
+  taskSpecificAgents: Record<string, AgentExecutor>;
+  opencode: Required<OpenCodeCliConfig>;
+};
+
+type OpenCodeExecutionContext = {
+  root: string;
+  seedText: string;
+  label: string;
+  skill?: SkillKey;
+};
+
+type OpenCodeInvocation = {
+  command: string;
+  args: string[];
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  promptToStdin: boolean;
+  promptPayload: string;
+  timeoutMs: number;
+};
+
+type OpenCodeCommandResult = {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+};
+
 // @ArchitectureID: 1209
 async function analyzeAutoSkillSuggestions(userText: string): Promise<AutoSkillSuggestion[]> {
   const fallback = buildFallbackAutoSkillSuggestions(userText);
@@ -2089,6 +2138,166 @@ function buildSkillSeedText(skill: SkillKey, userText: string): string {
   return lines.join('\n');
 }
 
+// @ArchitectureID: 1227
+function normalizeAgentExecutor(value?: string): AgentExecutor | undefined {
+  const normalized = (value ?? '').trim().toLowerCase();
+  switch (normalized) {
+    case 'copilot':
+    case 'github-copilot':
+    case 'github copilot':
+      return 'copilot';
+    case 'opencode':
+    case 'open-code':
+    case 'open code':
+      return 'opencode';
+    default:
+      return undefined;
+  }
+}
+
+// @ArchitectureID: 1227
+function normalizeSkillRoutingKey(value?: string): string | undefined {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const normalizedSkill = normalizeSkillKey(trimmed);
+  if (normalizedSkill) {
+    return normalizedSkill;
+  }
+
+  return trimmed.toLowerCase().replace(/[\s_]+/g, '-');
+}
+
+// @ArchitectureID: 1231
+function getEffectiveAgentRouterConfig(config?: AiConfig): EffectiveAgentRouterConfig {
+  const routerConfig = config?.AGENT_ROUTER_CONFIG;
+  const defaultAgent = normalizeAgentExecutor(routerConfig?.default_agent) ?? 'copilot';
+  const taskSpecificAgents = Object.entries(routerConfig?.task_specific_agents ?? {}).reduce<Record<string, AgentExecutor>>(
+    (accumulator, [rawKey, rawAgent]) => {
+      const normalizedKey = normalizeSkillRoutingKey(rawKey);
+      const normalizedAgent = normalizeAgentExecutor(rawAgent);
+      if (!normalizedKey || !normalizedAgent) {
+        return accumulator;
+      }
+
+      accumulator[normalizedKey] = normalizedAgent;
+      return accumulator;
+    },
+    {}
+  );
+
+  const opencode = routerConfig?.opencode;
+
+  return {
+    defaultAgent,
+    taskSpecificAgents,
+    opencode: {
+      command: typeof opencode?.command === 'string' && opencode.command.trim().length > 0 ? opencode.command : 'opencode',
+      args: Array.isArray(opencode?.args) && opencode.args.length > 0 ? opencode.args : ['run', '--prompt', '{prompt}'],
+      cwd: typeof opencode?.cwd === 'string' && opencode.cwd.trim().length > 0 ? opencode.cwd : '{workspaceRoot}',
+      env: opencode?.env ?? {},
+      timeoutMs: typeof opencode?.timeoutMs === 'number' && opencode.timeoutMs > 0 ? opencode.timeoutMs : 120000,
+      promptToStdin: typeof opencode?.promptToStdin === 'boolean' ? opencode.promptToStdin : false
+    }
+  };
+}
+
+// @ArchitectureID: 1227
+function resolveAgentExecutorForSkill(skill: SkillKey | undefined, config?: AiConfig): AgentExecutor {
+  const routerConfig = getEffectiveAgentRouterConfig(config);
+  const normalizedSkill = normalizeSkillRoutingKey(skill);
+  if (normalizedSkill && routerConfig.taskSpecificAgents[normalizedSkill]) {
+    return routerConfig.taskSpecificAgents[normalizedSkill];
+  }
+
+  return routerConfig.defaultAgent;
+}
+
+// @ArchitectureID: 1232
+function replaceOpenCodeTemplate(input: string, context: OpenCodeExecutionContext): string {
+  const templateSkill = context.skill ?? 'unknown';
+  return input
+    .replace(/\{workspaceRoot\}/g, context.root)
+    .replace(/\{prompt\}/g, context.seedText)
+    .replace(/\{label\}/g, context.label)
+    .replace(/\{skill\}/g, templateSkill);
+}
+
+// @ArchitectureID: 1232
+function buildOpenCodeInvocation(context: OpenCodeExecutionContext, config?: AiConfig): OpenCodeInvocation {
+  const routerConfig = getEffectiveAgentRouterConfig(config);
+  const opencodeConfig = routerConfig.opencode;
+  const env = Object.entries(opencodeConfig.env).reduce<NodeJS.ProcessEnv>((accumulator, [key, value]) => {
+    accumulator[key] = replaceOpenCodeTemplate(value, context);
+    return accumulator;
+  }, { ...process.env });
+
+  return {
+    command: replaceOpenCodeTemplate(opencodeConfig.command, context),
+    args: opencodeConfig.args.map((arg) => replaceOpenCodeTemplate(arg, context)),
+    cwd: replaceOpenCodeTemplate(opencodeConfig.cwd, context),
+    env,
+    promptToStdin: opencodeConfig.promptToStdin,
+    promptPayload: context.seedText,
+    timeoutMs: opencodeConfig.timeoutMs
+  };
+}
+
+// @ArchitectureID: 1232
+function runOpenCodeInvocation(invocation: OpenCodeInvocation): Promise<OpenCodeCommandResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(invocation.command, invocation.args, {
+      cwd: invocation.cwd,
+      env: invocation.env,
+      shell: false,
+      windowsHide: true
+    });
+
+    let stdout = '';
+    let stderr = '';
+    let didTimeOut = false;
+
+    const timer = setTimeout(() => {
+      didTimeOut = true;
+      child.kill();
+    }, invocation.timeoutMs);
+
+    child.stdout.on('data', (chunk: Buffer | string) => {
+      stdout += chunk.toString();
+    });
+
+    child.stderr.on('data', (chunk: Buffer | string) => {
+      stderr += chunk.toString();
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (didTimeOut) {
+        reject(new Error(`OpenCode CLI timed out after ${invocation.timeoutMs}ms. stdout=${stdout.trim() || '<empty>'}; stderr=${stderr.trim() || '<empty>'}`));
+        return;
+      }
+
+      resolve({
+        exitCode: code ?? -1,
+        stdout: stdout.trim(),
+        stderr: stderr.trim()
+      });
+    });
+
+    if (invocation.promptToStdin && child.stdin) {
+      child.stdin.write(invocation.promptPayload);
+      child.stdin.end();
+    }
+  });
+}
+
 function getWorkspaceRoot(): string {
   const folders = vscode.workspace.workspaceFolders;
   if (!folders || folders.length === 0) {
@@ -2186,7 +2395,7 @@ function describeMaintenanceType(value: string): { label: string; explanation: s
 }
 
 function buildGuidedOptionSummary(root: string): string {
-  const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+  const configPath = getAiConfigPath(root);
   const configExists = exists(configPath);
   const effectiveOptions = getEffectiveGuidedOptions(loadAiConfig(root));
   const scopeInfo = describeMaintenanceScope(effectiveOptions.needallmaintenace);
@@ -2242,6 +2451,7 @@ function buildGuidedAiConfig(
   }
 
   return {
+    ...(existing ?? {}),
     EA_AUTOGEN_CONFIG: {
       needallmaintenace: effectiveOptions.needallmaintenace,
       needbrowserlocation: effectiveOptions.needbrowserlocation,
@@ -2252,7 +2462,7 @@ function buildGuidedAiConfig(
 }
 
 function ensureGuidedAiConfig(root: string, overrides?: Partial<GuidedOptions>): AiConfig {
-  const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+  const configPath = getAiConfigPath(root);
   let existing: AiConfig | undefined;
 
   if (exists(configPath)) {
@@ -2399,13 +2609,28 @@ function toIsoLocal(date: Date): string {
 }
 
 function loadAiConfig(root: string): AiConfig | undefined {
-  const configPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+  const configPath = getAiConfigPath(root);
   if (!exists(configPath)) {
     return undefined;
   }
 
   const content = fs.readFileSync(configPath, 'utf-8');
   return JSON.parse(content) as AiConfig;
+}
+
+// @ArchitectureID: 1231
+function getAiConfigPath(root: string): string {
+  const primaryPath = resolvePath(root, RELATIVE_PATHS.aiConfig);
+  if (exists(primaryPath)) {
+    return primaryPath;
+  }
+
+  const secondaryPath = resolvePath(root, RELATIVE_PATHS.aiConfigJson);
+  if (exists(secondaryPath)) {
+    return secondaryPath;
+  }
+
+  return primaryPath;
 }
 
 function getArchitectureJsonPath(root: string): string {
@@ -2433,7 +2658,7 @@ async function refreshArchitectureContext(): Promise<void> {
 
     const checks: Array<{ label: string; filePath: string }> = [
       { label: 'Architecture JSON', filePath: archPath },
-      { label: 'Managed Options Config', filePath: resolvePath(root, RELATIVE_PATHS.aiConfig) },
+      { label: 'Managed Options Config', filePath: getAiConfigPath(root) },
       { label: 'Initial Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.initialPrompt) },
       { label: 'Wrap-up Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.wrapPrompt) },
       { label: 'Reverse Prompt', filePath: resolveExtensionPath(BUNDLED_PATHS.reversePrompt) }
@@ -2579,7 +2804,7 @@ async function runDesignCodeAlignment(): Promise<void> {
       '## Artifact Checks',
       '',
       `- Architecture JSON: ${exists(archPath) ? 'OK' : 'MISSING'} (${archPath})`,
-      `- Managed Options Config: ${exists(resolvePath(root, RELATIVE_PATHS.aiConfig)) ? 'OK' : 'MISSING'}`,
+      `- Managed Options Config: ${exists(getAiConfigPath(root)) ? 'OK' : 'MISSING'}`,
       `- Initial Prompt: ${exists(initPrompt) ? 'OK' : 'MISSING'}`,
       `- Wrap-up Prompt: ${exists(wrapPrompt) ? 'OK' : 'MISSING'}`,
       `- Reverse Prompt: ${exists(reversePrompt) ? 'OK' : 'MISSING'}`,
@@ -2752,7 +2977,8 @@ async function openCopilotWithInitPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'init prompt workflow'
+    'init prompt workflow',
+    'init'
   );
 }
 
@@ -2764,7 +2990,8 @@ async function openCopilotWithDesignAuditPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'design audit workflow'
+    'design audit workflow',
+    'audit'
   );
 }
 
@@ -2776,7 +3003,8 @@ async function openCopilotWithWrapUpPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'wrap-up workflow'
+    'wrap-up workflow',
+    'wrapup'
   );
 }
 
@@ -2788,7 +3016,8 @@ async function openCopilotWithTaskListPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'task list workflow'
+    'task list workflow',
+    'task-list'
   );
 }
 
@@ -2800,7 +3029,8 @@ async function openCopilotWithTaskSupportPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'task support workflow'
+    'task support workflow',
+    'task-support'
   );
 }
 
@@ -2812,7 +3042,8 @@ async function openCopilotWithWeeklyReportPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'weekly report workflow'
+    'weekly report workflow',
+    'weekly-report'
   );
 }
 
@@ -2824,7 +3055,8 @@ async function openCopilotWithIterationIssuesPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'iteration issues workflow'
+    'iteration issues workflow',
+    'iteration-issues'
   );
 }
 
@@ -2836,12 +3068,66 @@ async function openCopilotWithIterationSummaryPrompt(): Promise<void> {
       '具体需要执行的工作已在提示词中定义，请严格按提示词执行，不要在提示词之外额外布置任务。',
       '请现在开始。'
     ].join('\n'),
-    'iteration summary workflow'
+    'iteration summary workflow',
+    'iteration-summary'
   );
 }
 
-// @ArchitectureID: 1209
-async function openCopilotWithPromptReference(seedText: string, label: string): Promise<void> {
+// @ArchitectureID: 1227
+async function openCopilotWithPromptReference(seedText: string, label: string, skill?: SkillKey): Promise<void> {
+  const root = getWorkspaceRoot();
+  const config = loadAiConfig(root);
+  const selectedAgent = resolveAgentExecutorForSkill(skill, config);
+
+  output.appendLine(`[AI4PB] Routed ${label} to ${selectedAgent}.`);
+
+  if (selectedAgent === 'opencode') {
+    await openOpenCodeWithPrompt(seedText, label, root, config, skill);
+    return;
+  }
+
+  await openGitHubCopilotWithPromptReference(seedText, label);
+}
+
+// @ArchitectureID: 1232
+async function openOpenCodeWithPrompt(
+  seedText: string,
+  label: string,
+  root: string,
+  config: AiConfig | undefined,
+  skill?: SkillKey
+): Promise<void> {
+  const invocation = buildOpenCodeInvocation({ root, seedText, label, skill }, config);
+
+  output.appendLine(`[AI4PB] OpenCode command: ${invocation.command} ${invocation.args.join(' ')}`);
+  output.appendLine(`[AI4PB] OpenCode cwd: ${invocation.cwd}`);
+
+  try {
+    const result = await runOpenCodeInvocation(invocation);
+    if (result.stdout) {
+      output.appendLine(`[AI4PB] OpenCode stdout:\n${result.stdout}`);
+    }
+    if (result.stderr) {
+      output.appendLine(`[AI4PB] OpenCode stderr:\n${result.stderr}`);
+    }
+
+    if (result.exitCode !== 0) {
+      void vscode.window.showErrorMessage(
+        `AI4PB OpenCode execution failed with exit code ${result.exitCode}. stderr: ${result.stderr || '<empty>'}`
+      );
+      return;
+    }
+
+    void vscode.window.showInformationMessage(`AI4PB routed ${label} to OpenCode CLI successfully.`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    output.appendLine(`[AI4PB] OpenCode execution failed: ${message}`);
+    void vscode.window.showErrorMessage(`AI4PB failed to execute OpenCode CLI: ${message}`);
+  }
+}
+
+// @ArchitectureID: 1187
+async function openGitHubCopilotWithPromptReference(seedText: string, label: string): Promise<void> {
   try {
     await vscode.commands.executeCommand('workbench.action.chat.open', { query: seedText });
     await trySubmitCopilotChat();
