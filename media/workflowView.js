@@ -214,10 +214,313 @@
     thread.scrollTop = thread.scrollHeight;
   }
 
+  function normalizeStreamContent(content, fallbackStatus) {
+    const raw = content && typeof content === 'object' ? content : {};
+    return {
+      thinking: typeof raw.thinking === 'string' ? raw.thinking : '',
+      response: typeof raw.response === 'string' ? raw.response : '',
+      errorText: typeof raw.errorText === 'string' ? raw.errorText : '',
+      thinkingExpanded: raw.thinkingExpanded === true,
+      status: raw.status === 'failed' ? 'failed' : raw.status === 'completed' ? 'completed' : (fallbackStatus || 'streaming')
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escapeHtmlAttribute(value) {
+    return escapeHtml(value).replace(/\x60/g, '&#96;');
+  }
+
+  function splitTableRow(line) {
+    const trimmed = String(line || '').trim();
+    const normalized = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+    const withoutTrailing = normalized.endsWith('|') ? normalized.slice(0, -1) : normalized;
+    return withoutTrailing.split('|').map(function (cell) { return cell.trim(); });
+  }
+
+  function isTableDividerRow(line) {
+    const cells = splitTableRow(line);
+    if (cells.length === 0) {
+      return false;
+    }
+    return cells.every(function (cell) { return /^:?-{3,}:?$/.test(cell); });
+  }
+
+  function renderTable(lines) {
+    if (!Array.isArray(lines) || lines.length < 2) {
+      return '';
+    }
+
+    const headerCells = splitTableRow(lines[0]);
+    const bodyRows = lines.slice(2).map(function (line) { return splitTableRow(line); });
+    if (headerCells.length === 0) {
+      return '';
+    }
+
+    const headerHtml = '<thead><tr>' + headerCells.map(function (cell) { return '<th>' + renderInlineMarkdown(cell) + '</th>'; }).join('') + '</tr></thead>';
+    const bodyHtml = bodyRows.length > 0
+      ? '<tbody>' + bodyRows.map(function (row) {
+        return '<tr>' + headerCells.map(function (_, index) {
+          return '<td>' + renderInlineMarkdown(row[index] || '') + '</td>';
+        }).join('') + '</tr>';
+      }).join('') + '</tbody>'
+      : '';
+
+    return '<table>' + headerHtml + bodyHtml + '</table>';
+  }
+
+  function parseListItem(rawText) {
+    const taskMatch = String(rawText || '').match(/^\[([ xX])\]\s+(.*)$/);
+    if (taskMatch) {
+      const checked = taskMatch[1].toLowerCase() === 'x';
+      return {
+        isTask: true,
+        checked: checked,
+        html: '<span class="task-list-item' + (checked ? ' checked' : '') + '"><span class="task-checkbox">' + (checked ? '&#10003;' : '') + '</span><span class="task-text">' + renderInlineMarkdown(taskMatch[2]) + '</span></span>'
+      };
+    }
+
+    return {
+      isTask: false,
+      checked: false,
+      html: renderInlineMarkdown(rawText)
+    };
+  }
+
+  function renderInlineMarkdown(text) {
+    const source = String(text || '');
+    const codeSegments = [];
+    const mediaSegments = [];
+    let html = escapeHtml(source).replace(/\x60([^\x60]+)\x60/g, function (_, code) {
+      const token = '__CODE_' + codeSegments.length + '__';
+      codeSegments.push('<code>' + escapeHtml(code) + '</code>');
+      return token;
+    });
+
+    html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, function (_, alt, url) {
+      const safeUrl = escapeHtmlAttribute(url);
+      const token = '__MEDIA_' + mediaSegments.length + '__';
+      mediaSegments.push('<img src="' + safeUrl + '" alt="' + escapeHtmlAttribute(alt) + '" loading="lazy">');
+      return token;
+    });
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function (_, label, url) {
+      const safeUrl = escapeHtmlAttribute(url);
+      const token = '__MEDIA_' + mediaSegments.length + '__';
+      mediaSegments.push('<a href="' + safeUrl + '" target="_blank" rel="noreferrer noopener">' + label + '</a>');
+      return token;
+    });
+    html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, function (_, prefix, url) {
+      const safeUrl = escapeHtmlAttribute(url);
+      return prefix + '<a href="' + safeUrl + '" target="_blank" rel="noreferrer noopener">' + safeUrl + '</a>';
+    });
+    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+    codeSegments.forEach(function (segment, index) {
+      html = html.replace('__CODE_' + index + '__', segment);
+    });
+    mediaSegments.forEach(function (segment, index) {
+      html = html.replace('__MEDIA_' + index + '__', segment);
+    });
+
+    return html;
+  }
+
+  function renderMarkdownBlocks(markdown) {
+    const normalized = String(markdown || '').replace(/\r\n?/g, '\n');
+    const lines = normalized.split('\n');
+    const html = [];
+    let paragraphLines = [];
+    let listType = null;
+    let listItems = [];
+    let tableLines = [];
+    let skipTableDividerLine = false;
+
+    function flushParagraph() {
+      if (paragraphLines.length === 0) {
+        return;
+      }
+      html.push('<p>' + paragraphLines.map(function (line) { return renderInlineMarkdown(line); }).join('<br>') + '</p>');
+      paragraphLines = [];
+    }
+
+    function flushList() {
+      if (!listType || listItems.length === 0) {
+        listType = null;
+        listItems = [];
+        return;
+      }
+      const hasTaskItems = listItems.some(function (item) { return item.isTask; });
+      const listClass = hasTaskItems ? ' class="task-list"' : '';
+      html.push('<' + listType + listClass + '>' + listItems.map(function (item) { return '<li>' + item.html + '</li>'; }).join('') + '</' + listType + '>');
+      listType = null;
+      listItems = [];
+    }
+
+    function flushTable() {
+      if (tableLines.length < 2) {
+        tableLines = [];
+        return;
+      }
+      html.push(renderTable(tableLines));
+      tableLines = [];
+    }
+
+    lines.forEach(function (line, index) {
+      if (skipTableDividerLine) {
+        skipTableDividerLine = false;
+        return;
+      }
+
+      const trimmed = line.trim();
+      const heading = line.match(/^(#{1,6})\s+(.*)$/);
+      const ordered = line.match(/^\s*\d+\.\s+(.*)$/);
+      const unordered = line.match(/^\s*[-*+]\s+(.*)$/);
+      const quote = line.match(/^>\s?(.*)$/);
+      const hr = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line);
+      const looksLikeTableRow = line.includes('|');
+      const nextLine = index + 1 < lines.length ? lines[index + 1] : '';
+      const startsTable = looksLikeTableRow && isTableDividerRow(nextLine);
+
+      if (!trimmed) {
+        flushParagraph();
+        flushList();
+        flushTable();
+        return;
+      }
+
+      if (startsTable) {
+        flushParagraph();
+        flushList();
+        flushTable();
+        tableLines = [line, nextLine];
+        skipTableDividerLine = true;
+        return;
+      }
+
+      if (tableLines.length > 0) {
+        if (looksLikeTableRow) {
+          tableLines.push(line);
+          return;
+        }
+        flushTable();
+      }
+
+      if (hr) {
+        flushParagraph();
+        flushList();
+        flushTable();
+        html.push('<hr>');
+        return;
+      }
+
+      if (heading) {
+        flushParagraph();
+        flushList();
+        flushTable();
+        const level = Math.min(6, heading[1].length);
+        html.push('<h' + level + '>' + renderInlineMarkdown(heading[2]) + '</h' + level + '>');
+        return;
+      }
+
+      if (quote) {
+        flushParagraph();
+        flushList();
+        flushTable();
+        html.push('<blockquote>' + renderInlineMarkdown(quote[1]) + '</blockquote>');
+        return;
+      }
+
+      if (ordered) {
+        flushParagraph();
+        flushTable();
+        if (listType && listType !== 'ol') {
+          flushList();
+        }
+        listType = 'ol';
+        listItems.push(parseListItem(ordered[1]));
+        return;
+      }
+
+      if (unordered) {
+        flushParagraph();
+        flushTable();
+        if (listType && listType !== 'ul') {
+          flushList();
+        }
+        listType = 'ul';
+        listItems.push(parseListItem(unordered[1]));
+        return;
+      }
+
+      flushList();
+      flushTable();
+      paragraphLines.push(trimmed);
+    });
+
+    flushParagraph();
+    flushList();
+    flushTable();
+    return html.join('');
+  }
+
+  function renderMarkdown(text) {
+    const normalized = String(text || '').replace(/\r\n?/g, '\n');
+    const fencePattern = new RegExp('\\x60\\x60\\x60([^\\n\\x60]*)\\n([\\s\\S]*?)\\x60\\x60\\x60', 'g');
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = fencePattern.exec(normalized)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ kind: 'markdown', text: normalized.slice(lastIndex, match.index) });
+      }
+      parts.push({ kind: 'code', language: String(match[1] || '').trim(), text: String(match[2] || '') });
+      lastIndex = fencePattern.lastIndex;
+    }
+
+    if (lastIndex < normalized.length) {
+      parts.push({ kind: 'markdown', text: normalized.slice(lastIndex) });
+    }
+
+    if (parts.length === 0) {
+      parts.push({ kind: 'markdown', text: normalized });
+    }
+
+    return parts.map(function (part) {
+      if (part.kind === 'code') {
+        const languageClass = part.language ? ' class="language-' + escapeHtmlAttribute(part.language) + '"' : '';
+        return '<pre><code' + languageClass + '>' + escapeHtml(part.text) + '</code></pre>';
+      }
+      return renderMarkdownBlocks(part.text);
+    }).join('');
+  }
+
+  function setBubbleContent(bubble, role, text) {
+    if (role === 'ai') {
+      try {
+        bubble.innerHTML = renderMarkdown(text);
+      } catch (error) {
+        bubble.textContent = String(text || '');
+      }
+      return;
+    }
+    bubble.textContent = String(text || '');
+  }
+
   function createBubbleNode(role, text) {
     const bubble = document.createElement('div');
     bubble.className = 'bubble ' + role;
-    bubble.textContent = String(text || '');
+    setBubbleContent(bubble, role, text);
     return bubble;
   }
 
@@ -639,42 +942,116 @@
       return entry;
     }
 
-    const bubble = appendBubble('ai', '[' + String(label || 'OpenCode') + ']\nOpenCode 正在准备内容...', true);
-    entry = { bubble: bubble, label: String(label || 'OpenCode'), content: { thinking: '', response: '', errorText: '' } };
+    const bubble = createBubbleNode('ai', '');
+    bubble.classList.add('streaming');
+    bubble.dataset.streamId = streamId;
+    thread.appendChild(bubble);
+
+    entry = {
+      bubble: bubble,
+      label: String(label || 'OpenCode'),
+      content: normalizeStreamContent(undefined, 'streaming')
+    };
     activeStreams.set(streamId, entry);
+    setStreamBubbleContent(bubble, entry.label, entry.content);
+    scrollThreadToBottom();
     return entry;
   }
 
-  function renderStreamEntry(entry, status) {
-    const parts = [];
-    if (entry.content.response) {
-      parts.push(entry.content.response);
+  function renderStreamSectionHtml(kind, title, markdown, options) {
+    const sectionBody = '<div>' + renderMarkdown(markdown) + '</div>';
+    if (options && options.collapsible) {
+      const isExpanded = options.expanded === true;
+      return '<section class="stream-section ' + kind + '">'
+        + '<details class="stream-thinking-details"' + (isExpanded ? ' open' : '') + '>'
+        + '<summary class="stream-thinking-summary"><span class="stream-section-title">' + escapeHtml(title) + '</span></summary>'
+        + '<div class="stream-thinking-body">' + sectionBody + '</div>'
+        + '</details>'
+        + '</section>';
     }
-    if (entry.content.thinking) {
-      parts.push('[thinking]\n' + entry.content.thinking);
+
+    return '<section class="stream-section ' + kind + '">'
+      + '<div class="stream-section-title">' + escapeHtml(title) + '</div>'
+      + sectionBody
+      + '</section>';
+  }
+
+  function getStreamStatusLabel(status, content) {
+    if (status === 'failed') {
+      return '失败';
     }
-    if (entry.content.errorText) {
-      parts.push('[error]\n' + entry.content.errorText);
+    if (status === 'completed') {
+      return '已完成';
     }
-    entry.bubble.textContent = '[' + entry.label + (status ? ' / ' + status : '') + ']\n' + (parts.join('\n\n') || 'OpenCode 正在准备内容...');
+    if (content.response.trim().length > 0) {
+      return '回答中';
+    }
+    return '思考中';
+  }
+
+  function renderStreamBubbleHtml(label, content) {
+    const normalized = normalizeStreamContent(content, 'streaming');
+    const sections = [];
+    const thinkingExpanded = normalized.thinkingExpanded === true;
+
+    if (normalized.thinking.trim().length > 0) {
+      sections.push(renderStreamSectionHtml('thinking', 'Thinking', normalized.thinking, { collapsible: true, expanded: thinkingExpanded }));
+    }
+    if (normalized.response.trim().length > 0) {
+      sections.push(renderStreamSectionHtml('response', 'Response', normalized.response));
+    }
+    if (normalized.errorText.trim().length > 0 && normalized.status === 'failed') {
+      sections.push(renderStreamSectionHtml('error', 'Error', normalized.errorText));
+    }
+    if (sections.length === 0) {
+      sections.push('<div class="stream-empty">OpenCode 正在准备内容...</div>');
+    }
+
+    const statusLabel = getStreamStatusLabel(normalized.status, normalized);
+    const statusClass = normalized.status === 'failed' ? 'failed' : normalized.status === 'completed' ? 'completed' : 'thinking';
+    return '<div class="stream-shell">'
+      + '<div class="stream-header"><div class="stream-title">' + escapeHtml(label || 'OpenCode') + '</div><div class="stream-status ' + statusClass + '">' + escapeHtml(statusLabel) + '</div></div>'
+      + sections.join('')
+      + '</div>';
+  }
+
+  function setStreamBubbleContent(bubble, label, content) {
+    try {
+      const currentDetails = bubble.querySelector('.stream-thinking-details');
+      if (currentDetails instanceof HTMLDetailsElement) {
+        bubble.dataset.thinkingExpanded = currentDetails.open ? 'true' : 'false';
+      }
+
+      const normalized = normalizeStreamContent(content, 'streaming');
+      normalized.thinkingExpanded = bubble.dataset.thinkingExpanded === 'true';
+      bubble.innerHTML = renderStreamBubbleHtml(label, normalized);
+    } catch (error) {
+      const normalized = normalizeStreamContent(content, 'streaming');
+      const fallbackText = [normalized.response, normalized.thinking, normalized.errorText]
+        .filter(function (item) { return item && item.trim().length > 0; })
+        .join('\n\n');
+      bubble.textContent = fallbackText || String(label || 'OpenCode');
+    }
   }
 
   function updateStreamBubble(streamId, label, content) {
     const entry = ensureStreamBubble(streamId, label);
     entry.label = String(label || entry.label || 'OpenCode');
-    entry.content = {
-      thinking: content && typeof content.thinking === 'string' ? content.thinking : '',
-      response: content && typeof content.response === 'string' ? content.response : '',
-      errorText: content && typeof content.errorText === 'string' ? content.errorText : ''
-    };
-    renderStreamEntry(entry, content && typeof content.status === 'string' ? content.status : 'streaming');
+    entry.content = normalizeStreamContent(content, 'streaming');
+    setStreamBubbleContent(entry.bubble, entry.label, entry.content);
     scrollThreadToBottom();
   }
 
   function finishStreamBubble(streamId, label, content, status) {
     const entry = ensureStreamBubble(streamId, label);
-    updateStreamBubble(streamId, label, content || {});
-    renderStreamEntry(entry, status || 'completed');
+    entry.label = String(label || entry.label || 'OpenCode');
+    entry.content = normalizeStreamContent(content, status);
+    entry.bubble.classList.remove('streaming');
+    if (status === 'failed') {
+      entry.bubble.classList.add('failed');
+    }
+
+    setStreamBubbleContent(entry.bubble, entry.label, entry.content);
     activeStreams.delete(streamId);
     state.thread.push({
       kind: 'streamBubble',
@@ -687,6 +1064,7 @@
       }
     });
     syncState();
+    scrollThreadToBottom();
   }
 
   function restoreThread() {
@@ -707,8 +1085,12 @@
       }
 
       if (item.kind === 'streamBubble' && item.stream) {
-        const text = [item.stream.response, item.stream.thinking, item.stream.errorText].filter(Boolean).join('\n\n');
-        appendBubble('ai', '[' + (item.stream.label || 'OpenCode') + ']\n' + text, true);
+        const bubble = createBubbleNode('ai', '');
+        setStreamBubbleContent(bubble, item.stream.label, item.stream);
+        if (item.stream.status === 'failed') {
+          bubble.classList.add('failed');
+        }
+        thread.appendChild(bubble);
         return;
       }
 
