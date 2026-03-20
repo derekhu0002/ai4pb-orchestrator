@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as https from 'https';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 
 type AgentExecutor = 'copilot' | 'opencode';
 
@@ -218,11 +219,23 @@ type AutoSuggestionViewItem = {
   reason: string;
 };
 
+type WorkflowStreamBubbleState = {
+  label: string;
+  thinking: string;
+  response: string;
+  errorText: string;
+  status: 'streaming' | 'completed' | 'failed';
+};
+
 type WorkflowThreadEntry =
   | {
       kind: 'bubble';
       role: ChatBubbleRole;
       text: string;
+    }
+  | {
+      kind: 'streamBubble';
+      stream: WorkflowStreamBubbleState;
     }
   | {
       kind: 'autoSuggestion';
@@ -373,7 +386,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ai4pb.workflowView';
   private webviewView?: vscode.WebviewView;
   private panelWebview?: vscode.Webview;
-  private readonly runtimeStreams = new Map<string, { label: string; text: string; status: 'streaming' | 'completed' | 'failed' }>();
+  private readonly runtimeStreams = new Map<string, WorkflowStreamBubbleState>();
 
   public async postRuntimeMessage(message: any): Promise<void> {
     this.captureRuntimeMessage(message);
@@ -390,7 +403,9 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     if (messageType === 'opencodeStreamStart') {
       this.runtimeStreams.set(streamId, {
         label: typeof message.label === 'string' ? message.label : 'OpenCode',
-        text: '',
+        thinking: '',
+        response: '',
+        errorText: '',
         status: 'streaming'
       });
       return;
@@ -398,10 +413,13 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
     if (messageType === 'opencodeStreamUpdate') {
       const current = this.runtimeStreams.get(streamId);
+      const content = message?.content && typeof message.content === 'object' ? message.content : undefined;
       this.runtimeStreams.set(streamId, {
         label: typeof message.label === 'string' ? message.label : current?.label ?? 'OpenCode',
-        text: typeof message.text === 'string' ? message.text : current?.text ?? '',
-        status: 'streaming'
+        thinking: typeof content?.thinking === 'string' ? content.thinking : current?.thinking ?? '',
+        response: typeof content?.response === 'string' ? content.response : current?.response ?? '',
+        errorText: typeof content?.errorText === 'string' ? content.errorText : current?.errorText ?? '',
+        status: content?.status === 'failed' ? 'failed' : content?.status === 'completed' ? 'completed' : 'streaming'
       });
       return;
     }
@@ -423,8 +441,12 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const streams = Array.from(this.runtimeStreams.entries()).map(([streamId, stream]) => ({
       streamId,
       label: stream.label,
-      text: stream.text,
-      status: stream.status
+      content: {
+        thinking: stream.thinking,
+        response: stream.response,
+        errorText: stream.errorText,
+        status: stream.status
+      }
     }));
 
     await this.postMessageToWebview(webview, {
@@ -782,17 +804,27 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
   // @ArchitectureID: 1209
   private getHtml(webview: vscode.Webview, initialState: WorkflowViewState): string {
-    const nonce = String(Date.now());
-    const flowsJson = JSON.stringify(WORKFLOW_FLOW_OPTIONS);
-    const helpUrlsJson = JSON.stringify(HELP_URLS);
-    const initialStateJson = JSON.stringify(initialState);
-    const skillAgentLabelsJson = JSON.stringify(getSkillAgentDisplayMapForWorkspace());
+    const nonce = randomBytes(16).toString('base64');
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'workflowView.js'));
+    const serializeForInlineScript = (value: unknown): string => {
+      return JSON.stringify(value)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/&/g, '\\u0026')
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+    };
+
+    const flowsJson = serializeForInlineScript(WORKFLOW_FLOW_OPTIONS);
+    const helpUrlsJson = serializeForInlineScript(HELP_URLS);
+    const initialStateJson = serializeForInlineScript(initialState);
+    const skillAgentLabelsJson = serializeForInlineScript(getSkillAgentDisplayMapForWorkspace());
     const versionText = this.extensionVersion;
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource};" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -812,7 +844,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     }
     .shell {
       display: grid;
-      grid-template-rows: auto 1fr auto auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
       gap: 10px;
       height: calc(100vh - 20px);
       min-height: 440px;
@@ -833,6 +865,23 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-background) 18%, transparent), transparent 55%),
         color-mix(in srgb, var(--chat-panel) 92%, var(--vscode-editorWidget-background) 8%);
       box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vscode-button-background) 12%, transparent);
+    }
+    .boot-banner {
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--chat-border) 85%, transparent);
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+      background: color-mix(in srgb, var(--chat-panel) 88%, transparent);
+      word-break: break-word;
+    }
+    .boot-banner.ok {
+      border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 35%, transparent);
+    }
+    .boot-banner.error {
+      border-color: color-mix(in srgb, var(--vscode-errorForeground) 45%, transparent);
+      color: var(--vscode-errorForeground);
     }
     .status-banner-title {
       display: flex;
@@ -1078,6 +1127,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       border: 1px solid var(--chat-border);
       border-radius: var(--chat-radius);
       padding: 10px;
+      min-height: 0;
       overflow-y: auto;
       background: var(--chat-panel);
       display: flex;
@@ -1105,10 +1155,212 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       border-color: color-mix(in srgb, var(--vscode-errorForeground) 50%, var(--chat-border));
       box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vscode-errorForeground) 24%, transparent);
     }
+    .stream-shell {
+      display: grid;
+      gap: 8px;
+    }
+    .stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      opacity: 0.82;
+    }
+    .stream-title {
+      font-weight: 600;
+    }
+    .stream-status {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      border: 1px solid color-mix(in srgb, var(--chat-border) 80%, transparent);
+      background: color-mix(in srgb, var(--chat-panel) 75%, transparent);
+    }
+    .stream-status.thinking {
+      border-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent);
+      background: color-mix(in srgb, var(--vscode-button-background) 18%, var(--chat-panel));
+    }
+    .stream-status.completed {
+      border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 35%, transparent);
+    }
+    .stream-status.failed {
+      border-color: color-mix(in srgb, var(--vscode-errorForeground) 45%, transparent);
+    }
+    .stream-section {
+      display: grid;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--chat-border) 82%, transparent);
+      background: color-mix(in srgb, var(--vscode-editor-background) 68%, transparent);
+    }
+    .stream-section.thinking {
+      border-color: color-mix(in srgb, var(--vscode-button-background) 28%, transparent);
+      background: color-mix(in srgb, var(--vscode-button-background) 10%, var(--vscode-editor-background));
+    }
+    .stream-section.response {
+      border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 20%, transparent);
+    }
+    .stream-section.error {
+      border-color: color-mix(in srgb, var(--vscode-errorForeground) 35%, transparent);
+      background: color-mix(in srgb, var(--vscode-errorForeground) 10%, var(--vscode-editor-background));
+    }
+    .stream-section-title {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.76;
+    }
+    .stream-thinking-details {
+      display: grid;
+      gap: 8px;
+    }
+    .stream-thinking-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    .stream-thinking-summary::-webkit-details-marker {
+      display: none;
+    }
+    .stream-thinking-summary::after {
+      content: '展开';
+      font-size: 10px;
+      opacity: 0.72;
+    }
+    .stream-thinking-details[open] .stream-thinking-summary::after {
+      content: '收起';
+    }
+    .stream-thinking-body {
+      display: none;
+    }
+    .stream-thinking-details[open] .stream-thinking-body {
+      display: block;
+    }
+    .stream-empty {
+      font-size: 11px;
+      opacity: 0.62;
+    }
     .bubble.user {
       background: color-mix(in srgb, var(--vscode-button-background) 26%, var(--chat-panel));
       border: 1px solid color-mix(in srgb, var(--vscode-button-background) 45%, transparent);
       align-self: flex-end;
+    }
+    .bubble p {
+      margin: 0;
+    }
+    .bubble p + p {
+      margin-top: 8px;
+    }
+    .bubble h1,
+    .bubble h2,
+    .bubble h3,
+    .bubble h4,
+    .bubble h5,
+    .bubble h6 {
+      margin: 0 0 8px;
+      line-height: 1.3;
+    }
+    .bubble h1 { font-size: 1.2em; }
+    .bubble h2 { font-size: 1.12em; }
+    .bubble h3 { font-size: 1.05em; }
+    .bubble ul,
+    .bubble ol {
+      margin: 6px 0;
+      padding-left: 18px;
+    }
+    .bubble li + li {
+      margin-top: 3px;
+    }
+    .bubble blockquote {
+      margin: 8px 0;
+      padding-left: 10px;
+      border-left: 3px solid color-mix(in srgb, var(--vscode-button-background) 45%, transparent);
+      opacity: 0.92;
+    }
+    .bubble pre {
+      margin: 8px 0 0;
+      padding: 10px;
+      overflow-x: auto;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--vscode-editor-background) 84%, black 16%);
+      border: 1px solid color-mix(in srgb, var(--chat-border) 88%, transparent);
+      white-space: pre;
+    }
+    .bubble code {
+      font-family: var(--vscode-editor-font-family, Consolas, monospace);
+      font-size: 11px;
+    }
+    .bubble :not(pre) > code {
+      padding: 1px 5px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--vscode-editor-background) 72%, transparent);
+      border: 1px solid color-mix(in srgb, var(--chat-border) 78%, transparent);
+    }
+    .bubble hr {
+      border: none;
+      border-top: 1px solid color-mix(in srgb, var(--chat-border) 80%, transparent);
+      margin: 10px 0;
+    }
+    .bubble table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 11px;
+    }
+    .bubble thead {
+      background: color-mix(in srgb, var(--vscode-editorWidget-background) 55%, transparent);
+    }
+    .bubble th,
+    .bubble td {
+      padding: 6px 8px;
+      border: 1px solid color-mix(in srgb, var(--chat-border) 82%, transparent);
+      text-align: left;
+      vertical-align: top;
+    }
+    .bubble ul.task-list,
+    .bubble ol.task-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .task-list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .task-checkbox {
+      width: 14px;
+      height: 14px;
+      margin-top: 2px;
+      border-radius: 4px;
+      border: 1px solid color-mix(in srgb, var(--chat-border) 82%, transparent);
+      background: color-mix(in srgb, var(--vscode-editor-background) 80%, transparent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      line-height: 1;
+      flex: 0 0 14px;
+    }
+    .task-list-item.checked .task-checkbox {
+      border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 45%, transparent);
+      background: color-mix(in srgb, var(--vscode-testing-iconPassed) 28%, var(--vscode-editor-background));
+    }
+    .task-list-item.checked .task-text {
+      text-decoration: line-through;
+      opacity: 0.78;
+    }
+    .bubble a {
+      color: var(--vscode-textLink-foreground);
+      text-decoration: none;
+    }
+    .bubble a:hover {
+      text-decoration: underline;
     }
     .composer {
       display: grid;
@@ -1116,7 +1368,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       gap: 8px;
     }
     .skills {
-      margin-top: 2px;
+      margin-bottom: 2px;
     }
     .config-toggle-row {
       display: flex;
@@ -1238,9 +1490,11 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
   <div class="shell">
+    <div class="boot-banner" id="bootStatus">BOOT: html</div>
     <div class="status-banner" id="skillMeta"></div>
     <div class="thread" id="thread"></div>
     <div class="composer">
+      <div class="skills" id="skills"></div>
       <textarea id="promptInput" placeholder="输入业务诉求，或先选择一个流程环节再发送。"></textarea>
       <div class="composer-row">
         <div class="button-with-help">
@@ -1248,13 +1502,21 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
           <button id="sendHelpBtn" class="help-btn" title="查看发送帮助">?</button>
         </div>
       </div>
-      <div class="skills" id="skills"></div>
     </div>
     <p class="stamp">AI4PB Skill Chat v${versionText}</p>
   </div>
 
+  <template id="workflow-data-flows">${flowsJson}</template>
+  <template id="workflow-data-help-urls">${helpUrlsJson}</template>
+  <template id="workflow-data-initial-state">${initialStateJson}</template>
+  <template id="workflow-data-skill-agents">${skillAgentLabelsJson}</template>
+
+  <script src="${scriptUri}"></script>
+
   <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
+    const vscode = typeof acquireVsCodeApi === 'function'
+      ? acquireVsCodeApi()
+      : { postMessage() {}, setState() {} };
     const flows = ${flowsJson};
     const helpUrls = ${helpUrlsJson};
     const initialState = ${initialStateJson};
@@ -1280,24 +1542,409 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
     const sendHelpBtn = document.getElementById('sendHelpBtn');
+    const bootStatus = document.getElementById('bootStatus');
     const activeStreams = new Map();
+
+    function setBootStatus(text, kind) {
+      if (!bootStatus) {
+        return;
+      }
+      bootStatus.textContent = text;
+      bootStatus.className = 'boot-banner' + (kind ? ' ' + kind : '');
+    }
+
+    setBootStatus('BOOT: script-started', 'ok');
+    window.addEventListener('error', (event) => {
+      const message = event && event.message ? event.message : 'unknown error';
+      setBootStatus('BOOT: error - ' + message, 'error');
+    });
+    window.addEventListener('unhandledrejection', (event) => {
+      const reason = event && event.reason ? String(event.reason) : 'unknown rejection';
+      setBootStatus('BOOT: rejection - ' + reason, 'error');
+    });
+
+    function normalizeStreamContent(content, fallbackStatus) {
+      const raw = content && typeof content === 'object' ? content : {};
+      return {
+        thinking: typeof raw.thinking === 'string' ? raw.thinking : '',
+        response: typeof raw.response === 'string' ? raw.response : '',
+        errorText: typeof raw.errorText === 'string' ? raw.errorText : '',
+        thinkingExpanded: raw.thinkingExpanded === true,
+        status: raw.status === 'failed' ? 'failed' : raw.status === 'completed' ? 'completed' : (fallbackStatus || 'streaming')
+      };
+    }
 
     function scrollThreadToBottom() {
       thread.scrollTop = thread.scrollHeight;
     }
 
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeHtmlAttribute(value) {
+      return escapeHtml(value).replace(/\x60/g, '&#96;');
+    }
+
+    function splitTableRow(line) {
+      const trimmed = String(line || '').trim();
+      const normalized = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+      const withoutTrailing = normalized.endsWith('|') ? normalized.slice(0, -1) : normalized;
+      return withoutTrailing.split('|').map((cell) => cell.trim());
+    }
+
+    function isTableDividerRow(line) {
+      const cells = splitTableRow(line);
+      if (cells.length === 0) {
+        return false;
+      }
+      return cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+    }
+
+    function renderTable(lines) {
+      if (!Array.isArray(lines) || lines.length < 2) {
+        return '';
+      }
+
+      const headerCells = splitTableRow(lines[0]);
+      const bodyRows = lines.slice(2).map((line) => splitTableRow(line));
+      if (headerCells.length === 0) {
+        return '';
+      }
+
+      const headerHtml = '<thead><tr>' + headerCells.map((cell) => '<th>' + renderInlineMarkdown(cell) + '</th>').join('') + '</tr></thead>';
+      const bodyHtml = bodyRows.length > 0
+        ? '<tbody>' + bodyRows.map((row) => '<tr>' + headerCells.map((_, index) => '<td>' + renderInlineMarkdown(row[index] || '') + '</td>').join('') + '</tr>').join('') + '</tbody>'
+        : '';
+
+      return '<table>' + headerHtml + bodyHtml + '</table>';
+    }
+
+    function parseListItem(rawText) {
+      const taskMatch = String(rawText || '').match(/^\[([ xX])\]\s+(.*)$/);
+      if (taskMatch) {
+        const checked = taskMatch[1].toLowerCase() === 'x';
+        return {
+          isTask: true,
+          checked,
+          html: '<span class="task-list-item' + (checked ? ' checked' : '') + '"><span class="task-checkbox">' + (checked ? '&#10003;' : '') + '</span><span class="task-text">' + renderInlineMarkdown(taskMatch[2]) + '</span></span>'
+        };
+      }
+
+      return {
+        isTask: false,
+        checked: false,
+        html: renderInlineMarkdown(rawText)
+      };
+    }
+
+    function renderInlineMarkdown(text) {
+      const source = String(text || '');
+      const codeSegments = [];
+      const mediaSegments = [];
+      let html = escapeHtml(source).replace(/\x60([^\x60]+)\x60/g, (_, code) => {
+        const token = '__CODE_' + codeSegments.length + '__';
+        codeSegments.push('<code>' + escapeHtml(code) + '</code>');
+        return token;
+      });
+
+      html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, (_, alt, url) => {
+        const safeUrl = escapeHtmlAttribute(url);
+        const token = '__MEDIA_' + mediaSegments.length + '__';
+        mediaSegments.push('<img src="' + safeUrl + '" alt="' + escapeHtmlAttribute(alt) + '" loading="lazy">');
+        return token;
+      });
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
+        const safeUrl = escapeHtmlAttribute(url);
+        const token = '__MEDIA_' + mediaSegments.length + '__';
+        mediaSegments.push('<a href="' + safeUrl + '" target="_blank" rel="noreferrer noopener">' + label + '</a>');
+        return token;
+      });
+      html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, (_, prefix, url) => {
+        const safeUrl = escapeHtmlAttribute(url);
+        return prefix + '<a href="' + safeUrl + '" target="_blank" rel="noreferrer noopener">' + safeUrl + '</a>';
+      });
+      html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+      html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+      codeSegments.forEach((segment, index) => {
+        html = html.replace('__CODE_' + index + '__', segment);
+      });
+      mediaSegments.forEach((segment, index) => {
+        html = html.replace('__MEDIA_' + index + '__', segment);
+      });
+
+      return html;
+    }
+
+    function renderMarkdownBlocks(markdown) {
+      const normalized = String(markdown || '').replace(/\r\n?/g, '\n');
+      const lines = normalized.split('\n');
+      const html = [];
+      let paragraphLines = [];
+      let listType = null;
+      let listItems = [];
+      let tableLines = [];
+      let skipTableDividerLine = false;
+
+      function flushParagraph() {
+        if (paragraphLines.length === 0) {
+          return;
+        }
+        html.push('<p>' + paragraphLines.map((line) => renderInlineMarkdown(line)).join('<br>') + '</p>');
+        paragraphLines = [];
+      }
+
+      function flushList() {
+        if (!listType || listItems.length === 0) {
+          listType = null;
+          listItems = [];
+          return;
+        }
+        const hasTaskItems = listItems.some((item) => item.isTask);
+        const listClass = hasTaskItems ? ' class="task-list"' : '';
+        html.push('<' + listType + listClass + '>' + listItems.map((item) => '<li>' + item.html + '</li>').join('') + '</' + listType + '>');
+        listType = null;
+        listItems = [];
+      }
+
+      function flushTable() {
+        if (tableLines.length < 2) {
+          tableLines = [];
+          return;
+        }
+        html.push(renderTable(tableLines));
+        tableLines = [];
+      }
+
+      lines.forEach((line, index) => {
+        if (skipTableDividerLine) {
+          skipTableDividerLine = false;
+          return;
+        }
+
+        const trimmed = line.trim();
+        const heading = line.match(/^(#{1,6})\s+(.*)$/);
+        const ordered = line.match(/^\s*\d+\.\s+(.*)$/);
+        const unordered = line.match(/^\s*[-*+]\s+(.*)$/);
+        const quote = line.match(/^>\s?(.*)$/);
+        const hr = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line);
+        const looksLikeTableRow = line.includes('|');
+        const nextLine = index + 1 < lines.length ? lines[index + 1] : '';
+        const startsTable = looksLikeTableRow && isTableDividerRow(nextLine);
+
+        if (!trimmed) {
+          flushParagraph();
+          flushList();
+          flushTable();
+          return;
+        }
+
+        if (startsTable) {
+          flushParagraph();
+          flushList();
+          flushTable();
+          tableLines = [line, nextLine];
+          skipTableDividerLine = true;
+          return;
+        }
+
+        if (tableLines.length > 0) {
+          if (looksLikeTableRow) {
+            tableLines.push(line);
+            return;
+          }
+          flushTable();
+        }
+
+        if (hr) {
+          flushParagraph();
+          flushList();
+          flushTable();
+          html.push('<hr>');
+          return;
+        }
+
+        if (heading) {
+          flushParagraph();
+          flushList();
+          flushTable();
+          const level = Math.min(6, heading[1].length);
+          html.push('<h' + level + '>' + renderInlineMarkdown(heading[2]) + '</h' + level + '>');
+          return;
+        }
+
+        if (quote) {
+          flushParagraph();
+          flushList();
+          flushTable();
+          html.push('<blockquote>' + renderInlineMarkdown(quote[1]) + '</blockquote>');
+          return;
+        }
+
+        if (ordered) {
+          flushParagraph();
+          flushTable();
+          if (listType && listType !== 'ol') {
+            flushList();
+          }
+          listType = 'ol';
+          listItems.push(parseListItem(ordered[1]));
+          return;
+        }
+
+        if (unordered) {
+          flushParagraph();
+          flushTable();
+          if (listType && listType !== 'ul') {
+            flushList();
+          }
+          listType = 'ul';
+          listItems.push(parseListItem(unordered[1]));
+          return;
+        }
+
+        flushList();
+        flushTable();
+        paragraphLines.push(trimmed);
+      });
+
+      flushParagraph();
+      flushList();
+      flushTable();
+      return html.join('');
+    }
+
+    function renderMarkdown(text) {
+      const normalized = String(text || '').replace(/\r\n?/g, '\n');
+      const fencePattern = new RegExp('\\x60\\x60\\x60([^\\n\\x60]*)\\n([\\s\\S]*?)\\x60\\x60\\x60', 'g');
+      const parts = [];
+      let lastIndex = 0;
+      let match;
+
+      while ((match = fencePattern.exec(normalized)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push({ kind: 'markdown', text: normalized.slice(lastIndex, match.index) });
+        }
+        parts.push({ kind: 'code', language: String(match[1] || '').trim(), text: String(match[2] || '') });
+        lastIndex = fencePattern.lastIndex;
+      }
+
+      if (lastIndex < normalized.length) {
+        parts.push({ kind: 'markdown', text: normalized.slice(lastIndex) });
+      }
+
+      if (parts.length === 0) {
+        parts.push({ kind: 'markdown', text: normalized });
+      }
+
+      return parts.map((part) => {
+        if (part.kind === 'code') {
+          const languageClass = part.language ? ' class="language-' + escapeHtmlAttribute(part.language) + '"' : '';
+          return '<pre><code' + languageClass + '>' + escapeHtml(part.text) + '</code></pre>';
+        }
+        return renderMarkdownBlocks(part.text);
+      }).join('');
+    }
+
+    function setBubbleContent(bubble, role, text) {
+      if (role === 'ai') {
+        try {
+          bubble.innerHTML = renderMarkdown(text);
+        } catch {
+          bubble.textContent = String(text || '');
+        }
+        return;
+      }
+      bubble.textContent = String(text || '');
+    }
+
     function createBubbleNode(role, text) {
       const bubble = document.createElement('div');
       bubble.className = 'bubble ' + role;
-      bubble.textContent = String(text || '');
+      setBubbleContent(bubble, role, text);
       return bubble;
     }
 
-    function formatStreamBubbleText(label, text, status) {
-      const currentText = String(text || '');
-      const fallback = status === 'failed' ? 'OpenCode 执行失败。' : 'OpenCode 正在响应...';
-      const body = currentText.trim().length > 0 ? currentText : fallback;
-      return label ? ('[' + label + ']\\n' + body) : body;
+    function renderStreamSectionHtml(kind, title, markdown, options) {
+      const sectionBody = '<div>' + renderMarkdown(markdown) + '</div>';
+      if (options && options.collapsible) {
+        const isExpanded = options.expanded === true;
+        return '<section class="stream-section ' + kind + '">'
+          + '<details class="stream-thinking-details"' + (isExpanded ? ' open' : '') + '>'
+          + '<summary class="stream-thinking-summary"><span class="stream-section-title">' + escapeHtml(title) + '</span></summary>'
+          + '<div class="stream-thinking-body">' + sectionBody + '</div>'
+          + '</details>'
+          + '</section>';
+      }
+
+      return '<section class="stream-section ' + kind + '">'
+        + '<div class="stream-section-title">' + escapeHtml(title) + '</div>'
+        + sectionBody
+        + '</section>';
+    }
+
+    function getStreamStatusLabel(status, content) {
+      if (status === 'failed') {
+        return '失败';
+      }
+      if (status === 'completed') {
+        return '已完成';
+      }
+      if (content.response.trim().length > 0) {
+        return '回答中';
+      }
+      return '思考中';
+    }
+
+    function renderStreamBubbleHtml(label, content) {
+      const normalized = normalizeStreamContent(content, 'streaming');
+      const sections = [];
+      const thinkingExpanded = normalized.thinkingExpanded === true;
+
+      if (normalized.thinking.trim().length > 0) {
+        sections.push(renderStreamSectionHtml('thinking', 'Thinking', normalized.thinking, { collapsible: true, expanded: thinkingExpanded }));
+      }
+      if (normalized.response.trim().length > 0) {
+        sections.push(renderStreamSectionHtml('response', 'Response', normalized.response));
+      }
+      if (normalized.errorText.trim().length > 0 && normalized.status === 'failed') {
+        sections.push(renderStreamSectionHtml('error', 'Error', normalized.errorText));
+      }
+      if (sections.length === 0) {
+        sections.push('<div class="stream-empty">OpenCode 正在准备内容...</div>');
+      }
+
+      const statusLabel = getStreamStatusLabel(normalized.status, normalized);
+      const statusClass = normalized.status === 'failed' ? 'failed' : normalized.status === 'completed' ? 'completed' : 'thinking';
+      return '<div class="stream-shell">'
+        + '<div class="stream-header"><div class="stream-title">' + escapeHtml(label || 'OpenCode') + '</div><div class="stream-status ' + statusClass + '">' + escapeHtml(statusLabel) + '</div></div>'
+        + sections.join('')
+        + '</div>';
+    }
+
+    function setStreamBubbleContent(bubble, label, content) {
+      try {
+        const currentDetails = bubble.querySelector('.stream-thinking-details');
+        if (currentDetails instanceof HTMLDetailsElement) {
+          bubble.dataset.thinkingExpanded = currentDetails.open ? 'true' : 'false';
+        }
+
+        const normalized = normalizeStreamContent(content, 'streaming');
+        normalized.thinkingExpanded = bubble.dataset.thinkingExpanded === 'true';
+        bubble.innerHTML = renderStreamBubbleHtml(label, normalized);
+      } catch {
+        const normalized = normalizeStreamContent(content, 'streaming');
+        const fallbackText = [normalized.response, normalized.thinking, normalized.errorText].filter((item) => item && item.trim().length > 0).join('\n\n');
+        bubble.textContent = fallbackText || String(label || 'OpenCode');
+      }
     }
 
     function ensureStreamBubble(streamId, label) {
@@ -1314,38 +1961,42 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       entry = {
         bubble,
         label: String(label || 'OpenCode'),
-        text: ''
+        content: normalizeStreamContent(undefined, 'streaming')
       };
       activeStreams.set(streamId, entry);
-      bubble.textContent = formatStreamBubbleText(entry.label, entry.text, 'streaming');
+      setStreamBubbleContent(bubble, entry.label, entry.content);
       scrollThreadToBottom();
       return entry;
     }
 
-    function updateStreamBubble(streamId, label, text) {
+    function updateStreamBubble(streamId, label, content) {
       const entry = ensureStreamBubble(streamId, label);
       entry.label = String(label || entry.label || 'OpenCode');
-      entry.text = String(text || '');
-      entry.bubble.textContent = formatStreamBubbleText(entry.label, entry.text, 'streaming');
+      entry.content = normalizeStreamContent(content, 'streaming');
+      setStreamBubbleContent(entry.bubble, entry.label, entry.content);
       scrollThreadToBottom();
     }
 
-    function finishStreamBubble(streamId, label, text, status) {
+    function finishStreamBubble(streamId, label, content, status) {
       const entry = ensureStreamBubble(streamId, label);
       entry.label = String(label || entry.label || 'OpenCode');
-      entry.text = String(text || entry.text || '');
+      entry.content = normalizeStreamContent(content, status);
       entry.bubble.classList.remove('streaming');
       if (status === 'failed') {
         entry.bubble.classList.add('failed');
       }
 
-      const finalText = formatStreamBubbleText(entry.label, entry.text, status);
-      entry.bubble.textContent = finalText;
+      setStreamBubbleContent(entry.bubble, entry.label, entry.content);
       activeStreams.delete(streamId);
       state.thread.push({
-        kind: 'bubble',
-        role: 'ai',
-        text: finalText
+        kind: 'streamBubble',
+        stream: {
+          label: entry.label,
+          thinking: entry.content.thinking,
+          response: entry.content.response,
+          errorText: entry.content.errorText,
+          status: status === 'failed' ? 'failed' : 'completed'
+        }
       });
       syncState();
       scrollThreadToBottom();
@@ -1575,7 +2226,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    function updateSkillMeta() {
+    function updateSkillMetaCore() {
       if (state.confirmedMenu === 'auto') {
         renderStatusBanner('当前工作状态', [
           { kind: 'mode', text: '智能路由' },
@@ -1625,7 +2276,7 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       syncState();
     }
 
-    function renderSkills() {
+    function renderSkillsCore() {
       skillsContainer.innerHTML = '';
       const isMenuOpen = state.menuOpen === true;
       let autoAnchor = null;
@@ -1830,6 +2481,93 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
       contextShell.appendChild(panel);
     }
 
+    function renderSkillsFallback(reason) {
+      if (!skillsContainer) {
+        return;
+      }
+
+      skillsContainer.innerHTML = '';
+
+      const notice = document.createElement('div');
+      notice.className = 'auto-panel-desc';
+      notice.textContent = '菜单初始化异常，已切换为兼容模式。';
+      if (reason) {
+        notice.title = reason;
+      }
+      skillsContainer.appendChild(notice);
+
+      const row = document.createElement('div');
+      row.className = 'config-toggle-row';
+
+      function addQuickAction(label, onClick) {
+        const button = document.createElement('button');
+        button.className = 'quick-btn';
+        button.textContent = label;
+        button.addEventListener('click', onClick);
+        row.appendChild(button);
+      }
+
+      addQuickAction('智能路由', () => {
+        state.activeMenu = 'auto';
+        state.confirmedMenu = 'auto';
+        state.menuOpen = false;
+        updateSkillMeta();
+        updateSendButtonLabel();
+        syncState();
+      });
+
+      addQuickAction('迭代启动', () => {
+        state.activeMenu = 'flow';
+        state.confirmedMenu = 'flow';
+        state.menuOpen = false;
+        state.selectedFlow = 'delivery';
+        state.expandedFlow = 'delivery';
+        state.selectedSkill = 'init';
+        updateSkillMeta();
+        updateSendButtonLabel();
+        syncState();
+      });
+
+      addQuickAction('执行支持', () => {
+        state.activeMenu = 'flow';
+        state.confirmedMenu = 'flow';
+        state.menuOpen = false;
+        state.selectedFlow = 'support';
+        state.expandedFlow = 'support';
+        state.selectedSkill = 'task-support';
+        updateSkillMeta();
+        updateSendButtonLabel();
+        syncState();
+      });
+
+      skillsContainer.appendChild(row);
+    }
+
+    function renderSkills() {
+      try {
+        renderSkillsCore();
+        if (!skillsContainer || skillsContainer.querySelectorAll('button').length === 0) {
+          throw new Error('No skill buttons were rendered.');
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        renderSkillsFallback(message);
+      }
+    }
+
+    function updateSkillMeta() {
+      try {
+        updateSkillMetaCore();
+        if (skillMeta && !String(skillMeta.textContent || '').trim()) {
+          throw new Error('Status banner rendered empty.');
+        }
+      } catch {
+        if (skillMeta) {
+          skillMeta.textContent = '当前工作状态: 兼容模式';
+        }
+      }
+    }
+
     function sendRequest() {
       const effectiveSkill = state.activeMenu === 'flow' ? state.selectedSkill : null;
       const text = String(promptInput.value || '').trim();
@@ -1895,11 +2633,12 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
         return;
       }
       if (message.type === 'opencodeStreamUpdate') {
-        updateStreamBubble(message.streamId, message.label, message.text);
+        updateStreamBubble(message.streamId, message.label, message.content);
         return;
       }
       if (message.type === 'opencodeStreamEnd') {
-        finishStreamBubble(message.streamId, message.label, message.text, message.status === 'failed' ? 'failed' : 'completed');
+        const content = normalizeStreamContent(message.content, message.status === 'failed' ? 'failed' : 'completed');
+        finishStreamBubble(message.streamId, message.label, content, content.status === 'failed' ? 'failed' : 'completed');
         return;
       }
       if (message.type === 'workflowRuntimeSnapshot') {
@@ -1909,12 +2648,13 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
             return;
           }
 
-          if (stream.status === 'failed' || stream.status === 'completed') {
-            finishStreamBubble(stream.streamId, stream.label, stream.text, stream.status);
+          const content = normalizeStreamContent(stream.content, 'streaming');
+          if (content.status === 'failed' || content.status === 'completed') {
+            finishStreamBubble(stream.streamId, stream.label, content, content.status);
             return;
           }
 
-          updateStreamBubble(stream.streamId, stream.label, stream.text);
+          updateStreamBubble(stream.streamId, stream.label, content);
         });
       }
     });
@@ -1976,25 +2716,49 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
           return;
         }
 
-        if (item.kind === 'bubble') {
-          const bubble = createBubbleNode(item.role, item.text);
-          thread.appendChild(bubble);
-          return;
-        }
+        try {
+          if (item.kind === 'bubble') {
+            const bubble = createBubbleNode(item.role, item.text);
+            thread.appendChild(bubble);
+            return;
+          }
 
-        if (item.kind === 'autoSuggestion') {
-          appendAutoSuggestion(item, true);
+          if (item.kind === 'streamBubble') {
+            const bubble = createBubbleNode('ai', '');
+            setStreamBubbleContent(bubble, item.stream.label, item.stream);
+            if (item.stream.status === 'failed') {
+              bubble.classList.add('failed');
+            }
+            thread.appendChild(bubble);
+            return;
+          }
+
+          if (item.kind === 'autoSuggestion') {
+            appendAutoSuggestion(item, true);
+          }
+        } catch {
+          // Skip malformed restored items so the rest of the UI can still load.
         }
       });
 
       scrollThreadToBottom();
     }
 
-    restoreThread();
-    promptInput.value = state.draftText;
     renderSkills();
     updateSkillMeta();
     updateSendButtonLabel();
+    setBootStatus('BOOT: ui-ready', 'ok');
+    try {
+      restoreThread();
+    } catch {
+      thread.innerHTML = '';
+      const fallback = document.createElement('div');
+      fallback.className = 'bubble ai';
+      fallback.textContent = '欢迎使用 AI4PB Skill Chat。历史消息渲染失败，已跳过恢复。';
+      thread.appendChild(fallback);
+      setBootStatus('BOOT: restoreThread failed', 'error');
+    }
+    promptInput.value = state.draftText;
   </script>
 </body>
 </html>`;
@@ -2039,6 +2803,21 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
           kind: 'bubble',
           role: item.role === 'user' ? 'user' : 'ai',
           text: typeof item.text === 'string' ? item.text : ''
+        });
+        continue;
+      }
+
+      if (item.kind === 'streamBubble') {
+        const stream = item.stream && typeof item.stream === 'object' ? item.stream : undefined;
+        thread.push({
+          kind: 'streamBubble',
+          stream: {
+            label: typeof stream?.label === 'string' ? stream.label : 'OpenCode',
+            thinking: typeof stream?.thinking === 'string' ? stream.thinking : '',
+            response: typeof stream?.response === 'string' ? stream.response : '',
+            errorText: typeof stream?.errorText === 'string' ? stream.errorText : '',
+            status: stream?.status === 'failed' ? 'failed' : stream?.status === 'streaming' ? 'streaming' : 'completed'
+          }
         });
         continue;
       }
@@ -2205,6 +2984,9 @@ type OpenCodeCommandResult = {
 type OpenCodeStreamHandlers = {
   onStdoutChunk?: (chunk: string) => void;
   onStderrChunk?: (chunk: string) => void;
+  onThinkingDelta?: (chunk: string) => void;
+  onResponseDelta?: (chunk: string) => void;
+  onStreamError?: (message: string) => void;
 };
 
 async function postWorkflowRuntimeMessage(message: any): Promise<void> {
@@ -3116,7 +3898,6 @@ async function runOpenCodeServerInvocation(
   const textOrder: string[] = [];
   const reasoningOrder: string[] = [];
   const toolStatuses = new Map<string, string>();
-  let activeStreamLabel: 'thinking' | 'response' | null = null;
   let responseError = '';
   let isCompleted = false;
 
@@ -3125,10 +3906,6 @@ async function runOpenCodeServerInvocation(
       return;
     }
     isCompleted = true;
-    if (activeStreamLabel) {
-      streamHandlers?.onStdoutChunk?.('\n');
-      activeStreamLabel = null;
-    }
     if (error) {
       responseError = error;
     }
@@ -3157,7 +3934,6 @@ async function runOpenCodeServerInvocation(
         if (statusType === 'retry') {
           const retryMessage = readString(status, 'message') ?? 'OpenCode is retrying.';
           streamHandlers?.onStdoutChunk?.(`\n[retry] ${retryMessage}\n`);
-          activeStreamLabel = null;
           return;
         }
 
@@ -3175,6 +3951,7 @@ async function runOpenCodeServerInvocation(
 
         const message = parseOpenCodeServerError(event);
         streamHandlers?.onStderrChunk?.(`${message}\n`);
+        streamHandlers?.onStreamError?.(message);
         finalizeCompletion(message);
         return;
       }
@@ -3221,7 +3998,6 @@ async function runOpenCodeServerInvocation(
           if (toolStatuses.get(partId) !== statusKey) {
             toolStatuses.set(partId, statusKey);
             streamHandlers?.onStdoutChunk?.(`\n[tool:${toolName}] ${status}${title ? ` - ${title}` : ''}\n`);
-            activeStreamLabel = null;
           }
         }
         return;
@@ -3238,22 +4014,14 @@ async function runOpenCodeServerInvocation(
 
         const kind = partKinds.get(partId);
         if (kind === 'reasoning') {
-          if (activeStreamLabel !== 'thinking') {
-            streamHandlers?.onStdoutChunk?.('\n[thinking] ');
-            activeStreamLabel = 'thinking';
-          }
           reasoningParts.set(partId, `${reasoningParts.get(partId) ?? ''}${delta}`);
-          streamHandlers?.onStdoutChunk?.(delta);
+          streamHandlers?.onThinkingDelta?.(delta);
           return;
         }
 
         if (kind === 'text') {
-          if (activeStreamLabel !== 'response') {
-            streamHandlers?.onStdoutChunk?.('\n[response] ');
-            activeStreamLabel = 'response';
-          }
           textParts.set(partId, `${textParts.get(partId) ?? ''}${delta}`);
-          streamHandlers?.onStdoutChunk?.(delta);
+          streamHandlers?.onResponseDelta?.(delta);
         }
       }
     }
@@ -4248,7 +5016,27 @@ async function openOpenCodeWithPrompt(
   const invocation = buildOpenCodeInvocation({ root, seedText, label, skill }, config);
   const streamId = createWorkflowStreamId();
   const streamLabel = `OpenCode ${label}`;
-  let streamedThreadText = '';
+  const streamContent: WorkflowStreamBubbleState = {
+    label: streamLabel,
+    thinking: '',
+    response: '',
+    errorText: '',
+    status: 'streaming'
+  };
+
+  const postStreamUpdate = (): void => {
+    void postWorkflowRuntimeMessage({
+      type: 'opencodeStreamUpdate',
+      streamId,
+      label: streamLabel,
+      content: {
+        thinking: streamContent.thinking,
+        response: streamContent.response,
+        errorText: streamContent.errorText,
+        status: streamContent.status
+      }
+    });
+  };
 
   void postWorkflowRuntimeMessage({
     type: 'opencodeStreamStart',
@@ -4259,11 +5047,22 @@ async function openOpenCodeWithPrompt(
   output.show(true);
   output.appendLine(`[AI4PB] OpenCode transport: ${invocation.transport}`);
   if (invocation.transport === 'server') {
+    const sessionQuery = {
+      directory: invocation.serverDirectory,
+      workspace: invocation.serverWorkspace
+    };
+    const sessionCreateUrl = buildOpenCodeServerUrl(invocation.serverBaseUrl, '/session', sessionQuery);
+    const promptAsyncUrlTemplate = buildOpenCodeServerUrl(invocation.serverBaseUrl, '/session/{sessionId}/prompt_async', sessionQuery);
+
     output.appendLine(`[AI4PB] OpenCode server: ${invocation.serverBaseUrl}`);
     output.appendLine(`[AI4PB] OpenCode server directory: ${invocation.serverDirectory}`);
     if (invocation.serverWorkspace) {
       output.appendLine(`[AI4PB] OpenCode server workspace: ${invocation.serverWorkspace}`);
     }
+    output.appendLine(`[AI4PB] OpenCode session create request URL: ${sessionCreateUrl}`);
+    output.appendLine(`[AI4PB] OpenCode session create body: ${JSON.stringify({ title: invocation.serverSessionTitle })}`);
+    output.appendLine(`[AI4PB] OpenCode prompt_async request URL template: ${promptAsyncUrlTemplate}`);
+    output.appendLine(`[AI4PB] OpenCode prompt_async body summary: ${JSON.stringify({ parts: [{ type: 'text', textLength: invocation.promptPayload.length }] })}`);
   } else {
     output.appendLine(`[AI4PB] OpenCode command: ${invocation.command} ${invocation.args.join(' ')}`);
     output.appendLine(`[AI4PB] OpenCode cwd: ${invocation.cwd}`);
@@ -4277,31 +5076,28 @@ async function openOpenCodeWithPrompt(
   try {
     const result = await runOpenCodeInvocation(invocation, {
       onStdoutChunk: (chunk) => {
-        streamedThreadText += chunk;
-        void postWorkflowRuntimeMessage({
-          type: 'opencodeStreamUpdate',
-          streamId,
-          label: streamLabel,
-          text: streamedThreadText
-        });
-
         if (invocation.transport === 'server') {
           output.append(chunk);
           return;
         }
 
+        streamContent.response += chunk;
+        postStreamUpdate();
         output.append(`[AI4PB][OpenCode stdout] ${chunk}`);
+      },
+      onThinkingDelta: (chunk) => {
+        streamContent.thinking += chunk;
+        postStreamUpdate();
+      },
+      onResponseDelta: (chunk) => {
+        streamContent.response += chunk;
+        postStreamUpdate();
       },
       onStderrChunk: (chunk) => {
         const cleanedChunk = stripKnownWslWarnings(chunk);
         if (cleanedChunk) {
-          streamedThreadText += `\n[error] ${cleanedChunk}`;
-          void postWorkflowRuntimeMessage({
-            type: 'opencodeStreamUpdate',
-            streamId,
-            label: streamLabel,
-            text: streamedThreadText
-          });
+          streamContent.errorText = `${streamContent.errorText}${streamContent.errorText ? '\n' : ''}${cleanedChunk}`;
+          postStreamUpdate();
 
           if (invocation.transport === 'server') {
             output.append(`[error] ${cleanedChunk}`);
@@ -4310,6 +5106,10 @@ async function openOpenCodeWithPrompt(
 
           output.append(`[AI4PB][OpenCode stderr] ${cleanedChunk}`);
         }
+      },
+      onStreamError: (message) => {
+        streamContent.errorText = `${streamContent.errorText}${streamContent.errorText ? '\n' : ''}${message}`;
+        postStreamUpdate();
       }
     });
     output.appendLine('\n[AI4PB] OpenCode stream completed');
@@ -4321,11 +5121,23 @@ async function openOpenCodeWithPrompt(
     }
 
     if (result.exitCode !== 0) {
+      streamContent.status = 'failed';
+      if (!streamContent.response && result.stdout) {
+        streamContent.response = result.stdout;
+      }
+      if (!streamContent.errorText) {
+        streamContent.errorText = result.stderr || 'OpenCode 执行失败。';
+      }
       void postWorkflowRuntimeMessage({
         type: 'opencodeStreamEnd',
         streamId,
         label: streamLabel,
-        text: streamedThreadText.trim() || result.stderr || result.stdout || 'OpenCode 执行失败。',
+        content: {
+          thinking: streamContent.thinking,
+          response: streamContent.response,
+          errorText: streamContent.errorText,
+          status: streamContent.status
+        },
         status: 'failed'
       });
       void vscode.window.showErrorMessage(
@@ -4334,11 +5146,20 @@ async function openOpenCodeWithPrompt(
       return;
     }
 
+    streamContent.status = 'completed';
+    if (!streamContent.response) {
+      streamContent.response = result.stdout || 'OpenCode 已完成，但没有返回可展示的内容。';
+    }
     void postWorkflowRuntimeMessage({
       type: 'opencodeStreamEnd',
       streamId,
       label: streamLabel,
-      text: streamedThreadText.trim() || result.stdout || 'OpenCode 已完成，但没有返回可展示的内容。',
+      content: {
+        thinking: streamContent.thinking,
+        response: streamContent.response,
+        errorText: streamContent.errorText,
+        status: streamContent.status
+      },
       status: 'completed'
     });
 
@@ -4346,11 +5167,20 @@ async function openOpenCodeWithPrompt(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.appendLine(`[AI4PB] OpenCode execution failed: ${message}`);
+    streamContent.status = 'failed';
+    if (!streamContent.errorText) {
+      streamContent.errorText = message;
+    }
     void postWorkflowRuntimeMessage({
       type: 'opencodeStreamEnd',
       streamId,
       label: streamLabel,
-      text: streamedThreadText.trim() || message,
+      content: {
+        thinking: streamContent.thinking,
+        response: streamContent.response,
+        errorText: streamContent.errorText,
+        status: streamContent.status
+      },
       status: 'failed'
     });
     void vscode.window.showErrorMessage(`AI4PB failed to execute OpenCode: ${message}`);
