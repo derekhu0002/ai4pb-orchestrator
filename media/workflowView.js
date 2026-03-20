@@ -150,9 +150,15 @@
 
     const containerRect = skillsContainer.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
-    const desiredWidth = state.activeMenu === 'flow' ? 420 : 320;
     const containerWidth = Math.max(0, Math.floor(containerRect.width));
-    const width = Math.max(Math.min(desiredWidth, containerWidth), Math.min(220, containerWidth));
+    const minWidth = state.activeMenu === 'flow' ? 360 : 260;
+    const preferredRatio = state.activeMenu === 'flow' ? 0.9 : 0.72;
+    const maxWidth = state.activeMenu === 'flow' ? 760 : 480;
+    const preferredWidth = Math.floor(containerWidth * preferredRatio);
+    const width = Math.max(
+      Math.min(Math.max(minWidth, preferredWidth), maxWidth, containerWidth),
+      Math.min(220, containerWidth)
+    );
     let left = anchorRect.left - containerRect.left;
     if (left + width > containerWidth) {
       left = Math.max(0, containerWidth - width);

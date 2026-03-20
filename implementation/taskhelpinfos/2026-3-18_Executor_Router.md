@@ -1,6 +1,6 @@
 # 任务执行简报
 
-- 任务名称：implement a router to adapt different ai coding agent.
+- 任务名称：Executor_Router
 - 任务类型：ToDo
 - 当前状态：Active
 - 负责人：llm
@@ -10,19 +10,19 @@
 
 ## 1. LLM执行摘要
 
-- 当前任务是对 `Executor_Router` 的代理分发能力进行收口与验收，不是重构整个 AI 执行架构。
-- 任务行与 `ResolverNotes` 一致表明：默认代理读取、按技能路由、Copilot 保持原 prompt reference 链路、OpenCode CLI 适配层与错误透传已实现。
-- 首要修改对象仍应限定在 `src/extension.ts`、`.aicodingconfig`、`.aicodingconfig.json` 这些直接承载路由与配置的入口。
+- 本任务对应 markdown 任务行 `Executor_Router`，其执行目标来自 `Problem` 与 KG 任务名：实现面向不同 AI coding agent 的路由能力。
+- 当前主体开发已完成，后续重点是补齐真实 `OpenCode CLI` 成功执行验收，而不是重构整个 AI 执行架构。
+- 首要修改对象应限定在 `src/extension.ts`、`.aicodingconfig`、`.aicodingconfig.json` 这些直接承载路由和配置的入口。
 - `Github Copilot` 分支必须继续通过 `Prompt Tool Registry` 访问既有 prompt 资产，不允许借本任务改造技能注册或提示词资产结构。
 - `Open Code AI Coding Agent` 分支本轮只允许一次性 CLI 调用、工作目录适配和错误透传，不允许扩展为会话态或多轮编排。
-- 当前最关键验收条件是在真实安装的 `OpenCode CLI` 环境中完成一次成功执行；失败时也必须完整保留 stdout、stderr 与退出码。
+- 最关键验收条件是在真实安装的 `OpenCode CLI` 环境中完成一次成功执行；失败时也必须完整保留 stdout、stderr 与退出码。
 - 当前主要阻塞是执行环境缺少 `opencode` 命令，导致成功路径只能停留在命令构造与错误透传层面。
 - 若无需继续改码，后续执行重点应转向环境补齐、真实 CLI 验证和验证证据回写。
 
 ## 2. 已确认事实
 
 - `Executor_Router` (1227) 是 `AI4PB VS插件` (1209) 的组成部分，关系 `1116` 为 `AI4PB VS插件 --(ArchiMate_Composition)--> Executor_Router`。
-- `Executor_Router` (1227) 的 KG 描述明确要求它依据 `.aicodingconfig` (1231) 中的配置，将任务分发给不同 AI Coding Agent。
+- `Executor_Router` (1227) 的 KG 描述明确要求它依据 `.aicodingconfig` (1231) 中的配置，将任务分发给不同 `AI Coding Agent` (1230)。
 - `Executor_Router` (1227) 的 `project_info.tasks` 中存在唯一活动任务，字段为：状态 `Active`、负责人 `llm`、开始日期 `2026-3-18`、截止日期 `2026-3-18`、优先级 `Low`。
 - `.aicodingconfig` (1231) 在 KG 中已定义最小 schema：`AGENT_ROUTER_CONFIG.default_agent` 与 `AGENT_ROUTER_CONFIG.task_specific_agents`。
 - `AI4PB VS插件` (1209) 通过关系 `1100` 触发 `AI Coding Agent` (1230)，表明路由结果最终进入统一 AI 执行主链。
@@ -38,7 +38,7 @@
 - Windows 下命令引号、工作目录和路径分隔符兼容性未知。建议继续把路径拼装与进程调用集中在 CLI 适配边界处理。
 - KG 未给出 `OpenCode CLI 适配器` (1232) 的独立代码文件定位。建议继续以 `src/extension.ts` 为主入口，如需拆分模块再补充架构说明。
 - `ResolverNotes` 明确本机 `Get-Command opencode` 未安装，因此当前无法仅凭仓库内容完成真实成功路径验收。建议人工先安装 CLI 或提供可执行文件路径。
-- 任务表仍标记为 `Active`，但 `ResolverNotes` 显示主体开发已完成。建议在真实 CLI 成功跑通并记录证据后，再决定是否转为完成态。
+- markdown 任务行 `Name` 与 KG 任务名不一致：前者为 `Executor_Router`，后者为执行目标句。建议对外清单使用 `Executor_Router` 作为任务名，执行目标写入摘要和交付说明。
 
 ## 4. 约束与边界
 
@@ -78,7 +78,7 @@
    对应架构元素 ID：1187、1219、1213、1209
    完成判定标准：Copilot 路径无回归，代理切换不会改变 prompt 工具注册与界面职责分工。
 5. 动作说明：若真实执行失败，仅在 `Executor_Router` / CLI 适配边界内做最小修补，并同步更新任务材料中的阻塞说明。
-   目标文件 / 模块 / 目录：`src/extension.ts`、`implementation/taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md`
+   目标文件 / 模块 / 目录：`src/extension.ts`、`implementation/taskhelpinfos/2026-3-18_Executor_Router.md`
    对应架构元素 ID：1227、1232、1229
    完成判定标准：问题被限制在调用适配或错误处理层内解决，Copilot 路径与任务材料保持一致。
 
@@ -104,4 +104,4 @@
 - 主要阻塞：当前执行环境未安装 `OpenCode CLI`，无法完成成功路径验收。缓解措施：人工先安装 CLI 或在配置中提供明确命令路径，再执行端到端验证。
 - 技术风险：真实 CLI 契约可能与当前适配假设不一致。缓解措施：保持适配层只负责命令构造、工作目录处理与错误透传，避免深耦合解析。
 - 兼容性风险：Windows 下命令引号与路径转义可能导致仅在特定机器复现的问题。缓解措施：记录完整命令、参数、工作目录与退出码，便于针对性修补。
-- 状态风险：任务仍为 `Active`，可能让后续执行者误判为功能尚未开发。缓解措施：在任务支撑文件与任务清单中明确“主体实现已完成、剩余为真实 CLI 验收阻塞”。
+- 状态风险：任务仍为 `Active`，但主体开发已完成。缓解措施：在任务支撑文件与任务清单中明确“实现基本完成、剩余为真实 CLI 验收阻塞”。
