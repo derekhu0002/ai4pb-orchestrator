@@ -632,7 +632,7 @@ class WorkflowViewProvider {
     }
     .shell {
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
       gap: 10px;
       height: calc(100vh - 20px);
       min-height: 440px;

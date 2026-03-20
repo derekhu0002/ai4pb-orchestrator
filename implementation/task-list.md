@@ -11,7 +11,7 @@
 
 | Task Name | Associated Component | Assignee(s) | Priority | Status | Start Date | Due Date | Days Until Due | Key Deliverable | Task Help Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| implement a router to adapt different ai coding agent. | Executor_Router (1227) | llm | Low | Active | 2026-3-18 | 2026-3-18 | 21 | 保持 `Copilot` 原有 prompt reference 链路不变，并完成 `OpenCode CLI` 一次性执行链路的真实环境成功验收；若验收失败，仍需保留完整错误透传与诊断信息。 | [2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md](taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md) |
+| implement a router to adapt different ai coding agent. | Executor_Router (1227) | llm | Low | Active | 2026-3-18 | 2026-3-18 | 21 | 保持 `Github Copilot` 原有 prompt reference 调用链不变，并完成 `OpenCode CLI` 一次性执行链路的真实环境验收；若验收失败，也必须保留完整错误透传与诊断信息。 | [2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md](taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md) |
 
 ## 汇总
 
@@ -21,7 +21,7 @@
 
 ## 7日内到期任务
 
-- **implement a router to adapt different ai coding agent.** 截止日期为 `2026-3-18`；相对报告生成日 `2026-03-20` 已逾期 2 天，当前关键紧急项是补齐真实 `OpenCode CLI` 成功执行验收。
+- **implement a router to adapt different ai coding agent.** 截止日期为 `2026-3-18`；相对报告生成日 `2026-03-20` 已逾期 2 天，当前关键紧急项是补齐真实 `OpenCode CLI` 成功执行验收并回写验证证据。
 
 ## 无负责人任务
 
