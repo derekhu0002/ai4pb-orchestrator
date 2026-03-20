@@ -72,6 +72,7 @@ const RELATIVE_PATHS = {
 const BUNDLED_PATHS = {
   eaTemplate: 'EA-model-template/EA-model-template.feap',
   skillsRoot: '.github/skills',
+  opencodeSkillsRoot: '.opencode/skills',
   initialPrompt: 'workprompt/initial-prompt.md',
   wrapPrompt: 'workprompt/Wrap-up Prompt.md',
   reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
@@ -4470,9 +4471,15 @@ function ensureWorkspaceSkillsInstalled(): void {
       return;
     }
 
-    const workspaceSkillsRoot = resolvePath(root, BUNDLED_PATHS.skillsRoot);
-    copyFilesRecursivelyOverwrite(bundledSkillsRoot, workspaceSkillsRoot);
-    output.appendLine(`[AI4PB] Skills synchronized to workspace: ${workspaceSkillsRoot}`);
+    const workspaceSkillTargets = [
+      resolvePath(root, BUNDLED_PATHS.skillsRoot),
+      resolvePath(root, BUNDLED_PATHS.opencodeSkillsRoot)
+    ];
+
+    for (const targetRoot of workspaceSkillTargets) {
+      copyFilesRecursivelyOverwrite(bundledSkillsRoot, targetRoot);
+      output.appendLine(`[AI4PB] Skills synchronized to workspace: ${targetRoot}`);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     output.appendLine(`[AI4PB] Skills auto-install skipped: ${message}`);

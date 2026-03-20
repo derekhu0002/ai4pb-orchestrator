@@ -22,5 +22,13 @@ AI4PB（AI for Project Building）的核心在于消除“架构设计”与“�
 
 ---
 
+## 当前实现提示
+
+- `.aicodingconfig` 已不再只是最小导出配置，当前还可通过 `AGENT_ROUTER_CONFIG` 配置执行代理路由，并支持 `opencode.server` 传输参数。
+- AI4PB 工作流界面的实现已拆分为 `src/extension.ts` 中的宿主逻辑与 `media/workflowView.js` 中的外置 webview 前端运行时。
+- Design Audit 的审计结果应写入 `design/temp/audit.md`，该文件属于临时架构对齐工件，而非 `implementation/*` 交付文档。
+
+---
+
 > **附注**：
 > 本指导书随 AI4PB VS Code 扩展一同更新，请在开展项目之前通读本指南，掌握如何将 Sparx EA 和 VS Code Copilot Chat 串联到你的日常开发之中。

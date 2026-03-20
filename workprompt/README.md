@@ -38,10 +38,11 @@
 	- `TEMP/iteration-state.json`
 	- `TEMP/design-code-alignment-*.md`
 	- `TEMP/wrap-up-*.md`
+	- `design/temp/audit.md`（Design Audit 专用临时输出）
 
 ### 结论
 - `implementation/*`：用于交付给团队阅读和执行的内容成果。
-- `TEMP/*`：用于扩展运行过程追踪、对齐检查和会话收尾的过程工件。
+- `TEMP/*` 与 `design/temp/audit.md`：用于扩展运行过程追踪、对齐检查和会话收尾的过程工件。
 - `workprompt/*.md`：首先是 Prompt 资产本体，是否生成文件取决于具体 Prompt 类型与执行流程。
 
 ---
@@ -145,11 +146,13 @@
 ### 建议用法
 - 接手存量项目时使用
 - 在架构不完整或文档缺失时优先执行
+- 当作为 AI4PB Design Audit 使用时，应执行只读差异审计，并仅将结果写入 `design/temp/audit.md`
 
 ### 建议输出
 - 系统全景结构
 - 关键模块职责与依赖
 - 主要风险与改进建议
+- 设计审计场景下的架构变更建议与 traceability 修正项
 
 ---
 

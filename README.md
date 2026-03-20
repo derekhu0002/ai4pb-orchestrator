@@ -165,11 +165,32 @@ AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
     "needallmaintenace": "onlyActive",
     "needbrowserlocation": true,
     "maintenacetype": "forllm"
+  },
+  "AGENT_ROUTER_CONFIG": {
+    "default_agent": "copilot",
+    "task_specific_agents": {
+      "task-list": "opencode"
+    },
+    "opencode": {
+      "transport": "server",
+      "executionHost": "wsl",
+      "timeoutMs": 600000,
+      "server": {
+        "baseUrl": "http://127.0.0.1:4096",
+        "directory": "{workspaceRoot}",
+        "sessionTitle": "AI4PB {label}"
+      }
+    }
   }
 }
 ```
 - `needallmaintenace`: 控制抽取出来的任务状态（`onlyActive` 是主流做法，以缩小发给 Copilot 的 Token 体积并将精力集中于当期 Sprint）。
 - `maintenacetype`: 聚焦将 `Assigned To` 为 `forllm`（或等效 `llm`）的任务推送给 AI 进行处理。
+- `default_agent`: 设置默认执行代理（当前支持 `copilot` 与 `opencode`）。
+- `task_specific_agents`: 按技能名覆盖代理选择，例如将 `task-list` 路由到 OpenCode。
+- `opencode.transport`: 指定 OpenCode 使用 `cli` 或 `server` 传输方式。
+- `opencode.executionHost`: 在 Windows 环境下可指定 `wsl`，以适配 OpenCode 实际安装位置与路径转换。
+- `opencode.server`: 当 `transport` 为 `server` 时，配置 OpenCode 服务端地址、工作目录和会话标题模板。
 
 ## 4.3 提示词模板注册 (Prompt Tools)
 
@@ -182,7 +203,7 @@ AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
 ## 4.4 扩展运行架构 (Extension Runtime Architecture)
 
 在 AI4PB Orchestrator 的底层交互架构中，用户在侧边栏的交互会通过视图层驱动底层的自动化路由：
-- **WorkflowViewProvider (视图层)**：负责呈现 AI4PB 专属的 SCRUM 活动面板，监听当前工作区的环境与架构文件状态，提供各类操作下达入口。
+- **WorkflowViewProvider (视图层)**：负责呈现 AI4PB 专属的 SCRUM 活动面板，监听当前工作区的环境与架构文件状态，提供各类操作下达入口。当前实现由 `src/extension.ts` 中的宿主逻辑负责 webview 生命周期、状态同步与命令派发，并由 `media/workflowView.js` 负责实际前端运行时、交互渲染与 OpenCode 流式消息展示。
 - **AUTO Skill Router (自动技能路由层)**：当用户在 `WorkflowViewProvider` 中点击如“执行架构-代码对齐审计”等按钮时，视图层会向后台发出指令，触发 **AUTO Skill Router** 进行动态路由调度。Router 自动组装当前最新的 `SystemArchitecture.json` 作为上下文，利用 `Prompt Tool Registry Service` 将对应的系统级专家 Prompt 加载到 GitHub Copilot 的实际 Chat 会话中，从而实现免配置的一键式模型指令派发。
 
 # 5. SCRUM 敏捷执行工作流 (SCRUM Workflow)
@@ -213,7 +234,7 @@ AI4PB 最核心的工作模式，即是依据下述按部就班的 SCRUM 步序�
 ### Step 5: Design Audit (架构-代码审计 / Traceability)
 - **触发**：`打开 Copilot（Design Audit）`。
 - **目的**：“这批代码改坏了架构没有？”本步骤执行严苛的代码-架构一致性校验。
-- **行动**：AI 会读取实际产生的代码与 `SystemArchitecture.json` 里的声明差异，将缺失的 `code_paths` 以及职责越位的部分输出到 `design/temp/audit.md` 审计报告临时文件中。
+- **行动**：AI 会读取实际产生的代码与 `SystemArchitecture.json` 里的声明差异，将缺失的 `code_paths` 以及职责越位的部分输出到 `design/temp/audit.md` 审计报告临时文件中。该文件属于架构对齐过程工件，不属于 `implementation/*` 业务交付物。
 - **反馈**：系统工程师依据审计文案在 EA 中手工修正模型，从而保持图纸依然 100% 反映代码现状。
 
 ### Step 6: Wrap-up & Iteration Summary (迭代收尾与 Git 提交)
