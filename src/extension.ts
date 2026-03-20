@@ -94,6 +94,17 @@ const TOOL_NAMES = {
   iterationSummaryPrompt: 'ai4pb_get_iteration_summary_prompt'
 } as const;
 
+const SKILL_PROMPT_PATHS: Record<SkillKey, string> = {
+  init: BUNDLED_PATHS.initialPrompt,
+  audit: BUNDLED_PATHS.reversePrompt,
+  wrapup: BUNDLED_PATHS.wrapPrompt,
+  'iteration-summary': BUNDLED_PATHS.iterationSummaryPrompt,
+  'task-list': BUNDLED_PATHS.taskListPrompt,
+  'task-support': BUNDLED_PATHS.taskSupportPrompt,
+  'weekly-report': BUNDLED_PATHS.weeklyReportPrompt,
+  'iteration-issues': BUNDLED_PATHS.iterationIssuesPrompt
+};
+
 type SkillKey =
   | 'init'
   | 'audit'
@@ -3240,6 +3251,49 @@ function buildSkillSeedText(skill: SkillKey, userText: string): string {
   return lines.join('\n');
 }
 
+function extractUserDirectiveFromSeedText(seedText: string): string {
+  const match = seedText.match(/(?:^|\n)补充上下文：([\s\S]*?)(?:\n请现在开始。|$)/);
+  return match ? match[1].trim() : '';
+}
+
+function buildOpenCodePromptText(skill: SkillKey | undefined, seedText: string): string {
+  if (!skill) {
+    return seedText;
+  }
+
+  const promptRelativePath = SKILL_PROMPT_PATHS[skill];
+  const promptPath = resolveExtensionPath(promptRelativePath);
+  if (!exists(promptPath)) {
+    throw new Error(`AI4PB prompt file not found for OpenCode: ${promptPath}`);
+  }
+
+  const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
+  if (!promptContent) {
+    throw new Error(`AI4PB prompt file is empty for OpenCode: ${promptPath}`);
+  }
+
+  const userDirective = extractUserDirectiveFromSeedText(seedText);
+  const lines = [
+    `请严格执行以下 AI4PB 提示词模板。`,
+    `技能名称: ${skill}`,
+    `提示词文件: ${promptRelativePath}`,
+    '',
+    '提示词正文如下：',
+    promptContent,
+    '',
+    '执行要求：请严格按上述提示词执行，不要在提示词之外额外布置任务。'
+  ];
+
+  if (userDirective) {
+    lines.push('');
+    lines.push(`补充上下文：${userDirective}`);
+  }
+
+  lines.push('');
+  lines.push('请现在开始。');
+  return lines.join('\n');
+}
+
 // @ArchitectureID: 1227
 function normalizeAgentExecutor(value?: string): AgentExecutor | undefined {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -5020,7 +5074,8 @@ async function openOpenCodeWithPrompt(
   config: AiConfig | undefined,
   skill?: SkillKey
 ): Promise<void> {
-  const invocation = buildOpenCodeInvocation({ root, seedText, label, skill }, config);
+  const promptText = buildOpenCodePromptText(skill, seedText);
+  const invocation = buildOpenCodeInvocation({ root, seedText: promptText, label, skill }, config);
   const streamId = createWorkflowStreamId();
   const streamLabel = `OpenCode ${label}`;
   const streamContent: WorkflowStreamBubbleState = {
@@ -5053,6 +5108,7 @@ async function openOpenCodeWithPrompt(
 
   output.show(true);
   output.appendLine(`[AI4PB] OpenCode transport: ${invocation.transport}`);
+  output.appendLine(`[AI4PB] OpenCode prompt source: ${skill ? SKILL_PROMPT_PATHS[skill] : 'direct seed text'}`);
   if (invocation.transport === 'server') {
     const sessionQuery = {
       directory: invocation.serverDirectory,
