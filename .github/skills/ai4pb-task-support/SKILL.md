@@ -1,11 +1,13 @@
 ---
 name: ai4pb-task-support
-description: SCRUM flow skill for execution readiness and task-level guidance via #ai4pb-task-support.
+description: SCRUM flow skill for execution readiness and task-level guidance.
 ---
 
 # AI4PB Task Support Skill
 
-Use `#ai4pb-task-support` to prepare execution-ready task guidance during sprint delivery.
+Use this skill to prepare execution-ready task guidance during sprint delivery.
+
+Copilot equivalent prompt reference: `#ai4pb-task-support`.
 
 Execution rule:
 1. Run the task-support workflow only.

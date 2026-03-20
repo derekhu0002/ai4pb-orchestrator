@@ -1,11 +1,13 @@
 ---
 name: ai4pb-audit
-description: SCRUM flow skill for review and quality inspection via #ai4pb-audit.
+description: SCRUM flow skill for review and quality inspection of design-code alignment.
 ---
 
 # AI4PB Audit Skill
 
-Use `#ai4pb-audit` for sprint review inspection of design-code alignment.
+Use this skill for sprint review inspection of design-code alignment.
+
+Copilot equivalent prompt reference: `#ai4pb-audit`.
 
 Execution rule:
 1. Run the audit workflow only.

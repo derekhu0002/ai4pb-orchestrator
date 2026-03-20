@@ -1,11 +1,13 @@
 ---
 name: ai4pb-init
-description: SCRUM flow skill for sprint-start implementation kickoff via #ai4pb-init.
+description: SCRUM flow skill for sprint-start implementation kickoff from architecture-defined backlog items.
 ---
 
 # AI4PB Init Skill
 
-Use `#ai4pb-init` for sprint kickoff from architecture-defined backlog items.
+Use this skill for sprint kickoff from architecture-defined backlog items.
+
+Copilot equivalent prompt reference: `#ai4pb-init`.
 
 Execution rule:
 1. Run the init workflow only.

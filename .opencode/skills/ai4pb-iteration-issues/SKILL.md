@@ -1,11 +1,13 @@
 ---
 name: ai4pb-iteration-issues
-description: SCRUM flow skill for defect follow-up and in-sprint issue continuation via #ai4pb-iteration-issues.
+description: SCRUM flow skill for defect follow-up and in-sprint issue continuation.
 ---
 
 # AI4PB Iteration Issues Skill
 
-Use `#ai4pb-iteration-issues` for continuing unresolved issues during sprint execution after QA feedback.
+Use this skill for continuing unresolved issues during sprint execution after QA feedback.
+
+Copilot equivalent prompt reference: `#ai4pb-iteration-issues`.
 
 Execution rule:
 1. Run the iteration-issues workflow only.

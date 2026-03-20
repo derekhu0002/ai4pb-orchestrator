@@ -1,11 +1,13 @@
 ---
 name: ai4pb-weekly-report
-description: SCRUM flow skill for stakeholder reporting and progress communication via #ai4pb-weekly-report.
+description: SCRUM flow skill for stakeholder reporting and progress communication.
 ---
 
 # AI4PB Weekly Report Skill
 
-Use `#ai4pb-weekly-report` for periodic stakeholder reporting across sprint progress.
+Use this skill for periodic stakeholder reporting across sprint progress.
+
+Copilot equivalent prompt reference: `#ai4pb-weekly-report`.
 
 Execution rule:
 1. Run the weekly-report workflow only.
