@@ -11,6 +11,7 @@
     },
     "opencode": {
       "transport": "server",
+      "executionHost": "wsl",
       "timeoutMs": 600000,
       "server": {
         "baseUrl": "http://127.0.0.1:4096",

@@ -6,129 +6,99 @@
 - 负责人：llm
 - 优先级：Low
 - 起止时间：2026-3-18 至 2026-3-18
-- 关联架构对象名称与 ID：Executor_Router (1227)、AI4PB VS插件 (1209)、.aicodingconfig (1231)、AI Coding Agent (1230)、Github Copilot (1187)、Open Code AI Coding Agent (1228)、OpenCode CLI 适配器 (1232)、Prompt Tool Registry (1219)
+- 关联架构对象名称与 ID：Executor_Router (1227)、AI4PB VS插件 (1209)、AI Coding Agent (1230)、Github Copilot (1187)、Open Code AI Coding Agent (1228)、OpenCode CLI 适配器 (1232)、.aicodingconfig (1231)
 
 ## 1. LLM执行摘要
 
-- 当前任务要交付一个可配置的执行路由层，使 AI4PB 能按技能名把任务分发给不同 AI coding agent。
-- 首要修改对象是 Executor_Router (1227) 对应的扩展实现，KG 已将其代码落点绑定到 src/extension.ts。
-- 配置入口以 .aicodingconfig (1231) 为准，本轮只接受最小 schema：AGENT_ROUTER_CONFIG.default_agent 与 AGENT_ROUTER_CONFIG.task_specific_agents。
-- Copilot 侧必须继续复用现有 prompt reference 与 Prompt Tool Registry (1219)，不能改造成新的提示词分发体系。
-- OpenCode 侧仅实现一次性 CLI 调用适配与错误透传，不得扩展到持久会话、复杂状态同步或额外编排。
-- task_specific_agents 的键需要按现有技能标识归一化匹配，避免调用链把技能名硬编码在多个位置。
-- 最关键验收条件是：同一任务在配置命中 Copilot 时走现有提示词链路，在命中 OpenCode 时能构造 CLI 调用并透传失败信息。
-- 当前主要风险是 OpenCode CLI 契约未在 KG 中固化，命令格式、认证、退出码和 Windows 路径转义都需要以适配层封装并保留人工补充位。
+- 当前任务的主线不是从零重做路由，而是基于现有实现收口 `OpenCode CLI` 真实环境验收并补齐剩余阻塞。
+- `ResolverNotes` 已给出执行上下文：`src/extension.ts`、`.aicodingconfig` 已完成路由改造，`npm run compile` 已通过，但本机未安装 `opencode`，尚未完成真实 CLI 成功执行验收。
+- 首要核对对象是 `.aicodingconfig` 中 `AGENT_ROUTER_CONFIG` 与 `src/extension.ts` 中的统一路由入口，确认默认代理、按技能覆盖与回退行为仍一致。
+- `Copilot` 路径必须继续沿用现有 prompt reference 与 `Prompt Tool Registry` 服务边界，不能借本任务改造提示词资产体系。
+- `OpenCode` 路径本轮只允许一次性命令执行、错误透传和工作目录适配，不允许扩展为会话态代理或新增编排协议。
+- 最关键验收条件是：当技能命中 `opencode` 且本机 CLI 可用时，能完成一次真实调用；当 CLI 缺失或失败时，stderr/stdout 与退出码可被上层诊断。
+- 当前最大阻塞不是 KG 缺少组件，而是运行环境契约未落地：真实命令名、参数、认证方式和 Windows 路径细节仍需人工补齐。
+- 如无需修改现有实现逻辑，则下一步重点是补充环境、执行端到端验证，并把验证结论回写到任务支撑材料。
 
 ## 2. 已确认事实
 
-- Executor_Router (1227) 是 AI4PB VS插件 (1209) 的组成部分，关系为 AI4PB VS插件 --(ArchiMate_Composition)--> Executor_Router，关系 ID 为 1116。
-- Executor_Router (1227) 的描述明确指出其职责是“根据 .aicodingconfig 中存储的配置将任务派发给不同 AI coding agent”。
-- Executor_Router (1227) 的当前任务记录在其 project_info.tasks 中，任务名为 implement a router to adapt different ai coding agent.，状态为 Active，负责人为 llm，开始与截止日期均为 2026-3-18，优先级为 Low。
-- .aicodingconfig (1231) 在 KG 中已给出最小配置样例，其中包含 AGENT_ROUTER_CONFIG.default_agent 与 AGENT_ROUTER_CONFIG.task_specific_agents。
-- Github Copilot (1187) 是 AI Coding Agent (1230) 的特化实现，关系为 Github Copilot --(ArchiMate_Specialization)--> AI Coding Agent，关系 ID 为 1126。
-- Open Code AI Coding Agent (1228) 是 AI Coding Agent (1230) 的特化实现，关系为 Open Code AI Coding Agent --(ArchiMate_Specialization)--> AI Coding Agent，关系 ID 为 1125。
-- Prompt Tool Registry (1219) 负责注册并提供全部 AI4PB prompt 模板，KG 描述中明确其服务 planning、execution、audit、issue continuation、wrap-up、iteration summary 与 weekly report prompts。
-- AI4PB VS插件 (1209) 与 WorkflowViewProvider (1213) 已承担工作流编排与用户侧交互职责，因此本任务的新增能力应挂接在现有扩展运行架构之内，而不是旁路实现。
-- Executor_Router (1227)、WorkflowViewProvider (1213)、Prompt Tool Registry (1219) 的已确认代码落点都包含 src/extension.ts，说明本轮实现至少需要从该文件切入。
+- `Executor_Router` (1227) 是 `AI4PB VS插件` (1209) 的组成部分，关系为 `1116`：`AI4PB VS插件 --(ArchiMate_Composition)--> Executor_Router`。
+- `Executor_Router` (1227) 的 KG 描述明确为“根据 `.aicodingconfig` 中存储的配置将任务派发给不同 AI coding agent”。
+- `Executor_Router` (1227) 的任务记录在 `project_info.tasks` 中，状态为 `Active`，负责人为 `llm`，开始与截止日期均为 `2026-3-18`，优先级为 `Low`。
+- `.aicodingconfig` (1231) 在 KG 中已给出最小配置样例，包含 `AGENT_ROUTER_CONFIG.default_agent` 与 `AGENT_ROUTER_CONFIG.task_specific_agents`。
+- `Github Copilot` (1187) 是 `AI Coding Agent` (1230) 的特化实现，关系为 `1126`；`Open Code AI Coding Agent` (1228) 也是 `AI Coding Agent` (1230) 的特化实现，关系为 `1125`。
+- `Application` 视图 (`152`) 同时纳入 `AI4PB VS插件` (1209)、`Executor_Router` (1227)、`AI Coding Agent` (1230) 与 `Task Help Infomation` (1229)，并包含关系 `1116`、`1100`、`1122`，说明本任务位于扩展执行分发主链路中。
+- `AI Coding Agent` 视图 (`165`) 纳入 `AI Coding Agent` (1230)、`Github Copilot` (1187)、`Open Code AI Coding Agent` (1228)，并包含关系 `1125`、`1126`，确认 Copilot 与 OpenCode 在架构上是并列代理特化实现。
+- `Open Code AI Coding Agent` 视图 (`166`) 纳入 `OpenCode CLI 适配器` (1232)，说明 KG 已为 OpenCode 命令适配预留独立组件位。
+- `AI4PB VS插件` (1209)、`Github Copilot` (1187) 与 `WorkflowViewProvider` (1213) 的 `code_paths` 均指向 `src/extension.ts`/`package.json` 相关落点，表明本任务的主要代码边界仍在扩展主实现内。
 
 ## 3. 需人工确认 / 未知项
 
-- OpenCode CLI 的真实命令名、参数格式、标准输出格式、返回码约定未知。建议当前实现抽象出命令构造与结果解析接口，并以“原样透传 stderr/stdout + 退出码”作为默认假设。
-- OpenCode CLI 的认证方式未知。建议适配层不要自行发明认证流程，默认依赖用户本机既有登录态或环境变量，并在缺失时返回可诊断错误。
-- Windows 下 OpenCode CLI 对工作目录、引号转义、路径分隔符的精确要求未知。建议统一在适配层集中处理路径拼装，当前按标准 Windows shell quoting 假设执行。
-- task_specific_agents 需要映射的“技能名全集”未在当前任务对象内枚举。建议以仓库现有 ai4pb 技能标识作为允许集合，并在无法命中时回退 default_agent。
-- OpenCode 适配器 (1232) 的代码文件路径未在 KG 中声明。建议在实现阶段按代码仓结构新增独立模块；若无法独立抽离，至少在现有扩展文件内保持单独职责边界。
-- 配置文件读取优先级（.aicodingconfig 与 .aicodingconfig.json）未在本任务中再次声明。建议沿用扩展现有配置读取策略；若代码仓无现成逻辑，则以 .aicodingconfig 优先、.json 作为兼容项的最小假设实现。
+- `OpenCode CLI` 的真实命令名、参数格式、标准输出结构和非零退出码语义未知。建议以当前“命令构造 + 原样透传输出/退出码”为默认契约，并在获得真实 CLI 文档后再精化解析逻辑。
+- `OpenCode CLI` 的认证方式未知。建议默认依赖用户本机既有登录态或环境变量，不在扩展中新增认证流程；若环境缺失，则直接暴露诊断错误。
+- Windows 下命令引号、工作目录与路径分隔符细节未知。建议继续把路径拼装和进程调用收敛在适配层，避免在多个命令入口重复处理。
+- `ResolverNotes` 指出本机 `Get-Command opencode` 未安装，因此当前无法从仓库侧单独完成真实成功验收。建议人工先安装 CLI 或提供明确命令路径后再触发端到端验证。
+- 当前任务状态仍为 `Active`，但 `ResolverNotes` 显示大部分开发工作已完成。建议在真实 CLI 成功跑通后，再决定是否将任务状态更新为 `Verified`/`Completed`。
 
 ## 4. 约束与边界
 
-- 必须遵守的原则：Progressive Disclosure、Separation of Concerns。
-- 当前 KG 未将更细粒度的专属 Principle / Constraint 元素显式绑定到 Executor_Router (1227)；因此除基线原则外，额外强制约束来自任务描述与 .aicodingconfig (1231) 的最小 schema。
-- 必须保持不变的模块或边界：Github Copilot (1187) 的现有 prompt reference 获取方式、Prompt Tool Registry (1219) 的提示词服务职责、WorkflowViewProvider (1213) 的既有工作流入口语义。
-- 明确禁止的实现方式：不得把 OpenCode 调用逻辑散落到多个命令分支；不得把技能名到代理名的映射硬编码在多个位置；不得在本轮引入持久会话控制、流式回传协议或新的 prompt 资产体系。
-- Progressive Disclosure 的强制落地要求：仅交付默认代理选择、按技能覆盖、一次性 OpenCode CLI 执行、错误透传四项能力；更高级能力全部保留为后续增强。
-- Separation of Concerns 的强制落地要求：至少将配置解析、路由决策、Copilot 执行、OpenCode CLI 适配拆分为独立职责单元；即使暂时共处同一文件，也要保持独立函数或模块边界。
+- 必须遵守的原则：`Progressive Disclosure`、`Separation of Concerns`。
+- 需保持不变的边界：`Github Copilot` (1187) 的 prompt reference 调用方式、`Prompt Tool Registry` (1219) 的提示词资产服务职责、`WorkflowViewProvider` (1213) 的交互展示职责。
+- 明确禁止的实现方式：不得把 `OpenCode` 调用逻辑散落到多个分支；不得为本轮引入持久会话控制、流式协议、额外 prompt 资产或新的技能映射体系。
+- `Progressive Disclosure` 的落地要求：仅收口默认代理读取、按技能路由、一次性 `OpenCode CLI` 调用、错误透传与真实环境验收，不扩展后续增强项。
+- `Separation of Concerns` 的落地要求：配置解析、路由决策、`Copilot` 执行、`OpenCode CLI` 适配应保持独立职责；即使仍位于同一文件，也不得相互耦合成不可替换的实现。
 
 ## 5. 架构元素级任务拆解
 
 | 子任务名称 | 对应架构元素 | 技术目的 | 与其他子任务的依赖关系 |
 | --- | --- | --- | --- |
-| 定义代理路由配置契约 | .aicodingconfig (1231) | 固化 default_agent 与 task_specific_agents 的最小读取模型，并提供技能名归一化输入 | 后续全部子任务依赖该配置契约 |
-| 实现执行路由决策 | Executor_Router (1227) | 根据技能名和默认配置选择目标 AI Coding Agent | 依赖“定义代理路由配置契约” |
-| 保持 Copilot 执行链路 | Github Copilot (1187)、Prompt Tool Registry (1219) | 在命中 copilot 时继续走既有 prompt reference 获取与触发方式 | 依赖“实现执行路由决策” |
-| 增加 OpenCode 单次调用适配 | Open Code AI Coding Agent (1228)、OpenCode CLI 适配器 (1232) | 为命中 opencode 的任务构造 CLI 调用、处理工作目录与错误透传 | 依赖“实现执行路由决策”与“定义代理路由配置契约” |
-| 统一代理抽象与回退行为 | AI Coding Agent (1230)、AI4PB VS插件 (1209) | 让执行结果对上层调用方保持一致，并在未知技能或无配置时回退默认代理 | 依赖前述全部子任务 |
+| 核对路由配置与技能映射 | `.aicodingconfig` (1231)、`Executor_Router` (1227) | 确认默认代理、技能归一化与回退策略仍符合最小 schema | 后续所有验证步骤依赖此项 |
+| 复核 Copilot 保留链路 | `Github Copilot` (1187)、`Prompt Tool Registry` (1219)、`AI Coding Agent` (1230) | 确保命中 `copilot` 时仍走既有 prompt reference 执行链 | 依赖“核对路由配置与技能映射” |
+| 真实环境验证 OpenCode 执行 | `Open Code AI Coding Agent` (1228)、`OpenCode CLI 适配器` (1232) | 在已安装 CLI 的前提下完成一次真实命令执行并确认输出/退出码行为 | 依赖“核对路由配置与技能映射” |
+| 收口诊断与状态更新 | `Executor_Router` (1227)、`AI4PB VS插件` (1209) | 若验证失败则最小化修补；若验证通过则整理交付证据并准备关闭任务 | 依赖前述全部子任务 |
 
 ## 6. 推荐实施顺序
 
-1. 动作说明：梳理现有扩展中任务触发到执行的入口，定位 Executor_Router 应插入的决策点。
-   目标文件 / 模块 / 目录：src/extension.ts
-   对应架构元素 ID：1209、1227、1219
-   完成判定标准：能明确区分“上层发起执行请求”和“底层具体 agent 执行”两个层次的调用边界。
-2. 动作说明：实现 .aicodingconfig 的 AGENT_ROUTER_CONFIG 解析与技能名归一化逻辑。
-   目标文件 / 模块 / 目录：src/extension.ts 或 需结合代码仓进一步定位
-   对应架构元素 ID：1231、1227
-   完成判定标准：给定 default_agent 与 task_specific_agents 时，能够稳定产出目标代理名。
-3. 动作说明：把 Copilot 既有执行链路封装为一个显式的 agent executor，保持 prompt reference 触发方式不变。
-   目标文件 / 模块 / 目录：src/extension.ts
-   对应架构元素 ID：1187、1219、1227
-   完成判定标准：配置命中 copilot 时，执行结果与改造前保持等价。
-4. 动作说明：新增 OpenCode CLI 适配层，封装命令构造、工作目录、标准输出/错误透传与退出码处理。
-   目标文件 / 模块 / 目录：需结合代码仓进一步定位
-   对应架构元素 ID：1228、1232、1227
-   完成判定标准：配置命中 opencode 时，可生成单次 CLI 调用并把失败信息完整返回上层。
-5. 动作说明：补齐默认回退、未知技能处理和配置缺失处理，保证路由失败不会破坏现有扩展行为。
-   目标文件 / 模块 / 目录：src/extension.ts 或 需结合代码仓进一步定位
-   对应架构元素 ID：1209、1230、1227
-   完成判定标准：未知技能、缺失映射、OpenCode 未配置三类场景都有明确且可诊断的结果。
+1. 动作说明：核对 `ResolverNotes` 已声明的改动范围与当前配置入口，确认后续工作聚焦真实环境验收而不是重新设计路由。
+   目标文件 / 模块 / 目录：`design/tasks/taskandissues_for_LLM.md`、`.aicodingconfig`、`src/extension.ts`
+   对应架构元素 ID：1227、1231、1209
+   完成判定标准：能够明确写出默认代理、技能映射、Copilot 分支与 OpenCode 分支当前各自承担的职责。
+2. 动作说明：在本机补齐 `OpenCode CLI` 可执行环境，至少确认命令名或绝对路径可被扩展调用。
+   目标文件 / 模块 / 目录：`.aicodingconfig` 或 `.aicodingconfig.json`
+   对应架构元素 ID：1231、1228、1232
+   完成判定标准：存在可用的 CLI 命令配置，且人工可确认其认证方式与运行前提。
+3. 动作说明：触发映射到 `opencode` 的技能，验证一次真实命令执行是否成功，并记录 stdout/stderr/退出码行为。
+   目标文件 / 模块 / 目录：`src/extension.ts`、需结合代码仓进一步定位的输出通道/日志位置
+   对应架构元素 ID：1227、1232、1230
+   完成判定标准：命中 `opencode` 时能完成一次真实执行，或在失败时保留完整诊断信息。
+4. 动作说明：若真实执行失败，仅在 `Executor_Router`/适配层边界内做最小修补，避免牵动 prompt 资产与视图层。
+   目标文件 / 模块 / 目录：`src/extension.ts`
+   对应架构元素 ID：1227、1232、1187
+   完成判定标准：问题被限制在调用适配或错误处理层内解决，`Copilot` 路径行为不回归。
+5. 动作说明：补齐最终验收证据并回写任务材料，确认是否可以关闭该任务。
+   目标文件 / 模块 / 目录：`implementation/taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md`、`implementation/task-list.md`
+   对应架构元素 ID：1227、1229
+   完成判定标准：支撑文件、任务清单与实际验证结论一致，剩余阻塞项被明确记录。
 
 ## 7. 建议修改目标
 
-- 优先检查的文件：src/extension.ts、package.json、工作区根目录下的 .aicodingconfig 或 .aicodingconfig.json。
-- 可能需要新增的文件：需结合代码仓进一步定位，优先考虑新增独立的 OpenCode CLI 适配模块与代理路由工具模块。
-- 可能需要避免修改的文件：workprompt/*.md、.github/skills/*、与 AUTO Skill Router 业务语义直接相关但不参与 agent 执行分发的提示词资产文件。
+- 优先检查的文件：`src/extension.ts`、`.aicodingconfig`、`.aicodingconfig.json`。
+- 可能需要新增的文件：`未知`；当前 KG 未要求新增新模块，优先复用现有 `Executor_Router` / `OpenCode CLI` 适配边界。
+- 可能需要避免修改的文件：`workprompt/*.md`、`.github/skills/*`、与 `WorkflowViewProvider` 展示职责直接相关但不承担执行分发的代码。
 
 ## 8. 交付物与验收标准
 
-- [x] 路由层能读取 AGENT_ROUTER_CONFIG.default_agent。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 打开工作区根目录 `.aicodingconfig`，确认存在 `AGENT_ROUTER_CONFIG.default_agent` 字段。
-   2. 将 `default_agent` 保持为 `copilot`，执行 `npm run compile`，确认编译通过。
-   3. 在 VS Code 中触发任一 `AI4PB: Open Copilot with ... Prompt` 命令，确认仍然进入 Copilot 聊天窗口而不是报配置错误。
-- [ ] 路由层能按技能名命中 AGENT_ROUTER_CONFIG.task_specific_agents，并完成统一归一化。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 在 `.aicodingconfig` 中添加示例配置，如 `"task_specific_agents": { "task list": "opencode", "weekly_report": "copilot" }`。
-   2. 执行 `npm run compile`，确认编译通过。
-   3. 依次触发 `AI4PB: Open Copilot with Task List Prompt` 和 `AI4PB: Open Copilot with Weekly Report Prompt`，观察输出通道中的路由日志，确认前者归一化命中 `task-list`，后者归一化命中 `weekly-report`。
-- [ ] 命中 copilot 时仍走现有 prompt reference 执行链路。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 将 `.aicodingconfig` 中 `default_agent` 设为 `copilot`，并清空 `task_specific_agents`。
-   2. 触发 `AI4PB: Open Copilot with Init Prompt`。
-   3. 确认 Copilot Chat 被打开，输入框中仍包含 `请使用 #ai4pb-init。` 这类原始 prompt reference 文本。
-- [ ] 命中 opencode 时能完成单次 CLI 命令构造与执行。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 在 `.aicodingconfig` 中设置 `"task_specific_agents": { "task-list": "opencode" }`，并按需补充 `AGENT_ROUTER_CONFIG.opencode.command` 与 `args`。
-   2. 确保本机已安装可执行的 `opencode` 或者配置了真实命令路径。
-   3. 触发 `AI4PB: Open Copilot with Task List Prompt`，在 AI4PB 输出通道中检查记录的命令、参数和工作目录，确认命令已被构造并执行一次。
-- [ ] OpenCode 执行失败时，stderr/stdout 与退出码能被上层看到，不被吞掉或伪装成成功。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 故意把 `AGENT_ROUTER_CONFIG.opencode.command` 改成不存在的命令，或让 `args` 触发非零退出码。
-   2. 触发已映射到 `opencode` 的 prompt 命令。
-   3. 确认 VS Code 弹出错误提示，同时 AI4PB 输出通道中能看到失败命令、stderr 或异常信息；如果 CLI 返回非零退出码，应能看到对应 exit code。
-- [ ] 配置缺失、技能未命中、OpenCode CLI 不可用三类场景都有明确回退或错误提示。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 删除 `task_specific_agents` 中的目标技能映射，保留 `default_agent: copilot`，触发对应命令，确认回退到 Copilot。
-   2. 将某个未知键写入 `task_specific_agents`，执行 `npm run compile` 并触发无对应映射的技能，确认仍按默认代理执行。
-   3. 将某个技能映射到 `opencode`，但保持本机无 `opencode` 命令，触发命令后确认收到明确的 CLI 缺失错误提示。
-- [ ] 实现没有越界修改 prompt 资产体系，也没有把执行职责重新塞回 WorkflowViewProvider 的展示逻辑。
-   ***人工验收测试步骤 (Generated by Copilot):***
-   1. 检查本次变更文件，确认核心修改集中在 `src/extension.ts` 与 `.aicodingconfig`，没有修改 `workprompt/*.md` 或 `.github/skills/*`。
-   2. 复查 `WorkflowViewProvider`，确认其仍只负责收集输入、触发命令和展示状态，而路由决策已下沉到统一的 prompt 执行函数。
-   3. 执行 `npm run compile`，确认没有因路由改造破坏现有视图层命令注册与编译结果。
+- [x] 已具备默认代理读取与配置保留能力。
+- [x] 已具备按技能名选择代理的路由能力。
+- [x] 命中 `copilot` 时保留既有 prompt reference 执行链路。
+- [x] `OpenCode` 分支已具备命令构造与错误透传逻辑。
+- [x] `npm run compile` 已通过，且 `get_errors` 对 `src/extension.ts`、`.aicodingconfig`、任务支撑文件返回 0 错误（依据 `ResolverNotes`）。
+- [ ] 在已安装并配置真实 `OpenCode CLI` 的环境中完成一次成功执行，并记录成功证据。
+- [ ] 在真实 CLI 环境下复核 Windows 路径、命令参数与退出码透传是否仍然符合预期。
+- [ ] 依据最终验证结果更新任务状态，并补齐最终 closure 说明。
 
 ## 9. 风险、阻塞与缓解措施
 
-- 技术风险：OpenCode CLI 契约未固化，适配层可能与真实工具语义存在偏差。缓解措施：把命令构造、结果解析和错误透传集中在单独适配层，降低后续替换成本。
-- 依赖风险：如果现有扩展没有统一的“执行请求对象”，路由层插入点可能分散。缓解措施：先收敛上层调用入口，再挂接 Executor_Router 决策。
-- 信息缺口：技能名归一化规则未被显式建模。缓解措施：以现有 ai4pb 技能标识为白名单来源，并在未命中时回退 default_agent。
-- 兼容性风险：Windows 路径与 shell quoting 可能导致 OpenCode 调用失败。缓解措施：集中处理路径拼装，并保留原始命令与错误输出用于诊断。
+- 主要阻塞：当前执行环境未安装 `OpenCode CLI`，无法完成成功路径验收。缓解措施：人工先安装 CLI 或在配置中提供明确命令路径，再执行端到端验证。
+- 技术风险：真实 CLI 契约可能与当前适配假设不一致。缓解措施：继续保持适配层只负责命令构造、工作目录和错误透传，避免深耦合解析。
+- 兼容性风险：Windows 下命令引号与路径转义可能导致仅在特定机器复现的问题。缓解措施：记录完整命令、参数、工作目录和退出码，便于针对性修补。
+- 管理风险：任务状态仍为 `Active`，容易让后续执行者误判为功能未开发。缓解措施：在任务清单与支撑文件中明确“开发已基本完成、剩余为真实 CLI 验收阻塞”。

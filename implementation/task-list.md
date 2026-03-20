@@ -11,7 +11,7 @@
 
 | Task Name | Associated Component | Assignee(s) | Priority | Status | Start Date | Due Date | Days Until Due | Key Deliverable | Task Help Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| implement a router to adapt different ai coding agent. | Executor_Router (1227) | llm | Low | Active | 2026-3-18 | 2026-3-18 | 21 | 建立基于 `.aicodingconfig` 的执行路由，使任务可按技能名分发到不同 AI coding agent，并保持 Copilot 原有 prompt reference 链路不变。补齐 OpenCode 的一次性 CLI 适配、命令构造与错误透传。 | [2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md](taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md) |
+| implement a router to adapt different ai coding agent. | Executor_Router (1227) | llm | Low | Active | 2026-3-18 | 2026-3-18 | 21 | 完成执行路由改造的收口工作：保持 Copilot 原有 prompt reference 链路不变，并在真实 OpenCode CLI 环境下完成一次成功执行验收，同时保留错误透传能力。 | [2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md](taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md) |
 
 ## 汇总
 
@@ -21,7 +21,7 @@
 
 ## 7日内到期任务
 
-- `implement a router to adapt different ai coding agent.` 已于 2026-3-18 到期；相对报告生成日 2026-03-20 已逾期 2 天，应优先确认是否需要将状态从 `Active` 更新为 `Verified` 或补录剩余验收阻塞。
+- **implement a router to adapt different ai coding agent.** 截止日期为 `2026-3-18`；相对报告生成日 `2026-03-20` 已逾期 2 天，当前紧急点不是重新开发，而是补齐真实 `OpenCode CLI` 成功执行验收。
 
 ## 无负责人任务
 
@@ -29,6 +29,7 @@
 
 ## 假设说明
 
-- 已按要求同时使用 `design/tasks/taskandissues_for_LLM.md` 与 `design/KG/SystemArchitecture.json`；其中任务行内容与 ResolverNotes 取自 markdown，负责人、优先级、起止日期、组件映射取自 KG。
-- `implementation/taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md` 已存在，因此 `Task Help Link` 保留有效相对链接，而非 `N/A`。
-- `Days Until Due` 严格按提示词规定的基准日期 2026-02-25 计算，因此 2026-3-18 的截止日期对应 21 天；但 7 日内到期判断按本次报告生成日 2026-03-20 识别实际紧急度。
+- 已同时使用 `design/tasks/taskandissues_for_LLM.md` 与 `design/KG/SystemArchitecture.json`；任务名称、状态与 `ResolverNotes` 执行上下文取自 markdown，负责人、优先级、起止日期与组件映射取自 KG。
+- `Task Help Link` 指向已生成并刷新后的 `implementation/taskhelpinfos/2026-3-18_implement_a_router_to_adapt_different_ai_coding_agent.md`，因此不使用 `N/A`。
+- `Days Until Due` 严格按提示词指定基准日 `2026-02-25` 计算，因此 `2026-3-18` 的结果为 `21`；紧急度说明则按本次报告生成日 `2026-03-20` 表达实际风险。
+- 由于 `ResolverNotes` 明确说明路由改造已完成而真实 CLI 成功验收尚未完成，因此本清单将该任务视为“实现基本完成、验证阻塞未关闭”的 `Active` 任务。

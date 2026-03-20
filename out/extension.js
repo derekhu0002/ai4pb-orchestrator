@@ -179,6 +179,7 @@ const DEFAULT_WORKFLOW_VIEW_STATE = {
 };
 let output;
 let extensionInstallRoot = '';
+let workflowViewProviderBridge;
 function activate(context) {
     extensionInstallRoot = context.extensionUri.fsPath;
     output = vscode.window.createOutputChannel('AI4PB Orchestrator');
@@ -187,10 +188,12 @@ function activate(context) {
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
     const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
     const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion, context);
+    workflowViewProviderBridge = workflowViewProvider;
     registerPromptTools(context);
     context.subscriptions.push(output, vscode.window.registerWebviewViewProvider(WorkflowViewProvider.viewType, workflowViewProvider, { webviewOptions: { retainContextWhenHidden: true } }), vscode.commands.registerCommand('ai4pb.openInEditor', () => workflowViewProvider.openInEditor()), vscode.commands.registerCommand('ai4pb.initializeFromTemplate', initializeFromTemplate), vscode.commands.registerCommand('ai4pb.refreshArchitectureContext', refreshArchitectureContext), vscode.commands.registerCommand('ai4pb.startIterationFromModel', startIterationFromModel), vscode.commands.registerCommand('ai4pb.runDesignCodeAlignment', runDesignCodeAlignment), vscode.commands.registerCommand('ai4pb.generateWrapUpReport', generateWrapUpReport), vscode.commands.registerCommand('ai4pb.openNextAction', openNextAction), vscode.commands.registerCommand('ai4pb.runGuidedWorkflow', runGuidedWorkflow), vscode.commands.registerCommand('ai4pb.openCopilotWithInitPrompt', openCopilotWithInitPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithDesignAuditPrompt', openCopilotWithDesignAuditPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWrapUpPrompt', openCopilotWithWrapUpPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskListPrompt', openCopilotWithTaskListPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithTaskSupportPrompt', openCopilotWithTaskSupportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithWeeklyReportPrompt', openCopilotWithWeeklyReportPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationIssuesPrompt', openCopilotWithIterationIssuesPrompt), vscode.commands.registerCommand('ai4pb.openCopilotWithIterationSummaryPrompt', openCopilotWithIterationSummaryPrompt));
 }
 function deactivate() {
+    workflowViewProviderBridge = undefined;
     output?.dispose();
 }
 class PromptTemplateTool {
@@ -239,6 +242,70 @@ function registerPromptTools(context) {
 }
 // @ArchitectureID: 1213
 class WorkflowViewProvider {
+    async postRuntimeMessage(message) {
+        this.captureRuntimeMessage(message);
+        await this.postMessage(message);
+    }
+    captureRuntimeMessage(message) {
+        const messageType = typeof message?.type === 'string' ? message.type : '';
+        const streamId = typeof message?.streamId === 'string' ? message.streamId : '';
+        if (!streamId) {
+            return;
+        }
+        if (messageType === 'opencodeStreamStart') {
+            this.runtimeStreams.set(streamId, {
+                label: typeof message.label === 'string' ? message.label : 'OpenCode',
+                text: '',
+                status: 'streaming'
+            });
+            return;
+        }
+        if (messageType === 'opencodeStreamUpdate') {
+            const current = this.runtimeStreams.get(streamId);
+            this.runtimeStreams.set(streamId, {
+                label: typeof message.label === 'string' ? message.label : current?.label ?? 'OpenCode',
+                text: typeof message.text === 'string' ? message.text : current?.text ?? '',
+                status: 'streaming'
+            });
+            return;
+        }
+        if (messageType === 'opencodeStreamEnd') {
+            this.runtimeStreams.delete(streamId);
+        }
+    }
+    async postMessageToWebview(webview, message) {
+        await webview.postMessage(message);
+    }
+    async replayRuntimeStreamsToWebview(webview) {
+        if (this.runtimeStreams.size === 0) {
+            return;
+        }
+        const streams = Array.from(this.runtimeStreams.entries()).map(([streamId, stream]) => ({
+            streamId,
+            label: stream.label,
+            text: stream.text,
+            status: stream.status
+        }));
+        await this.postMessageToWebview(webview, {
+            type: 'workflowRuntimeSnapshot',
+            streams
+        });
+    }
+    async syncStateToWebview(webview) {
+        await this.postMessageToWebview(webview, { type: 'updateState', state: this.getSavedState() });
+        await this.replayRuntimeStreamsToWebview(webview);
+    }
+    async syncStateToOtherWebviews(senderWebview, state) {
+        const cleanState = state ?? this.getSavedState();
+        if (this.webviewView && this.webviewView.webview !== senderWebview) {
+            await this.postMessageToWebview(this.webviewView.webview, { type: 'updateState', state: cleanState });
+            await this.replayRuntimeStreamsToWebview(this.webviewView.webview);
+        }
+        if (this.panelWebview && this.panelWebview !== senderWebview) {
+            await this.postMessageToWebview(this.panelWebview, { type: 'updateState', state: cleanState });
+            await this.replayRuntimeStreamsToWebview(this.panelWebview);
+        }
+    }
     async postMessage(message, senderWebview) {
         const promises = [];
         if (this.webviewView && this.webviewView.webview !== senderWebview) {
@@ -285,7 +352,7 @@ class WorkflowViewProvider {
         });
         panel.onDidChangeViewState((e) => {
             if (e.webviewPanel.visible) {
-                e.webviewPanel.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+                void this.syncStateToWebview(e.webviewPanel.webview);
             }
         });
         this.panelWebview = panel.webview;
@@ -297,6 +364,7 @@ class WorkflowViewProvider {
         this.extensionUri = extensionUri;
         this.extensionVersion = extensionVersion;
         this.context = context;
+        this.runtimeStreams = new Map();
     }
     resolveWebviewView(webviewView) {
         this.webviewView = webviewView;
@@ -334,7 +402,7 @@ class WorkflowViewProvider {
         });
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {
-                webviewView.webview.postMessage({ type: 'updateState', state: this.getSavedState() });
+                void this.syncStateToWebview(webviewView.webview);
             }
         });
         webviewView.onDidDispose(() => {
@@ -348,7 +416,7 @@ class WorkflowViewProvider {
     async saveState(raw, senderWebview) {
         const cleanState = sanitizeWorkflowViewState(raw);
         await this.context.workspaceState.update(WORKFLOW_VIEW_STATE_KEY, cleanState);
-        await this.postMessage({ type: 'updateState', state: cleanState }, senderWebview);
+        await this.syncStateToOtherWebviews(senderWebview, cleanState);
     }
     // @ArchitectureID: 1209
     async handleChatRequest(rawText, rawSkill) {
@@ -830,6 +898,14 @@ class WorkflowViewProvider {
       border: 1px solid var(--chat-border);
       align-self: flex-start;
     }
+    .bubble.ai.streaming {
+      border-color: color-mix(in srgb, var(--vscode-button-background) 42%, var(--chat-border));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vscode-button-background) 24%, transparent);
+    }
+    .bubble.ai.failed {
+      border-color: color-mix(in srgb, var(--vscode-errorForeground) 50%, var(--chat-border));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vscode-errorForeground) 24%, transparent);
+    }
     .bubble.user {
       background: color-mix(in srgb, var(--vscode-button-background) 26%, var(--chat-panel));
       border: 1px solid color-mix(in srgb, var(--vscode-button-background) 45%, transparent);
@@ -1005,6 +1081,76 @@ class WorkflowViewProvider {
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
     const sendHelpBtn = document.getElementById('sendHelpBtn');
+    const activeStreams = new Map();
+
+    function scrollThreadToBottom() {
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function createBubbleNode(role, text) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + role;
+      bubble.textContent = String(text || '');
+      return bubble;
+    }
+
+    function formatStreamBubbleText(label, text, status) {
+      const currentText = String(text || '');
+      const fallback = status === 'failed' ? 'OpenCode 执行失败。' : 'OpenCode 正在响应...';
+      const body = currentText.trim().length > 0 ? currentText : fallback;
+      return label ? ('[' + label + ']\\n' + body) : body;
+    }
+
+    function ensureStreamBubble(streamId, label) {
+      let entry = activeStreams.get(streamId);
+      if (entry) {
+        return entry;
+      }
+
+      const bubble = createBubbleNode('ai', '');
+      bubble.classList.add('streaming');
+      bubble.dataset.streamId = streamId;
+      thread.appendChild(bubble);
+
+      entry = {
+        bubble,
+        label: String(label || 'OpenCode'),
+        text: ''
+      };
+      activeStreams.set(streamId, entry);
+      bubble.textContent = formatStreamBubbleText(entry.label, entry.text, 'streaming');
+      scrollThreadToBottom();
+      return entry;
+    }
+
+    function updateStreamBubble(streamId, label, text) {
+      const entry = ensureStreamBubble(streamId, label);
+      entry.label = String(label || entry.label || 'OpenCode');
+      entry.text = String(text || '');
+      entry.bubble.textContent = formatStreamBubbleText(entry.label, entry.text, 'streaming');
+      scrollThreadToBottom();
+    }
+
+    function finishStreamBubble(streamId, label, text, status) {
+      const entry = ensureStreamBubble(streamId, label);
+      entry.label = String(label || entry.label || 'OpenCode');
+      entry.text = String(text || entry.text || '');
+      entry.bubble.classList.remove('streaming');
+      if (status === 'failed') {
+        entry.bubble.classList.add('failed');
+      }
+
+      const finalText = formatStreamBubbleText(entry.label, entry.text, status);
+      entry.bubble.textContent = finalText;
+      activeStreams.delete(streamId);
+      state.thread.push({
+        kind: 'bubble',
+        role: 'ai',
+        text: finalText
+      });
+      syncState();
+      scrollThreadToBottom();
+    }
 
     function getAgentLabelForSkill(skillKey) {
       if (!skillKey) {
@@ -1157,11 +1303,9 @@ class WorkflowViewProvider {
     }
 
     function appendBubble(role, text) {
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble ' + role;
-      bubble.textContent = text;
+      const bubble = createBubbleNode(role, text);
       thread.appendChild(bubble);
-      thread.scrollTop = thread.scrollHeight;
+      scrollThreadToBottom();
 
       state.thread.push({
         kind: 'bubble',
@@ -1215,7 +1359,7 @@ class WorkflowViewProvider {
 
       bubble.appendChild(card);
       thread.appendChild(bubble);
-      thread.scrollTop = thread.scrollHeight;
+      scrollThreadToBottom();
 
       if (!skipPersist) {
         state.thread.push({
@@ -1522,6 +1666,7 @@ class WorkflowViewProvider {
       const message = event.data || {};
       if (message.type === 'updateState') {
         Object.assign(state, message.state);
+        activeStreams.clear();
         thread.innerHTML = '';
         restoreThread();
         promptInput.value = state.draftText;
@@ -1544,6 +1689,34 @@ class WorkflowViewProvider {
       }
       if (message.type === 'autoAnalysisError') {
         appendBubble('ai', message.message || '智能路由分析失败，请重试或手动选择流程环节。');
+        return;
+      }
+      if (message.type === 'opencodeStreamStart') {
+        ensureStreamBubble(message.streamId, message.label);
+        return;
+      }
+      if (message.type === 'opencodeStreamUpdate') {
+        updateStreamBubble(message.streamId, message.label, message.text);
+        return;
+      }
+      if (message.type === 'opencodeStreamEnd') {
+        finishStreamBubble(message.streamId, message.label, message.text, message.status === 'failed' ? 'failed' : 'completed');
+        return;
+      }
+      if (message.type === 'workflowRuntimeSnapshot') {
+        const streams = Array.isArray(message.streams) ? message.streams : [];
+        streams.forEach((stream) => {
+          if (!stream || typeof stream !== 'object' || typeof stream.streamId !== 'string') {
+            return;
+          }
+
+          if (stream.status === 'failed' || stream.status === 'completed') {
+            finishStreamBubble(stream.streamId, stream.label, stream.text, stream.status);
+            return;
+          }
+
+          updateStreamBubble(stream.streamId, stream.label, stream.text);
+        });
       }
     });
 
@@ -1605,9 +1778,7 @@ class WorkflowViewProvider {
         }
 
         if (item.kind === 'bubble') {
-          const bubble = document.createElement('div');
-          bubble.className = 'bubble ' + item.role;
-          bubble.textContent = String(item.text || '');
+          const bubble = createBubbleNode(item.role, item.text);
           thread.appendChild(bubble);
           return;
         }
@@ -1617,7 +1788,7 @@ class WorkflowViewProvider {
         }
       });
 
-      thread.scrollTop = thread.scrollHeight;
+      scrollThreadToBottom();
     }
 
     restoreThread();
@@ -1762,6 +1933,15 @@ function inferSkillFromText(input) {
         return 'iteration-summary';
     }
     return 'init';
+}
+async function postWorkflowRuntimeMessage(message) {
+    if (!workflowViewProviderBridge) {
+        return;
+    }
+    await workflowViewProviderBridge.postRuntimeMessage(message);
+}
+function createWorkflowStreamId() {
+    return `opencode-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 // @ArchitectureID: 1209
 async function analyzeAutoSkillSuggestions(userText) {
@@ -1999,6 +2179,15 @@ function toWslPath(inputPath) {
     }
     return normalized;
 }
+function normalizeOpenCodeServerPath(inputPath, executionHost) {
+    if (!inputPath) {
+        return inputPath;
+    }
+    if (process.platform !== 'win32' || executionHost === 'native') {
+        return inputPath;
+    }
+    return toWslPath(inputPath);
+}
 function quotePosixShellArg(value) {
     if (value.length === 0) {
         return "''";
@@ -2080,6 +2269,182 @@ function extractTextFromOpenCodeParts(parts) {
         }
     }
     return texts.join('\n\n').trim();
+}
+function createDeferred() {
+    let resolve;
+    let reject;
+    const promise = new Promise((innerResolve, innerReject) => {
+        resolve = innerResolve;
+        reject = innerReject;
+    });
+    return {
+        promise,
+        resolve,
+        reject
+    };
+}
+function asRecord(value) {
+    return value && typeof value === 'object' ? value : undefined;
+}
+function readString(value, key) {
+    const record = asRecord(value);
+    const candidate = record?.[key];
+    return typeof candidate === 'string' ? candidate : undefined;
+}
+function readNestedString(value, pathSegments) {
+    let current = value;
+    for (const segment of pathSegments) {
+        const record = asRecord(current);
+        if (!record) {
+            return undefined;
+        }
+        current = record[segment];
+    }
+    return typeof current === 'string' ? current : undefined;
+}
+function appendUniquePartOrder(order, partId) {
+    if (!order.includes(partId)) {
+        order.push(partId);
+    }
+}
+function buildOrderedPartText(order, values) {
+    return order
+        .map((partId) => values.get(partId)?.trim() ?? '')
+        .filter((text) => text.length > 0)
+        .join('\n\n')
+        .trim();
+}
+function parseOpenCodeServerError(event) {
+    const direct = readString(event.properties, 'message');
+    if (direct) {
+        return direct;
+    }
+    const nested = readNestedString(event.properties, ['error', 'data', 'message'])
+        ?? readNestedString(event.properties, ['error', 'message'])
+        ?? readNestedString(event.properties, ['error', 'name']);
+    return nested ?? 'OpenCode server session failed.';
+}
+function subscribeOpenCodeServerEvents(urlString, headers, timeoutMs, abortSignal, onEvent) {
+    const connectedDeferred = createDeferred();
+    const finishedDeferred = createDeferred();
+    const url = new URL(urlString);
+    const isHttps = url.protocol === 'https:';
+    const requestOptions = {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port ? Number(url.port) : undefined,
+        path: `${url.pathname}${url.search}`,
+        method: 'GET',
+        headers: {
+            Accept: 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            ...headers
+        }
+    };
+    let connectedSettled = false;
+    let finishedSettled = false;
+    let responseClosed = false;
+    const settleConnected = (action, reason) => {
+        if (connectedSettled) {
+            return;
+        }
+        connectedSettled = true;
+        if (action === 'resolve') {
+            connectedDeferred.resolve();
+            return;
+        }
+        connectedDeferred.reject(reason);
+    };
+    const settleFinished = (action, reason) => {
+        if (finishedSettled) {
+            return;
+        }
+        finishedSettled = true;
+        if (action === 'resolve') {
+            finishedDeferred.resolve();
+            return;
+        }
+        finishedDeferred.reject(reason);
+    };
+    const requestImpl = isHttps ? https.request : http.request;
+    const req = requestImpl(requestOptions, (response) => {
+        const statusCode = response.statusCode ?? 0;
+        if (statusCode < 200 || statusCode >= 300) {
+            const chunks = [];
+            response.on('data', (chunk) => {
+                chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+            });
+            response.on('end', () => {
+                const error = new Error(`OpenCode server GET ${url.pathname} failed with status ${statusCode}: ${summarizeHttpErrorBody(Buffer.concat(chunks).toString('utf8'))}`);
+                settleConnected('reject', error);
+                settleFinished('reject', error);
+            });
+            return;
+        }
+        response.setEncoding('utf8');
+        settleConnected('resolve');
+        let buffer = '';
+        response.on('data', (chunk) => {
+            buffer += chunk;
+            const messages = buffer.split(/\r?\n\r?\n/);
+            buffer = messages.pop() ?? '';
+            for (const message of messages) {
+                const dataLines = message
+                    .split(/\r?\n/)
+                    .filter((line) => line.startsWith('data:'))
+                    .map((line) => line.slice(5).trimStart());
+                if (dataLines.length === 0) {
+                    continue;
+                }
+                const payload = dataLines.join('\n').trim();
+                if (!payload || payload === '[DONE]') {
+                    continue;
+                }
+                try {
+                    onEvent(JSON.parse(payload));
+                }
+                catch {
+                    // Ignore malformed intermediary events.
+                }
+            }
+        });
+        response.on('end', () => {
+            responseClosed = true;
+            settleFinished('resolve');
+        });
+        response.on('error', (error) => {
+            if (abortSignal.aborted) {
+                settleFinished('resolve');
+                return;
+            }
+            settleFinished('reject', error);
+        });
+    });
+    req.setTimeout(timeoutMs, () => {
+        req.destroy(new Error(`OpenCode server event stream timed out after ${timeoutMs}ms.`));
+    });
+    req.on('error', (error) => {
+        if (abortSignal.aborted) {
+            settleConnected('resolve');
+            settleFinished('resolve');
+            return;
+        }
+        settleConnected('reject', error);
+        settleFinished('reject', error);
+    });
+    const close = () => {
+        if (!responseClosed) {
+            req.destroy();
+        }
+        settleFinished('resolve');
+    };
+    abortSignal.addEventListener('abort', close, { once: true });
+    req.end();
+    return {
+        connected: connectedDeferred.promise,
+        finished: finishedDeferred.promise,
+        close
+    };
 }
 function requestOpenCodeServer(method, urlString, headers, bodyText, timeoutMs) {
     return new Promise((resolve, reject) => {
@@ -2231,6 +2596,9 @@ function buildOpenCodeInvocation(context, config) {
         accumulator[key] = value;
         return accumulator;
     }, { ...process.env });
+    const executionHost = normalizeOpenCodeExecutionHost(opencodeConfig.executionHost) ?? (process.platform === 'win32' ? 'auto' : 'native');
+    const rawServerDirectory = replaceOpenCodeTemplate(opencodeConfig.server.directory, context);
+    const rawServerWorkspace = replaceOpenCodeTemplate(opencodeConfig.server.workspace, context);
     return {
         transport: opencodeConfig.transport,
         command: replaceOpenCodeTemplate(opencodeConfig.command, context),
@@ -2241,41 +2609,186 @@ function buildOpenCodeInvocation(context, config) {
         promptToStdin: opencodeConfig.promptToStdin,
         promptPayload: context.seedText,
         timeoutMs: opencodeConfig.timeoutMs,
-        executionHost: normalizeOpenCodeExecutionHost(opencodeConfig.executionHost) ?? (process.platform === 'win32' ? 'auto' : 'native'),
+        executionHost,
         wslDistribution: opencodeConfig.wslDistribution || undefined,
         wslUseLoginShell: opencodeConfig.wslUseLoginShell,
         serverBaseUrl: replaceOpenCodeTemplate(opencodeConfig.server.baseUrl, context),
         serverUsername: replaceOpenCodeTemplate(opencodeConfig.server.username, context),
         serverPassword: replaceOpenCodeTemplate(opencodeConfig.server.password, context),
         serverSessionTitle: replaceOpenCodeTemplate(opencodeConfig.server.sessionTitle, context),
-        serverDirectory: replaceOpenCodeTemplate(opencodeConfig.server.directory, context),
-        serverWorkspace: replaceOpenCodeTemplate(opencodeConfig.server.workspace, context)
+        serverDirectory: normalizeOpenCodeServerPath(rawServerDirectory, executionHost),
+        serverWorkspace: normalizeOpenCodeServerPath(rawServerWorkspace, executionHost)
     };
 }
 async function runOpenCodeServerInvocation(invocation, streamHandlers) {
     const authHeader = buildOpenCodeServerAuthHeader(invocation.serverUsername, invocation.serverPassword);
     const headers = authHeader ? { Authorization: authHeader } : {};
+    const sessionQuery = {
+        directory: invocation.serverDirectory,
+        workspace: invocation.serverWorkspace
+    };
     streamHandlers?.onStdoutChunk?.(`Connecting to OpenCode server: ${invocation.serverBaseUrl}\n`);
     const health = await requestOpenCodeServerJson('GET', buildOpenCodeServerUrl(invocation.serverBaseUrl, '/global/health'), headers, undefined, invocation.timeoutMs);
     if (!health?.healthy) {
         throw new Error(`OpenCode server is unhealthy at ${invocation.serverBaseUrl}.`);
     }
     streamHandlers?.onStdoutChunk?.(`OpenCode server healthy, version=${health.version ?? 'unknown'}\n`);
-    const session = await requestOpenCodeServerJson('POST', buildOpenCodeServerUrl(invocation.serverBaseUrl, '/session'), headers, { title: invocation.serverSessionTitle }, invocation.timeoutMs);
+    const session = await requestOpenCodeServerJson('POST', buildOpenCodeServerUrl(invocation.serverBaseUrl, '/session', sessionQuery), headers, { title: invocation.serverSessionTitle }, invocation.timeoutMs);
     if (!session?.id) {
         throw new Error('OpenCode server did not return a session id.');
     }
     streamHandlers?.onStdoutChunk?.(`OpenCode session created: ${session.id}\n`);
-    const promptResponse = await requestOpenCodeServerJson('POST', buildOpenCodeServerUrl(invocation.serverBaseUrl, `/session/${encodeURIComponent(session.id)}/message`, {
-        directory: invocation.serverDirectory,
-        workspace: invocation.serverWorkspace
-    }), headers, {
-        parts: [{ type: 'text', text: invocation.promptPayload }]
-    }, invocation.timeoutMs);
-    const responseText = extractTextFromOpenCodeParts(promptResponse.parts ?? []);
-    const responseError = promptResponse.info?.error?.message?.trim() ?? '';
+    const abortController = new AbortController();
+    const completionDeferred = createDeferred();
+    const partKinds = new Map();
+    const textParts = new Map();
+    const reasoningParts = new Map();
+    const textOrder = [];
+    const reasoningOrder = [];
+    const toolStatuses = new Map();
+    let activeStreamLabel = null;
+    let responseError = '';
+    let isCompleted = false;
+    const finalizeCompletion = (error) => {
+        if (isCompleted) {
+            return;
+        }
+        isCompleted = true;
+        if (activeStreamLabel) {
+            streamHandlers?.onStdoutChunk?.('\n');
+            activeStreamLabel = null;
+        }
+        if (error) {
+            responseError = error;
+        }
+        completionDeferred.resolve();
+    };
+    const eventStream = subscribeOpenCodeServerEvents(buildOpenCodeServerUrl(invocation.serverBaseUrl, '/event'), headers, invocation.timeoutMs, abortController.signal, (event) => {
+        const eventType = event.type ?? '';
+        if (eventType === 'server.connected' || eventType === 'server.heartbeat') {
+            return;
+        }
+        if (eventType === 'session.status') {
+            const sessionId = readString(event.properties, 'sessionID');
+            if (sessionId !== session.id) {
+                return;
+            }
+            const status = asRecord(event.properties?.status);
+            const statusType = readString(status, 'type');
+            if (statusType === 'retry') {
+                const retryMessage = readString(status, 'message') ?? 'OpenCode is retrying.';
+                streamHandlers?.onStdoutChunk?.(`\n[retry] ${retryMessage}\n`);
+                activeStreamLabel = null;
+                return;
+            }
+            if (statusType === 'idle') {
+                finalizeCompletion();
+            }
+            return;
+        }
+        if (eventType === 'session.error') {
+            const sessionId = readString(event.properties, 'sessionID');
+            if (sessionId && sessionId !== session.id) {
+                return;
+            }
+            const message = parseOpenCodeServerError(event);
+            streamHandlers?.onStderrChunk?.(`${message}\n`);
+            finalizeCompletion(message);
+            return;
+        }
+        if (eventType === 'message.part.updated') {
+            const part = asRecord(event.properties?.part);
+            const sessionId = readString(part, 'sessionID');
+            if (!part || sessionId !== session.id) {
+                return;
+            }
+            const partId = readString(part, 'id');
+            const partType = readString(part, 'type');
+            if (!partId || !partType) {
+                return;
+            }
+            partKinds.set(partId, partType);
+            if (partType === 'text') {
+                appendUniquePartOrder(textOrder, partId);
+                const text = readString(part, 'text');
+                if (typeof text === 'string') {
+                    textParts.set(partId, text);
+                }
+                return;
+            }
+            if (partType === 'reasoning') {
+                appendUniquePartOrder(reasoningOrder, partId);
+                const text = readString(part, 'text');
+                if (typeof text === 'string') {
+                    reasoningParts.set(partId, text);
+                }
+                return;
+            }
+            if (partType === 'tool') {
+                const toolName = readString(part, 'tool') ?? 'tool';
+                const state = asRecord(part.state);
+                const status = readString(state, 'status') ?? 'unknown';
+                const title = readString(state, 'title');
+                const statusKey = `${status}:${title ?? ''}`;
+                if (toolStatuses.get(partId) !== statusKey) {
+                    toolStatuses.set(partId, statusKey);
+                    streamHandlers?.onStdoutChunk?.(`\n[tool:${toolName}] ${status}${title ? ` - ${title}` : ''}\n`);
+                    activeStreamLabel = null;
+                }
+            }
+            return;
+        }
+        if (eventType === 'message.part.delta') {
+            const sessionId = readString(event.properties, 'sessionID');
+            const partId = readString(event.properties, 'partID');
+            const field = readString(event.properties, 'field');
+            const delta = readString(event.properties, 'delta') ?? '';
+            if (sessionId !== session.id || !partId || field !== 'text' || !delta) {
+                return;
+            }
+            const kind = partKinds.get(partId);
+            if (kind === 'reasoning') {
+                if (activeStreamLabel !== 'thinking') {
+                    streamHandlers?.onStdoutChunk?.('\n[thinking] ');
+                    activeStreamLabel = 'thinking';
+                }
+                reasoningParts.set(partId, `${reasoningParts.get(partId) ?? ''}${delta}`);
+                streamHandlers?.onStdoutChunk?.(delta);
+                return;
+            }
+            if (kind === 'text') {
+                if (activeStreamLabel !== 'response') {
+                    streamHandlers?.onStdoutChunk?.('\n[response] ');
+                    activeStreamLabel = 'response';
+                }
+                textParts.set(partId, `${textParts.get(partId) ?? ''}${delta}`);
+                streamHandlers?.onStdoutChunk?.(delta);
+            }
+        }
+    });
+    await eventStream.connected;
+    streamHandlers?.onStdoutChunk?.('OpenCode event stream connected\n');
+    const promptResponse = await requestOpenCodeServer('POST', buildOpenCodeServerUrl(invocation.serverBaseUrl, `/session/${encodeURIComponent(session.id)}/prompt_async`, sessionQuery), headers, JSON.stringify({ parts: [{ type: 'text', text: invocation.promptPayload }] }), invocation.timeoutMs);
+    if (promptResponse.statusCode < 200 || promptResponse.statusCode >= 300) {
+        abortController.abort();
+        throw new Error(`OpenCode server POST /session/${session.id}/prompt_async failed with status ${promptResponse.statusCode}: ${summarizeHttpErrorBody(promptResponse.bodyText)}`);
+    }
+    streamHandlers?.onStdoutChunk?.(`OpenCode prompt accepted for session ${session.id}\n`);
+    try {
+        await Promise.race([
+            completionDeferred.promise,
+            eventStream.finished,
+            new Promise((_, reject) => {
+                setTimeout(() => reject(new Error(`OpenCode server stream timed out after ${invocation.timeoutMs}ms.`)), invocation.timeoutMs);
+            })
+        ]);
+    }
+    finally {
+        abortController.abort();
+    }
+    const responseText = buildOrderedPartText(textOrder, textParts);
+    const reasoningText = buildOrderedPartText(reasoningOrder, reasoningParts);
     if (responseError) {
-        streamHandlers?.onStderrChunk?.(`${responseError}\n`);
         return {
             exitCode: 1,
             stdout: responseText,
@@ -2285,7 +2798,7 @@ async function runOpenCodeServerInvocation(invocation, streamHandlers) {
     streamHandlers?.onStdoutChunk?.(`OpenCode server response received for session ${session.id}\n`);
     return {
         exitCode: 0,
-        stdout: responseText || JSON.stringify(promptResponse, null, 2),
+        stdout: responseText || reasoningText || '<empty>',
         stderr: ''
     };
 }
@@ -3015,6 +3528,14 @@ async function openCopilotWithPromptReference(seedText, label, skill) {
 // @ArchitectureID: 1232
 async function openOpenCodeWithPrompt(seedText, label, root, config, skill) {
     const invocation = buildOpenCodeInvocation({ root, seedText, label, skill }, config);
+    const streamId = createWorkflowStreamId();
+    const streamLabel = `OpenCode ${label}`;
+    let streamedThreadText = '';
+    void postWorkflowRuntimeMessage({
+        type: 'opencodeStreamStart',
+        streamId,
+        label: streamLabel
+    });
     output.show(true);
     output.appendLine(`[AI4PB] OpenCode transport: ${invocation.transport}`);
     if (invocation.transport === 'server') {
@@ -3036,11 +3557,33 @@ async function openOpenCodeWithPrompt(seedText, label, root, config, skill) {
     try {
         const result = await runOpenCodeInvocation(invocation, {
             onStdoutChunk: (chunk) => {
+                streamedThreadText += chunk;
+                void postWorkflowRuntimeMessage({
+                    type: 'opencodeStreamUpdate',
+                    streamId,
+                    label: streamLabel,
+                    text: streamedThreadText
+                });
+                if (invocation.transport === 'server') {
+                    output.append(chunk);
+                    return;
+                }
                 output.append(`[AI4PB][OpenCode stdout] ${chunk}`);
             },
             onStderrChunk: (chunk) => {
                 const cleanedChunk = stripKnownWslWarnings(chunk);
                 if (cleanedChunk) {
+                    streamedThreadText += `\n[error] ${cleanedChunk}`;
+                    void postWorkflowRuntimeMessage({
+                        type: 'opencodeStreamUpdate',
+                        streamId,
+                        label: streamLabel,
+                        text: streamedThreadText
+                    });
+                    if (invocation.transport === 'server') {
+                        output.append(`[error] ${cleanedChunk}`);
+                        return;
+                    }
                     output.append(`[AI4PB][OpenCode stderr] ${cleanedChunk}`);
                 }
             }
@@ -3053,14 +3596,35 @@ async function openOpenCodeWithPrompt(seedText, label, root, config, skill) {
             output.appendLine(`[AI4PB] OpenCode stderr:\n${result.stderr}`);
         }
         if (result.exitCode !== 0) {
+            void postWorkflowRuntimeMessage({
+                type: 'opencodeStreamEnd',
+                streamId,
+                label: streamLabel,
+                text: streamedThreadText.trim() || result.stderr || result.stdout || 'OpenCode 执行失败。',
+                status: 'failed'
+            });
             void vscode.window.showErrorMessage(`AI4PB OpenCode execution failed with exit code ${result.exitCode}. stderr: ${result.stderr || '<empty>'}`);
             return;
         }
+        void postWorkflowRuntimeMessage({
+            type: 'opencodeStreamEnd',
+            streamId,
+            label: streamLabel,
+            text: streamedThreadText.trim() || result.stdout || 'OpenCode 已完成，但没有返回可展示的内容。',
+            status: 'completed'
+        });
         void vscode.window.showInformationMessage(`AI4PB routed ${label} to OpenCode successfully.`);
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         output.appendLine(`[AI4PB] OpenCode execution failed: ${message}`);
+        void postWorkflowRuntimeMessage({
+            type: 'opencodeStreamEnd',
+            streamId,
+            label: streamLabel,
+            text: streamedThreadText.trim() || message,
+            status: 'failed'
+        });
         void vscode.window.showErrorMessage(`AI4PB failed to execute OpenCode: ${message}`);
     }
 }
