@@ -492,12 +492,8 @@ class WorkflowViewProvider {
                 await vscode.commands.executeCommand('ai4pb.initializeFromTemplate');
                 return;
             }
-            if (key === 'initCopilotProjectConfig') {
-                await initializeWorkspaceProjectConfig(BUNDLED_PATHS.bundledGitHubRoot, 'Copilot');
-                return;
-            }
-            if (key === 'initOpenCodeProjectConfig') {
-                await initializeWorkspaceProjectConfig(BUNDLED_PATHS.bundledOpenCodeRoot, 'OpenCode');
+            if (key === 'initAICodingAgentProjectConfig') {
+                await initializeAICodingAgentWorkspaceProjectConfig();
                 return;
             }
             if (key === 'options') {
@@ -2186,29 +2182,17 @@ class WorkflowViewProvider {
         });
         appendButtonWithHelp(actions, initBtn, helpUrls.config.init, '查看 EA 模板初始化帮助');
 
-        const copilotConfigBtn = document.createElement('button');
-        copilotConfigBtn.className = 'quick-btn';
-        copilotConfigBtn.textContent = '初始化项目copilot配置';
-        copilotConfigBtn.addEventListener('click', () => {
+        const aiCodingAgentConfigBtn = document.createElement('button');
+        aiCodingAgentConfigBtn.className = 'quick-btn';
+        aiCodingAgentConfigBtn.textContent = '初始化AICodingAgent配置';
+        aiCodingAgentConfigBtn.addEventListener('click', () => {
           state.menuOpen = false;
-          appendBubble('user', '[初始化项目 Copilot 配置]');
-          vscode.postMessage({ type: 'statusAction', key: 'initCopilotProjectConfig' });
+          appendBubble('user', '[初始化 AICodingAgent 配置]');
+          vscode.postMessage({ type: 'statusAction', key: 'initAICodingAgentProjectConfig' });
           renderSkills();
           syncState();
         });
-        appendButtonWithHelp(actions, copilotConfigBtn, helpUrls.config.copilotProject, '查看项目 Copilot 配置初始化帮助');
-
-        const openCodeConfigBtn = document.createElement('button');
-        openCodeConfigBtn.className = 'quick-btn';
-        openCodeConfigBtn.textContent = '初始化项目opencode配置';
-        openCodeConfigBtn.addEventListener('click', () => {
-          state.menuOpen = false;
-          appendBubble('user', '[初始化项目 OpenCode 配置]');
-          vscode.postMessage({ type: 'statusAction', key: 'initOpenCodeProjectConfig' });
-          renderSkills();
-          syncState();
-        });
-        appendButtonWithHelp(actions, openCodeConfigBtn, helpUrls.config.opencodeProject, '查看项目 OpenCode 配置初始化帮助');
+        appendButtonWithHelp(actions, aiCodingAgentConfigBtn, helpUrls.config.opencodeProject, '查看 AICodingAgent 配置初始化帮助');
 
         const configBtn = document.createElement('button');
         configBtn.className = 'quick-btn';
@@ -3922,29 +3906,66 @@ function readBundledSkillText(skillRelativePath) {
     }
     return rawContent.replace(/^---\s*[\r\n]+[\s\S]*?[\r\n]+---\s*/u, '').trim();
 }
-async function initializeWorkspaceProjectConfig(sourceRelativeDir, label) {
+async function initializeAICodingAgentWorkspaceProjectConfig() {
+    await initializeWorkspaceProjectConfigs([
+        {
+            sourceRelativeDir: BUNDLED_PATHS.bundledGitHubRoot,
+            label: '.github'
+        },
+        {
+            sourceRelativeDir: BUNDLED_PATHS.bundledOpenCodeRoot,
+            label: '.opencode'
+        },
+        {
+            sourceRelativeDir: 'commands',
+            targetRelativeDir: 'commands',
+            label: 'commands'
+        },
+        {
+            sourceRelativeDir: 'skills',
+            targetRelativeDir: 'skills',
+            label: 'skills'
+        }
+    ], 'AICodingAgent');
+}
+async function initializeWorkspaceProjectConfigs(specs, label) {
     const root = getWorkspaceRoot();
-    const sourceDir = resolveExtensionPath(sourceRelativeDir);
-    const targetDir = resolvePath(root, sourceRelativeDir);
-    if (!exists(sourceDir)) {
-        throw new Error(`Bundled ${label} config directory not found: ${sourceDir}`);
+    const resolvedSpecs = specs.map((spec) => {
+        const targetRelativeDir = spec.targetRelativeDir ?? spec.sourceRelativeDir;
+        return {
+            sourceDir: resolveExtensionPath(spec.sourceRelativeDir),
+            targetDir: resolvePath(root, targetRelativeDir),
+            targetRelativeDir,
+            label: spec.label ?? targetRelativeDir
+        };
+    });
+    for (const spec of resolvedSpecs) {
+        if (!exists(spec.sourceDir)) {
+            throw new Error(`扩展内未找到初始化目录 ${spec.label}: ${spec.sourceDir}`);
+        }
     }
-    if (exists(targetDir)) {
-        const choice = await vscode.window.showWarningMessage(`${label} config already exists in workspace: ${sourceRelativeDir}`, { modal: true }, 'Overwrite', 'Open Existing');
-        if (choice === 'Open Existing') {
-            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetDir));
+    const existingSpecs = resolvedSpecs.filter((spec) => exists(spec.targetDir));
+    if (existingSpecs.length > 0) {
+        const allTargets = resolvedSpecs.map((spec) => spec.targetRelativeDir).join(', ');
+        const existingTargets = existingSpecs.map((spec) => spec.targetRelativeDir).join(', ');
+        const choice = await vscode.window.showWarningMessage(`初始化${label}配置将复制: ${allTargets}。已存在: ${existingTargets}`, { modal: true }, '覆盖', '打开已有目录');
+        if (choice === '打开已有目录') {
+            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(existingSpecs[0].targetDir));
             return;
         }
-        if (choice !== 'Overwrite') {
+        if (choice !== '覆盖') {
             return;
         }
     }
-    replaceDirectoryFromSource(sourceDir, targetDir);
-    output.appendLine(`[AI4PB] ${label} project config initialized: ${targetDir}`);
+    for (const spec of resolvedSpecs) {
+        replaceDirectoryFromSource(spec.sourceDir, spec.targetDir);
+        output.appendLine(`[AI4PB] 已初始化${label}配置: ${spec.targetDir}`);
+    }
     output.show(true);
-    const revealChoice = await vscode.window.showInformationMessage(`${label} project config initialized: ${sourceRelativeDir}`, 'Reveal in Explorer');
-    if (revealChoice === 'Reveal in Explorer') {
-        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetDir));
+    const initializedTargets = resolvedSpecs.map((spec) => spec.targetRelativeDir).join(', ');
+    const revealChoice = await vscode.window.showInformationMessage(`已完成初始化${label}配置: ${initializedTargets}`, '在资源管理器中查看');
+    if (revealChoice === '在资源管理器中查看') {
+        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(root));
     }
 }
 function replaceDirectoryFromSource(sourceDir, targetDir) {

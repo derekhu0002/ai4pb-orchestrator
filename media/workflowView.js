@@ -775,29 +775,17 @@
       });
       appendButtonWithHelp(actions, initBtn, helpUrls.config.init, '查看 EA 模板初始化帮助');
 
-      const copilotConfigBtn = document.createElement('button');
-      copilotConfigBtn.className = 'quick-btn';
-      copilotConfigBtn.textContent = '初始化项目copilot配置';
-      copilotConfigBtn.addEventListener('click', function () {
+      const aiCodingAgentConfigBtn = document.createElement('button');
+      aiCodingAgentConfigBtn.className = 'quick-btn';
+      aiCodingAgentConfigBtn.textContent = '初始化AICodingAgent配置';
+      aiCodingAgentConfigBtn.addEventListener('click', function () {
         state.menuOpen = false;
-        appendBubble('user', '[初始化项目 Copilot 配置]');
-        vscode.postMessage({ type: 'statusAction', key: 'initCopilotProjectConfig' });
+        appendBubble('user', '[初始化 AICodingAgent 配置]');
+        vscode.postMessage({ type: 'statusAction', key: 'initAICodingAgentProjectConfig' });
         renderSkills();
         syncState();
       });
-      appendButtonWithHelp(actions, copilotConfigBtn, helpUrls.config.copilotProject, '查看项目 Copilot 配置初始化帮助');
-
-      const openCodeConfigBtn = document.createElement('button');
-      openCodeConfigBtn.className = 'quick-btn';
-      openCodeConfigBtn.textContent = '初始化项目opencode配置';
-      openCodeConfigBtn.addEventListener('click', function () {
-        state.menuOpen = false;
-        appendBubble('user', '[初始化项目 OpenCode 配置]');
-        vscode.postMessage({ type: 'statusAction', key: 'initOpenCodeProjectConfig' });
-        renderSkills();
-        syncState();
-      });
-      appendButtonWithHelp(actions, openCodeConfigBtn, helpUrls.config.opencodeProject, '查看项目 OpenCode 配置初始化帮助');
+      appendButtonWithHelp(actions, aiCodingAgentConfigBtn, helpUrls.config.opencodeProject, '查看 AICodingAgent 配置初始化帮助');
 
       const configBtn = document.createElement('button');
       configBtn.className = 'quick-btn';
