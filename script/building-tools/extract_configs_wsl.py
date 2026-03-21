@@ -199,7 +199,11 @@ def main():
     opencode_env_dirs = [
         cwd / ".opencode",
         home / ".config" / "opencode",
-        home / ".local" / "share" / "opencode"
+        home / ".local" / "share" / "opencode",
+        cwd / ".claude",
+        home / ".claude",
+        cwd / ".agents",
+        home / ".agents"
     ]
     
     ignore_heavy_subdirs = {"snapshot", "node_modules", "dist", "build"}

@@ -3917,11 +3917,6 @@ async function initializeAICodingAgentWorkspaceProjectConfig() {
             label: '.opencode'
         },
         {
-            sourceRelativeDir: 'commands',
-            targetRelativeDir: 'commands',
-            label: 'commands'
-        },
-        {
             sourceRelativeDir: 'skills',
             targetRelativeDir: 'skills',
             label: 'skills'
