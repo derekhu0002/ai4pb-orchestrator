@@ -39,9 +39,14 @@ def extract_references(obj, config_path, file_set):
                                 search_paths.append(inst)
                         for search_path in search_paths:
                             try:
+                                found_match = False
                                 for match in glob.glob(search_path, recursive=True):
                                     mp = Path(match).resolve()
-                                    if mp.is_file(): file_set.add(mp)
+                                    if mp.is_file():
+                                        file_set.add(mp)
+                                        found_match = True
+                                if found_match:
+                                    break  # Stop hunting if we found matches in the preceding paths
                             except: pass
             else:
                 extract_references(v, config_path, file_set)
@@ -61,7 +66,9 @@ def extract_references(obj, config_path, file_set):
             for search_fp in search_paths:
                 try:
                     search_fp = search_fp.resolve()
-                    if search_fp.is_file(): file_set.add(search_fp)
+                    if search_fp.is_file():
+                        file_set.add(search_fp)
+                        break  # Stop at first found match honoring precedence
                 except: pass
 
 def deep_merge(dict1, dict2, sources1, source_name):
