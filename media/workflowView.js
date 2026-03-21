@@ -151,9 +151,11 @@
     const containerRect = skillsContainer.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
     const containerWidth = Math.max(0, Math.floor(containerRect.width));
-    const minWidth = state.activeMenu === 'flow' ? 360 : 260;
-    const preferredRatio = state.activeMenu === 'flow' ? 0.9 : 0.72;
-    const maxWidth = state.activeMenu === 'flow' ? 760 : 480;
+    const isFlowMenu = state.activeMenu === 'flow';
+    const isConfigMenu = state.activeMenu === 'config';
+    const minWidth = isFlowMenu ? 360 : isConfigMenu ? 420 : 260;
+    const preferredRatio = isFlowMenu ? 0.9 : isConfigMenu ? 0.92 : 0.72;
+    const maxWidth = isFlowMenu ? 760 : isConfigMenu ? 860 : 480;
     const preferredWidth = Math.floor(containerWidth * preferredRatio);
     const width = Math.max(
       Math.min(Math.max(minWidth, preferredWidth), maxWidth, containerWidth),
@@ -168,6 +170,7 @@
     }
 
     contextShell.style.width = width + 'px';
+    contextShell.style.maxHeight = isConfigMenu ? '320px' : '220px';
     contextShell.style.left = left + 'px';
     contextShell.style.bottom = anchor.offsetHeight + 8 + 'px';
   }
@@ -754,7 +757,7 @@
 
       const desc = document.createElement('div');
       desc.className = 'config-panel-desc';
-      desc.textContent = '集中处理 EA 模板初始化与导出参数配置。';
+      desc.textContent = '集中处理 EA 模板、项目 Copilot/OpenCode 配置初始化与导出参数配置。';
       panel.appendChild(desc);
 
       const actions = document.createElement('div');
@@ -771,6 +774,30 @@
         syncState();
       });
       appendButtonWithHelp(actions, initBtn, helpUrls.config.init, '查看 EA 模板初始化帮助');
+
+      const copilotConfigBtn = document.createElement('button');
+      copilotConfigBtn.className = 'quick-btn';
+      copilotConfigBtn.textContent = '初始化项目copilot配置';
+      copilotConfigBtn.addEventListener('click', function () {
+        state.menuOpen = false;
+        appendBubble('user', '[初始化项目 Copilot 配置]');
+        vscode.postMessage({ type: 'statusAction', key: 'initCopilotProjectConfig' });
+        renderSkills();
+        syncState();
+      });
+      appendButtonWithHelp(actions, copilotConfigBtn, helpUrls.config.copilotProject, '查看项目 Copilot 配置初始化帮助');
+
+      const openCodeConfigBtn = document.createElement('button');
+      openCodeConfigBtn.className = 'quick-btn';
+      openCodeConfigBtn.textContent = '初始化项目opencode配置';
+      openCodeConfigBtn.addEventListener('click', function () {
+        state.menuOpen = false;
+        appendBubble('user', '[初始化项目 OpenCode 配置]');
+        vscode.postMessage({ type: 'statusAction', key: 'initOpenCodeProjectConfig' });
+        renderSkills();
+        syncState();
+      });
+      appendButtonWithHelp(actions, openCodeConfigBtn, helpUrls.config.opencodeProject, '查看项目 OpenCode 配置初始化帮助');
 
       const configBtn = document.createElement('button');
       configBtn.className = 'quick-btn';

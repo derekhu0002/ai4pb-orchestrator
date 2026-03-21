@@ -1891,7 +1891,11 @@ class WorkflowViewProvider {
 
       const containerRect = skillsContainer.getBoundingClientRect();
       const anchorRect = anchor.getBoundingClientRect();
-      const desiredWidth = state.activeMenu === 'flow' ? 420 : 320;
+      const desiredWidth = state.activeMenu === 'flow'
+        ? 420
+        : state.activeMenu === 'config'
+          ? 460
+          : 320;
       const containerWidth = Math.max(0, Math.floor(containerRect.width));
       const width = Math.max(Math.min(desiredWidth, containerWidth), Math.min(220, containerWidth));
       let left = anchorRect.left - containerRect.left;
@@ -1903,6 +1907,7 @@ class WorkflowViewProvider {
       }
 
       contextShell.style.width = width + 'px';
+      contextShell.style.maxHeight = state.activeMenu === 'config' ? '320px' : '220px';
       contextShell.style.left = left + 'px';
       contextShell.style.bottom = anchor.offsetHeight + 8 + 'px';
     }
