@@ -3,13 +3,6 @@ name: ai4pb-wrapup
 description: SCRUM flow skill for sprint closure and status synchronization.
 ---
 
-# SKILL: AI4PB_WRAP_UP
-
-## Skill Definition
-- Skill ID: `ai4pb-wrapup`
-- Role: Architectural Implementation Engine
-- Primary Goal: Check and sync implementation status for verified todos/issues at session wrap-up
-
 # SESSION WRAP-UP & SYNC
 
 ## Task Status Sync (Session Delta)

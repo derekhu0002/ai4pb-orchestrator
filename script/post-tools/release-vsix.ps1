@@ -24,24 +24,6 @@ function Invoke-CheckedCommand {
     }
 }
 
-function Sync-SkillDirectory {
-    param(
-        [string]$SourceDir,
-        [string]$TargetDir
-    )
-
-    if (-not (Test-Path $SourceDir)) {
-        throw "Skill source directory not found: $SourceDir"
-    }
-
-    if (Test-Path $TargetDir) {
-        Remove-Item -LiteralPath $TargetDir -Recurse -Force
-    }
-
-    New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
-    Copy-Item -Path (Join-Path $SourceDir '*') -Destination $TargetDir -Recurse -Force
-}
-
 $gitExecutable = $null
 try {
     $gitCommand = Get-Command git.exe -ErrorAction Stop
@@ -73,14 +55,6 @@ function Get-GitValue {
 Write-Host "== AI4PB VSIX Release =="
 Write-Host "Workspace: $PWD"
 Write-Host "Version bump: $Bump"
-
-$skillsSourceDir = Join-Path $PWD 'skills'
-$githubSkillsDir = Join-Path $PWD '.github/skills'
-$opencodeSkillsDir = Join-Path $PWD '.opencode/skills'
-
-Write-Host "Synchronizing skills into packaging targets..."
-Sync-SkillDirectory -SourceDir $skillsSourceDir -TargetDir $githubSkillsDir
-Sync-SkillDirectory -SourceDir $skillsSourceDir -TargetDir $opencodeSkillsDir
 
 if ($Bump -ne 'none') {
     Write-Host "Bumping version ($Bump)..."

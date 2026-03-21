@@ -197,7 +197,6 @@ function activate(context) {
     extensionInstallRoot = context.extensionUri.fsPath;
     output = vscode.window.createOutputChannel('AI4PB Orchestrator');
     output.appendLine('AI4PB Orchestrator activated.');
-    ensureWorkspaceSkillsInstalled();
     void vscode.window.showInformationMessage(`AI4PB loaded: ${context.extension.id}`);
     const extensionVersion = String(context.extension.packageJSON?.version ?? 'unknown');
     const workflowViewProvider = new WorkflowViewProvider(context.extensionUri, extensionVersion, context);
@@ -4058,8 +4057,6 @@ async function startIterationFromModel() {
         const archPath = getArchitectureJsonPath(root);
         const designTasksDir = resolvePath(root, RELATIVE_PATHS.designTasksDir);
         const initialPromptPath = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
-        ensureWorkspaceSkillsInstalled();
-        output.appendLine(`[AI4PB] Workspace skill directories verified during model iteration startup: ${root}`);
         if (!exists(archPath)) {
             void vscode.window.showErrorMessage(`Architecture JSON not found: ${archPath}`);
             return;

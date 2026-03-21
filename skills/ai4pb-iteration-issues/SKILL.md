@@ -3,16 +3,8 @@ name: ai4pb-iteration-issues
 description: SCRUM flow skill for defect follow-up and in-sprint issue continuation.
 ---
 
-# SKILL: AI4PB_ITERATION_ISSUES
-
-## Skill Definition
-- Skill ID: `ai4pb-iteration-issues`
-- Role: Architectural Implementation Engine
-- Primary Goal: Continue unresolved issue execution in later iteration
-
 # ITERATION ISSUE CONTINUATION
 
-## Role
 You are an **Architectural Implementation Engine** continuing a later iteration after QA feedback.
 
 ## Input Data

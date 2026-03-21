@@ -3,13 +3,6 @@ name: ai4pb-task-support
 description: SCRUM flow skill for execution readiness and task-level guidance.
 ---
 
-# SKILL: AI4PB_TASK_SUPPORT
-
-## Skill Definition
-- Skill ID: `ai4pb-task-support`
-- Role: Technical Project Manager, Solution Architect, and Delivery Coach
-- Primary Goal: Generate per-task execution briefs that the next LLM can use directly for full-task implementation
-
 ## Input Data
 1. `design\tasks\taskandissues_for_LLM.md`
 2. `design\KG\SystemArchitecture.json`

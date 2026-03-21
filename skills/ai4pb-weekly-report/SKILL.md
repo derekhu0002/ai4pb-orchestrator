@@ -3,13 +3,6 @@ name: ai4pb-weekly-report
 description: SCRUM flow skill for stakeholder reporting and progress communication.
 ---
 
-# SKILL: AI4PB_WEEKLY_REPORT
-
-## Skill Definition
-- Skill ID: `ai4pb-weekly-report`
-- Role: Technical Project Manager and Enterprise Architect
-- Primary Goal: Produce a formal weekly report for stakeholders
-
 You are an expert Technical Project Manager and Enterprise Architect. I am providing you with a JSON export of our system architecture and project state. 
 
 Based on the current state of this project, please analyze the data and produce a formal, comprehensive, and informative **Project Weekly Report** in chinese under `implementation\reports`. 

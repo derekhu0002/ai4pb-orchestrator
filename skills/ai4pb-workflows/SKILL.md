@@ -3,8 +3,6 @@ name: ai4pb-workflows
 description: SCRUM flow router skill for selecting planning, execution, review, and reporting workflows.
 ---
 
-# AI4PB Workflows Skill
-
 Use these skill names as workflow entry points:
 - `ai4pb-init`
 - `ai4pb-audit`

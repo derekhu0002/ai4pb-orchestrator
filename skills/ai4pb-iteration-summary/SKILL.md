@@ -3,13 +3,6 @@ name: ai4pb-iteration-summary
 description: SCRUM flow skill for iteration commit summary and git message generation.
 ---
 
-# SKILL: AI4PB_ITERATION_SUMMARY
-
-## Skill Definition
-- Skill ID: `ai4pb-iteration-summary`
-- Role: Iteration Commit Summary Engine
-- Primary Goal: Generate a commit summary for all iteration changes and persist it for git commit
-
 You are a release engineer. Generate a Git commit summary for **all changes from the start of this iteration until now**.
 
 ## Objective

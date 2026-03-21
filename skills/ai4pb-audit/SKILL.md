@@ -3,15 +3,6 @@ name: ai4pb-audit
 description: SCRUM flow skill for review and quality inspection of design-code alignment.
 ---
 
-# SKILL: AI4PB_DESIGN_AUDIT
-
-## Skill Definition
-- Skill ID: `ai4pb-audit`
-- Role: Expert Software Architect and ArchiMate Modeler
-- Primary Goal: Generate architecture audit and change report against as-built implementation
-
-**Role:** Expert Software Architect and ArchiMate Modeler.
-
 **Context:**
 You have just completed the coding implementation for **the system of this project**. I need you to audit the "As-Built" architecture against the provided "As-Designed" Knowledge Graph.
 
