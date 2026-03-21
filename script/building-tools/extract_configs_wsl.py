@@ -2,6 +2,9 @@ import os
 import json
 import re
 import fnmatch
+import datetime
+import shutil
+import glob
 from pathlib import Path
 
 def load_jsonc(filepath):
@@ -9,18 +12,57 @@ def load_jsonc(filepath):
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
-            # Remove /* ... */ comments
             content = re.sub(r'/\*.*?\*/', '', content, flags=re.DOTALL)
-            # Remove // comments without breaking http://
             content = re.sub(r'(?<!:)//.*', '', content)
-            # Clean trailing commas
-            for _ in range(3):
-                content = re.sub(r',\s*([\]}])', r'\1', content)
+            for _ in range(3): content = re.sub(r',\s*([\]}])', r'\1', content)
             if not content.strip(): return {}
             return json.loads(content)
     except Exception as e:
-        print(f"Error parsing {filepath}: {e}")
         return {}
+
+def extract_references(obj, config_path, file_set):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "instructions" and isinstance(v, list):
+                for inst in v:
+                    if isinstance(inst, str):
+                        base = config_path.parent if config_path else Path.cwd()
+                        if inst.startswith('~'):
+                            search_paths = [str(Path.home() / inst[2:])]
+                        else:
+                            search_paths = []
+                            if not Path(inst).is_absolute():
+                                if config_path:
+                                    search_paths.append(str(config_path.parent / inst))
+                                search_paths.append(str(Path.cwd() / inst))
+                            else:
+                                search_paths.append(inst)
+                        for search_path in search_paths:
+                            try:
+                                for match in glob.glob(search_path, recursive=True):
+                                    mp = Path(match).resolve()
+                                    if mp.is_file(): file_set.add(mp)
+                            except: pass
+            else:
+                extract_references(v, config_path, file_set)
+    elif isinstance(obj, list):
+        for item in obj: extract_references(item, config_path, file_set)
+    elif isinstance(obj, str):
+        for m in re.findall(r'\{file:(.*?)\}', obj):
+            p = m.strip()
+            if p.startswith('~/'): p = str(Path.home() / p[2:])
+            fp = Path(p)
+            if not fp.is_absolute():
+                search_paths = []
+                if config_path: search_paths.append(config_path.parent / p)
+                search_paths.append(Path.cwd() / p)
+            else:
+                search_paths = [fp]
+            for search_fp in search_paths:
+                try:
+                    search_fp = search_fp.resolve()
+                    if search_fp.is_file(): file_set.add(search_fp)
+                except: pass
 
 def deep_merge(dict1, dict2, sources1, source_name):
     for k, v in dict2.items():
@@ -44,11 +86,7 @@ def serialize_jsonc(obj, sources, indent_level=0):
             is_last = (i == len(items) - 1)
             comma = "" if is_last else ","
             src = sources.get(k, "Default")
-            # Format source name for comments
-            if isinstance(src, dict):
-                src_name = "Merged from multiple sources"
-            else:
-                src_name = str(src).replace('\\\\', '/').replace('\\', '/')
+            src_name = "Merged from multiple sources" if isinstance(src, dict) else str(src).replace('\\\\', '/').replace('\\', '/')
             
             if isinstance(v, dict):
                 lines.append(f'{inner_pad}// Inherited from: {src_name}')
@@ -56,112 +94,124 @@ def serialize_jsonc(obj, sources, indent_level=0):
             elif isinstance(v, list):
                 list_str = json.dumps(v, indent=2)
                 list_lines = list_str.split('\n')
-                if len(list_lines) > 1:
-                    shifted_list = list_lines[0] + '\n' + '\n'.join((inner_pad + ll) for ll in list_lines[1:])
-                else:
-                    shifted_list = list_lines[0]
-                lines.append(f'{inner_pad}"{k}": {shifted_list}{comma} // Source: {src_name}')
+                shifted = list_lines[0] + ('\n' + '\n'.join((inner_pad + ll) for ll in list_lines[1:]) if len(list_lines)>1 else '')
+                lines.append(f'{inner_pad}"{k}": {shifted}{comma} // Source: {src_name}')
             else:
-                val_str = json.dumps(v)
-                lines.append(f'{inner_pad}"{k}": {val_str}{comma} // Source: {src_name}')
+                lines.append(f'{inner_pad}"{k}": {json.dumps(v)}{comma} // Source: {src_name}')
         lines.append(pad + "}")
         return "\n".join(lines)
-    else:
-        return json.dumps(obj)
+    return json.dumps(obj)
+
+def copy_to_archive(src_path, cwd, home, out_dir):
+    try:
+        src_path = Path(src_path).resolve()
+        base_target = ""
+        
+        # Determine base root mapping
+        try:
+            rel = src_path.relative_to(cwd)
+            base_target = "workspace"
+        except ValueError:
+            try:
+                rel = src_path.relative_to(home)
+                base_target = "home"
+            except ValueError:
+                drive, tail = os.path.splitdrive(src_path)
+                rel = tail.lstrip('\\/')
+                base_target = "external"
+                if drive:
+                    base_target = f"external/{drive.replace(':', '')}"
+                    
+        target = out_dir / base_target / rel
+        if target and src_path.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_path, target)
+    except Exception as e:
+        print(f"Failed to copy {src_path}: {e}")
 
 def main():
     cwd = Path.cwd()
     home = Path.home()
     
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_root = cwd / f"{timestamp}_{cwd.name}_exported_configs"
+    out_root.mkdir(parents=True, exist_ok=True)
     print(f"Running in WSL at: {cwd}")
+    print(f"Output Directory Setup: {out_root}")
 
-    merged_opencode_config = {"$schema": "https://opencode.ai/config.json"}
-    merged_sources = {"$schema": "Official Schema"}
+    merged_cfg = {"$schema": "https://opencode.ai/config.json"}
+    sources = {"$schema": "Official Schema"}
+    files_to_collect = set()
 
-    # 1. Global Paths
-    global_paths = [
-        home / ".config" / "opencode" / "opencode.jsonc",
-        home / ".config" / "opencode" / "opencode.json",
-        home / ".local" / "share" / "opencode" / "opencode.jsonc",
-        home / ".local" / "share" / "opencode" / "opencode.json"
-    ]
-    for gp in global_paths:
-        if gp.exists():
-            cfg = load_jsonc(gp)
-            if cfg:
-                deep_merge(merged_opencode_config, cfg, merged_sources, str(gp))
-                print(f"Loaded Global config from: {gp}")
+    def process_config(cfg_path, source_label):
+        if cfg_path.exists():
+            c = load_jsonc(cfg_path)
+            if c:
+                deep_merge(merged_cfg, c, sources, source_label)
+                extract_references(c, cfg_path, files_to_collect)
+                files_to_collect.add(cfg_path.resolve())
+                print(f"Loaded config: {cfg_path}")
 
-    # 2. Custom Env Var
-    env_config_path = os.environ.get("OPENCODE_CONFIG")
-    if env_config_path:
-        cp = Path(env_config_path)
-        if cp.exists():
-            cfg = load_jsonc(cp)
-            if cfg:
-                deep_merge(merged_opencode_config, cfg, merged_sources, f"ENV OPENCODE_CONFIG ({cp})")
-                print(f"Loaded Custom config: {cp}")
+    # 1. Global
+    for gp in [home/".config"/"opencode"/"opencode.jsonc", home/".config"/"opencode"/"opencode.json",
+               home/".local"/"share"/"opencode"/"opencode.jsonc", home/".local"/"share"/"opencode"/"opencode.json"]:
+        process_config(gp, str(gp))
 
-    # 3. Project Configs
-    project_paths = [
-        cwd / ".opencode" / "opencode.jsonc",
-        cwd / ".opencode" / "opencode.json",
-        cwd / "opencode.jsonc",
-        cwd / "opencode.json",
-    ]
-    for lp in project_paths:
-        if lp.exists():
-            cfg = load_jsonc(lp)
-            if cfg:
-                rel_path = lp.relative_to(cwd)
-                deep_merge(merged_opencode_config, cfg, merged_sources, f"Project File (./{rel_path})")
-                print(f"Loaded Project config from: {lp}")
+    # 2. Env
+    if os.environ.get("OPENCODE_CONFIG"):
+        process_config(Path(os.environ["OPENCODE_CONFIG"]), f"ENV OPENCODE_CONFIG")
 
-    # 4. Inline JSON
-    env_config_content = os.environ.get("OPENCODE_CONFIG_CONTENT")
-    if env_config_content:
+    # 3. Project
+    for lp in [cwd/".opencode"/"opencode.jsonc", cwd/".opencode"/"opencode.json", cwd/"opencode.jsonc", cwd/"opencode.json"]:
         try:
-            cfg = json.loads(env_config_content)
-            deep_merge(merged_opencode_config, cfg, merged_sources, "ENV OPENCODE_CONFIG_CONTENT")
-        except json.JSONDecodeError: pass
+            rel = lp.relative_to(cwd)
+            process_config(lp, f"Project File (./{rel})")
+        except:
+            process_config(lp, f"Project File ({lp})")
 
-    # Write output to JSONC
-    out_jsonc = cwd / "opencode_generated.jsonc"
-    with open(out_jsonc, "w", encoding="utf-8") as f:
-        f.write(serialize_jsonc(merged_opencode_config, merged_sources))
-        
-    print(f"==> Saved standardized annotated Config to: {out_jsonc.name}")
+    # 4. Inline Env Config
+    inline_content = os.environ.get("OPENCODE_CONFIG_CONTENT")
+    if inline_content:
+        try:
+            content = re.sub(r'/\*.*?\*/', '', inline_content, flags=re.DOTALL)
+            content = re.sub(r'(?<!:)//.*', '', content)
+            for _ in range(3): content = re.sub(r',\s*([\]}])', r'\1', content)
+            if content.strip():
+                c = json.loads(content)
+                deep_merge(merged_cfg, c, sources, "ENV OPENCODE_CONFIG_CONTENT")
+                extract_references(c, None, files_to_collect)
+                print("Loaded config: ENV OPENCODE_CONFIG_CONTENT")
+        except Exception as e:
+            print(f"Failed to parse OPENCODE_CONFIG_CONTENT: {e}")
 
-    # 5. Extract Extended Definitions
-    config_patterns = {
-        "ai_rules_and_agents": ["AGENTS.md", "*.agent.md", "*.prompt.md", "*.skill.md", "*.instructions.md", "copilot-instructions.md", ".clinerules*"],
-        "build_and_system": ["bunfig.toml", "turbo.json", "package.json", "tsconfig.json", "flake.nix"],
-        "infrastructure": ["sst.config.ts", "sst-env.d.ts", "vite.config.ts"]
-    }
-    ignore_dirs = {".git", "node_modules", "dist", ".sst", ".turbo", "build", "out", ".vite"}
-    extended_data = {k: {} for k in config_patterns}
+    # Write merged config JSONC
+    with open(out_root / "opencode_generated.jsonc", "w", encoding="utf-8") as f:
+        f.write(serialize_jsonc(merged_cfg, sources))
+
+    # Collect explicit OpenCode environment directories (agents, modes, skills, etc)
+    opencode_env_dirs = [
+        cwd / ".opencode",
+        home / ".config" / "opencode",
+        home / ".local" / "share" / "opencode"
+    ]
     
-    for root, dirs, files in os.walk(cwd):
-        dirs[:] = [d for d in dirs if d not in ignore_dirs]
-        for file in files:
-            for cat, patterns in config_patterns.items():
-                if any(fnmatch.fnmatch(file, p) for p in patterns):
-                    filepath = Path(root) / file
-                    rel_path = filepath.relative_to(cwd).as_posix()
-                    try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            content = f.read()
-                            if filepath.suffix == '.json':
-                                try: content = json.loads(content)
-                                except: pass
-                            extended_data[cat][rel_path] = content
-                    except: pass
+    ignore_heavy_subdirs = {"snapshot", "node_modules", "dist", "build"}
+    
+    for env_dir in opencode_env_dirs:
+        if env_dir.exists() and env_dir.is_dir():
+            for root, dirs, files in os.walk(env_dir):
+                # Ignore heavy unnecessary snapshot and build cache directories
+                dirs[:] = [d for d in dirs if d not in ignore_heavy_subdirs]
+                
+                for file in files:
+                    fp = Path(root) / file
+                    if fp.is_file() and fp.suffix in ['.json', '.jsonc', '.md', '.ts', '.js', '.yaml', '.yml']:
+                        files_to_collect.add(fp.resolve())
 
-    out_extended = cwd / "opencode_extended_configs.json"
-    with open(out_extended, "w", encoding="utf-8") as f:
-        json.dump(extended_data, f, indent=4)
+    print(f"\nCopying {len(files_to_collect)} referenced OpenCode configuration items to structural archive...")
+    for fp in files_to_collect:
+        copy_to_archive(fp, cwd, home, out_root)
         
-    print(f"==> Saved other project-specific configs to: {out_extended.name}")
+    print(f"Extraction fully complete. Archive created at: {out_root.name}")
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
