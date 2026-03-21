@@ -4671,9 +4671,6 @@ async function initializeFromTemplate(): Promise<void> {
     const root = getWorkspaceRoot();
     const templatePath = resolveExtensionPath(BUNDLED_PATHS.eaTemplate);
 
-    ensureWorkspaceSkillsInstalled();
-    output.appendLine(`[AI4PB] Workspace skill directories verified during template initialization: ${root}`);
-
     if (!exists(templatePath)) {
       void vscode.window.showErrorMessage(`Bundled EA template not found: ${templatePath}`);
       return;
