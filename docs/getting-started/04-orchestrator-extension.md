@@ -32,7 +32,7 @@
 
 ## 4.3 提示词模板注册 (Prompt Tools)
 
-扩展本身也是实现了 VS Code 最新的 Language Model Tool API 提供者。它预先注册了一整套 `#ai4pb-xxxx` 提示词工具资产（存放在代码仓的 `workprompt/*.md` 及 `.github/skills/*`），这些资产区分为：
+扩展本身也是实现了 VS Code 最新的 Language Model Tool API 提供者。它预先注册了一整套 `#ai4pb-xxxx` 提示词工具资产（源码位于代码仓的 `skills/*/SKILL.md`，并在运行/发版时同步到 `.github/skills/*` 与 `.opencode/skills/*`），这些资产区分为：
 - **模板型 Prompt (由 LM Tool 读取)**：指引 Copilot 应如何响应、思考。
 - **产出型 Prompt**：基于上述模板在会话中真实执行后生成的输出文档（例如：`implementation/task-list.md`）。
 

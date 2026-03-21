@@ -214,7 +214,7 @@ AI 无法直接阅读二进制 `.feap`。我们需要用附带的 JS 脚本：
 
 ### 4.3 提示词模板注册 (Prompt Tools)
 
-扩展本身也是实现了 VS Code 最新的 Language Model Tool API 提供者。它预先注册了一整套 `#ai4pb-xxxx` 提示词工具资产（存放在代码仓的 `workprompt/*.md` 及 `.github/skills/*`），这些资产区分为：
+扩展本身也是实现了 VS Code 最新的 Language Model Tool API 提供者。它预先注册了一整套 `#ai4pb-xxxx` 提示词工具资产（源码位于代码仓的 `skills/*/SKILL.md`，并在运行/发版时同步到 `.github/skills/*` 与 `.opencode/skills/*`），这些资产区分为：
 
 - **模板型 Prompt (由 LM Tool 读取)**：指引 Copilot 应如何响应、思考。
 - **产出型 Prompt**：基于上述模板在会话中真实执行后生成的输出文档（例如：`implementation/task-list.md`）。
@@ -426,8 +426,8 @@ AI4PB 最核心的工作模式，即是依据下述按部就班的 SCRUM 步序�
 
 如果你需要调整系统级别的提示资产（比如针对本团队特殊加入测试脚本调用）：
 
-- 找到 `workprompt` 目录下的 `.md` 或者 `.github/skills/` 里的 Skill 文件。
-- 确认自己是在编写“模板型 Prompt”还是“产出型 Prompt”。（见 `workprompt/README.md`）
+- 找到 `skills/` 目录下的 `SKILL.md` 或者 `.github/skills/` 里的 Skill 文件。
+- 确认自己是在编写“模板型 Skill”还是“产出型执行结果约束”。（见 `skills/README.md`）
 - 保持核心数据抓取锚点 `design/KG/SystemArchitecture.json` 不做破坏。
 
 ### 6.4 AI 无法取代的东西：测试与闭环复核

@@ -7,6 +7,41 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Invoke-CheckedCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath,
+
+        [string[]]$ArgumentList = @(),
+
+        [Parameter(Mandatory = $true)]
+        [string]$FailureMessage
+    )
+
+    & $FilePath @ArgumentList
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FailureMessage (exit code: $LASTEXITCODE)"
+    }
+}
+
+function Sync-SkillDirectory {
+    param(
+        [string]$SourceDir,
+        [string]$TargetDir
+    )
+
+    if (-not (Test-Path $SourceDir)) {
+        throw "Skill source directory not found: $SourceDir"
+    }
+
+    if (Test-Path $TargetDir) {
+        Remove-Item -LiteralPath $TargetDir -Recurse -Force
+    }
+
+    New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
+    Copy-Item -Path (Join-Path $SourceDir '*') -Destination $TargetDir -Recurse -Force
+}
+
 $gitExecutable = $null
 try {
     $gitCommand = Get-Command git.exe -ErrorAction Stop
@@ -39,13 +74,21 @@ Write-Host "== AI4PB VSIX Release =="
 Write-Host "Workspace: $PWD"
 Write-Host "Version bump: $Bump"
 
+$skillsSourceDir = Join-Path $PWD 'skills'
+$githubSkillsDir = Join-Path $PWD '.github/skills'
+$opencodeSkillsDir = Join-Path $PWD '.opencode/skills'
+
+Write-Host "Synchronizing skills into packaging targets..."
+Sync-SkillDirectory -SourceDir $skillsSourceDir -TargetDir $githubSkillsDir
+Sync-SkillDirectory -SourceDir $skillsSourceDir -TargetDir $opencodeSkillsDir
+
 if ($Bump -ne 'none') {
     Write-Host "Bumping version ($Bump)..."
-    npm version $Bump --no-git-tag-version
+    Invoke-CheckedCommand -FilePath 'npm' -ArgumentList @('version', $Bump, '--no-git-tag-version') -FailureMessage 'npm version failed'
 }
 
 Write-Host "Compiling extension..."
-npm run compile
+Invoke-CheckedCommand -FilePath 'npm' -ArgumentList @('run', 'compile') -FailureMessage 'npm compile failed'
 
 $packageJsonPath = Join-Path $PWD 'package.json'
 $packageJson = Get-Content $packageJsonPath -Raw | ConvertFrom-Json
@@ -58,6 +101,9 @@ if (-not (Test-Path $releaseDir)) {
 }
 
 $vsixPath = Join-Path $releaseDir ("{0}-{1}.vsix" -f $extensionName, $extensionVersion)
+if (Test-Path $vsixPath) {
+    Remove-Item -LiteralPath $vsixPath -Force
+}
 
 $readmePath = Join-Path $PWD 'README.md'
 $marketplaceReadmePath = Join-Path $PWD $MarketplaceReadme
@@ -79,7 +125,16 @@ try {
     }
 
     Write-Host "Packaging VSIX: $vsixPath"
-    npx @vscode/vsce package --out $vsixPath --allow-missing-repository --skip-license
+    Invoke-CheckedCommand -FilePath 'npx' -ArgumentList @('@vscode/vsce', 'package', '--out', $vsixPath, '--allow-missing-repository', '--skip-license') -FailureMessage 'VSIX packaging failed'
+
+    if (-not (Test-Path $vsixPath)) {
+        throw "VSIX packaging reported success but file was not created: $vsixPath"
+    }
+
+    $vsixFile = Get-Item -LiteralPath $vsixPath
+    if ($vsixFile.Length -le 0) {
+        throw "VSIX packaging created an empty file: $vsixPath"
+    }
 }
 finally {
     if ($shouldSwapReadme -and $null -ne $originalReadmeContent) {

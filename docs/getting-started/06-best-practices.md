@@ -24,8 +24,8 @@
 
 如果你需要调整系统级别的提示资产（比如针对本团队特殊加入测试脚本调用）：
 
-- 找到 `workprompt` 目录下的 `.md` 或者 `.github/skills/` 里的 Skill 文件。
-- 确认自己是在编写“模板型 Prompt”还是“产出型 Prompt”。（见 `workprompt/README.md`）
+- 找到 `skills/` 目录下的 `SKILL.md` 或者 `.github/skills/` 里的 Skill 文件。
+- 确认自己是在编写“模板型 Skill”还是“产出型执行结果约束”。（见 `skills/README.md`）
 - 保持核心数据抓取锚点 `design/KG/SystemArchitecture.json` 不做破坏。
 
 ## 6.4 AI 无法取代的东西：测试与闭环复核

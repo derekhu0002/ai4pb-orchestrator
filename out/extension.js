@@ -50,16 +50,17 @@ const RELATIVE_PATHS = {
 };
 const BUNDLED_PATHS = {
     eaTemplate: 'EA-model-template/EA-model-template.feap',
-    skillsRoot: '.github/skills',
+    bundledSkillsRoot: 'skills',
+    workspaceSkillsRoot: '.github/skills',
     opencodeSkillsRoot: '.opencode/skills',
-    initialPrompt: 'workprompt/initial-prompt.md',
-    wrapPrompt: 'workprompt/Wrap-up Prompt.md',
-    reversePrompt: 'workprompt/reverse-engineer-WHOLE.md',
-    taskListPrompt: 'workprompt/task-list-prompt.md',
-    taskSupportPrompt: 'workprompt/task-support-prompt.md',
-    weeklyReportPrompt: 'workprompt/weekly-report-prompt.md',
-    iterationIssuesPrompt: 'workprompt/iteration-issues-prompt.md',
-    iterationSummaryPrompt: 'workprompt/iteration-summary.md'
+    initialPrompt: 'skills/ai4pb-init/SKILL.md',
+    wrapPrompt: 'skills/ai4pb-wrapup/SKILL.md',
+    reversePrompt: 'skills/ai4pb-audit/SKILL.md',
+    taskListPrompt: 'skills/ai4pb-task-list/SKILL.md',
+    taskSupportPrompt: 'skills/ai4pb-task-support/SKILL.md',
+    weeklyReportPrompt: 'skills/ai4pb-weekly-report/SKILL.md',
+    iterationIssuesPrompt: 'skills/ai4pb-iteration-issues/SKILL.md',
+    iterationSummaryPrompt: 'skills/ai4pb-iteration-summary/SKILL.md'
 };
 const TOOL_NAMES = {
     initPrompt: 'ai4pb_get_init_session_prompt',
@@ -219,16 +220,9 @@ class PromptTemplateTool {
         };
     }
     invoke(_options, _token) {
-        const promptPath = resolveExtensionPath(this.promptRelativePath);
-        if (!exists(promptPath)) {
-            throw new Error(`AI4PB prompt file not found: ${promptPath}`);
-        }
-        const content = fs.readFileSync(promptPath, 'utf-8').trim();
-        if (!content) {
-            throw new Error(`AI4PB prompt file is empty: ${promptPath}`);
-        }
+        const content = readBundledSkillText(this.promptRelativePath);
         const resultText = [
-            `AI4PB ${this.label} prompt template from ${this.promptRelativePath}:`,
+            `AI4PB ${this.label} skill template from ${this.promptRelativePath}:`,
             '',
             content
         ].join('\n');
@@ -2898,19 +2892,12 @@ function buildOpenCodePromptText(skill, seedText) {
         return seedText;
     }
     const promptRelativePath = SKILL_PROMPT_PATHS[skill];
-    const promptPath = resolveExtensionPath(promptRelativePath);
-    if (!exists(promptPath)) {
-        throw new Error(`AI4PB prompt file not found for OpenCode: ${promptPath}`);
-    }
-    const promptContent = fs.readFileSync(promptPath, 'utf-8').trim();
-    if (!promptContent) {
-        throw new Error(`AI4PB prompt file is empty for OpenCode: ${promptPath}`);
-    }
+    const promptContent = readBundledSkillText(promptRelativePath);
     const userDirective = extractUserDirectiveFromSeedText(seedText);
     const lines = [
         `请严格执行以下 AI4PB 提示词模板。`,
         `技能名称: ${skill}`,
-        `提示词文件: ${promptRelativePath}`,
+        `技能文件: ${promptRelativePath}`,
         '',
         '提示词正文如下：',
         promptContent,
@@ -3887,17 +3874,28 @@ async function configureGuidedOptions(root) {
 function exists(filePath) {
     return fs.existsSync(filePath);
 }
+function readBundledSkillText(skillRelativePath) {
+    const skillPath = resolveExtensionPath(skillRelativePath);
+    if (!exists(skillPath)) {
+        throw new Error(`AI4PB skill file not found: ${skillPath}`);
+    }
+    const rawContent = fs.readFileSync(skillPath, 'utf-8').trim();
+    if (!rawContent) {
+        throw new Error(`AI4PB skill file is empty: ${skillPath}`);
+    }
+    return rawContent.replace(/^---\s*[\r\n]+[\s\S]*?[\r\n]+---\s*/u, '').trim();
+}
 // @ArchitectureID: 1220
 function ensureWorkspaceSkillsInstalled() {
     try {
         const root = getWorkspaceRoot();
-        const bundledSkillsRoot = resolveExtensionPath(BUNDLED_PATHS.skillsRoot);
+        const bundledSkillsRoot = resolveExtensionPath(BUNDLED_PATHS.bundledSkillsRoot);
         if (!exists(bundledSkillsRoot)) {
             output.appendLine(`[AI4PB] Bundled skills not found: ${bundledSkillsRoot}`);
             return;
         }
         const workspaceSkillTargets = [
-            resolvePath(root, BUNDLED_PATHS.skillsRoot),
+            resolvePath(root, BUNDLED_PATHS.workspaceSkillsRoot),
             resolvePath(root, BUNDLED_PATHS.opencodeSkillsRoot)
         ];
         for (const targetRoot of workspaceSkillTargets) {
@@ -4022,6 +4020,8 @@ async function initializeFromTemplate() {
     try {
         const root = getWorkspaceRoot();
         const templatePath = resolveExtensionPath(BUNDLED_PATHS.eaTemplate);
+        ensureWorkspaceSkillsInstalled();
+        output.appendLine(`[AI4PB] Workspace skill directories verified during template initialization: ${root}`);
         if (!exists(templatePath)) {
             void vscode.window.showErrorMessage(`Bundled EA template not found: ${templatePath}`);
             return;
@@ -4058,6 +4058,8 @@ async function startIterationFromModel() {
         const archPath = getArchitectureJsonPath(root);
         const designTasksDir = resolvePath(root, RELATIVE_PATHS.designTasksDir);
         const initialPromptPath = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
+        ensureWorkspaceSkillsInstalled();
+        output.appendLine(`[AI4PB] Workspace skill directories verified during model iteration startup: ${root}`);
         if (!exists(archPath)) {
             void vscode.window.showErrorMessage(`Architecture JSON not found: ${archPath}`);
             return;
