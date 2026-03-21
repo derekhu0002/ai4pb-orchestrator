@@ -71,9 +71,8 @@ const RELATIVE_PATHS = {
 
 const BUNDLED_PATHS = {
   eaTemplate: 'EA-model-template/EA-model-template.feap',
-  bundledSkillsRoot: 'skills',
-  workspaceSkillsRoot: '.github/skills',
-  opencodeSkillsRoot: '.opencode/skills',
+  bundledGitHubRoot: '.github',
+  bundledOpenCodeRoot: '.opencode',
   initialPrompt: 'skills/ai4pb-init/SKILL.md',
   wrapPrompt: 'skills/ai4pb-wrapup/SKILL.md',
   reversePrompt: 'skills/ai4pb-audit/SKILL.md',
@@ -216,6 +215,8 @@ const HELP_URLS = {
   } as Record<SkillKey, string>,
   config: {
     init: `${GITHUB_DOC_BASE_URL}/docs/getting-started/03-modeling-and-export.md`,
+    copilotProject: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`,
+    opencodeProject: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`,
     options: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`,
     query: `${GITHUB_DOC_BASE_URL}/docs/getting-started/04-orchestrator-extension.md`
   }
@@ -678,6 +679,16 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
 
       if (key === 'init') {
         await vscode.commands.executeCommand('ai4pb.initializeFromTemplate');
+        return;
+      }
+
+      if (key === 'initCopilotProjectConfig') {
+        await initializeWorkspaceProjectConfig(BUNDLED_PATHS.bundledGitHubRoot, 'Copilot');
+        return;
+      }
+
+      if (key === 'initOpenCodeProjectConfig') {
+        await initializeWorkspaceProjectConfig(BUNDLED_PATHS.bundledOpenCodeRoot, 'OpenCode');
         return;
       }
 
@@ -2383,6 +2394,30 @@ class WorkflowViewProvider implements vscode.WebviewViewProvider {
           syncState();
         });
         appendButtonWithHelp(actions, initBtn, helpUrls.config.init, '查看 EA 模板初始化帮助');
+
+        const copilotConfigBtn = document.createElement('button');
+        copilotConfigBtn.className = 'quick-btn';
+        copilotConfigBtn.textContent = '初始化项目copilot配置';
+        copilotConfigBtn.addEventListener('click', () => {
+          state.menuOpen = false;
+          appendBubble('user', '[初始化项目 Copilot 配置]');
+          vscode.postMessage({ type: 'statusAction', key: 'initCopilotProjectConfig' });
+          renderSkills();
+          syncState();
+        });
+        appendButtonWithHelp(actions, copilotConfigBtn, helpUrls.config.copilotProject, '查看项目 Copilot 配置初始化帮助');
+
+        const openCodeConfigBtn = document.createElement('button');
+        openCodeConfigBtn.className = 'quick-btn';
+        openCodeConfigBtn.textContent = '初始化项目opencode配置';
+        openCodeConfigBtn.addEventListener('click', () => {
+          state.menuOpen = false;
+          appendBubble('user', '[初始化项目 OpenCode 配置]');
+          vscode.postMessage({ type: 'statusAction', key: 'initOpenCodeProjectConfig' });
+          renderSkills();
+          syncState();
+        });
+        appendButtonWithHelp(actions, openCodeConfigBtn, helpUrls.config.opencodeProject, '查看项目 OpenCode 配置初始化帮助');
 
         const configBtn = document.createElement('button');
         configBtn.className = 'quick-btn';
@@ -4513,29 +4548,53 @@ function readBundledSkillText(skillRelativePath: string): string {
   return rawContent.replace(/^---\s*[\r\n]+[\s\S]*?[\r\n]+---\s*/u, '').trim();
 }
 
-// @ArchitectureID: 1220
-function ensureWorkspaceSkillsInstalled(): void {
-  try {
-    const root = getWorkspaceRoot();
-    const bundledSkillsRoot = resolveExtensionPath(BUNDLED_PATHS.bundledSkillsRoot);
-    if (!exists(bundledSkillsRoot)) {
-      output.appendLine(`[AI4PB] Bundled skills not found: ${bundledSkillsRoot}`);
+async function initializeWorkspaceProjectConfig(sourceRelativeDir: string, label: string): Promise<void> {
+  const root = getWorkspaceRoot();
+  const sourceDir = resolveExtensionPath(sourceRelativeDir);
+  const targetDir = resolvePath(root, sourceRelativeDir);
+
+  if (!exists(sourceDir)) {
+    throw new Error(`Bundled ${label} config directory not found: ${sourceDir}`);
+  }
+
+  if (exists(targetDir)) {
+    const choice = await vscode.window.showWarningMessage(
+      `${label} config already exists in workspace: ${sourceRelativeDir}`,
+      { modal: true },
+      'Overwrite',
+      'Open Existing'
+    );
+
+    if (choice === 'Open Existing') {
+      await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetDir));
       return;
     }
 
-    const workspaceSkillTargets = [
-      resolvePath(root, BUNDLED_PATHS.workspaceSkillsRoot),
-      resolvePath(root, BUNDLED_PATHS.opencodeSkillsRoot)
-    ];
-
-    for (const targetRoot of workspaceSkillTargets) {
-      copyFilesRecursivelyOverwrite(bundledSkillsRoot, targetRoot);
-      output.appendLine(`[AI4PB] Skills synchronized to workspace: ${targetRoot}`);
+    if (choice !== 'Overwrite') {
+      return;
     }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    output.appendLine(`[AI4PB] Skills auto-install skipped: ${message}`);
   }
+
+  replaceDirectoryFromSource(sourceDir, targetDir);
+  output.appendLine(`[AI4PB] ${label} project config initialized: ${targetDir}`);
+  output.show(true);
+
+  const revealChoice = await vscode.window.showInformationMessage(
+    `${label} project config initialized: ${sourceRelativeDir}`,
+    'Reveal in Explorer'
+  );
+
+  if (revealChoice === 'Reveal in Explorer') {
+    await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(targetDir));
+  }
+}
+
+function replaceDirectoryFromSource(sourceDir: string, targetDir: string): void {
+  if (exists(targetDir)) {
+    fs.rmSync(targetDir, { recursive: true, force: true });
+  }
+
+  copyFilesRecursivelyOverwrite(sourceDir, targetDir);
 }
 
 // @ArchitectureID: 1220
