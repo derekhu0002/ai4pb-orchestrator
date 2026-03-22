@@ -20,4 +20,3 @@ node_modules/**/.cache/**
 *.feap
 **/*.feap
 !EA-model-template/EA-model-template.feap
-out/**

@@ -3920,6 +3920,21 @@ async function initializeAICodingAgentWorkspaceProjectConfig() {
             sourceRelativeDir: 'skills',
             targetRelativeDir: 'skills',
             label: 'skills'
+        },
+        {
+            sourceRelativeDir: '.agents',
+            targetRelativeDir: '.agents',
+            label: '.agents'
+        },
+        {
+            sourceRelativeDir: '.claude',
+            targetRelativeDir: '.claude',
+            label: '.claude'
+        },
+        {
+            sourceRelativeDir: 'rules',
+            targetRelativeDir: 'rules',
+            label: 'rules'
         }
     ], 'AICodingAgent');
 }
