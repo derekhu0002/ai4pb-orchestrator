@@ -1,0 +1,30 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="16" y1="12" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08111F"/>
+      <stop offset="1" stop-color="#12263A"/>
+    </linearGradient>
+    <linearGradient id="leftRibbon" x1="20" y1="112" x2="67" y2="17" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A6BFF"/>
+      <stop offset="1" stop-color="#39B8FF"/>
+    </linearGradient>
+    <linearGradient id="rightRibbon" x1="80" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4FD0FF"/>
+      <stop offset="1" stop-color="#0078F2"/>
+    </linearGradient>
+    <linearGradient id="bridgeRibbon" x1="46" y1="74" x2="96" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#146DFF"/>
+      <stop offset="1" stop-color="#6EDCFF"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bg)"/>
+
+  <path d="M22 106L55 20H71L41 106H22Z" fill="url(#leftRibbon)"/>
+  <path d="M67 20H84L105 106H87L67 20Z" fill="url(#rightRibbon)"/>
+  <path d="M50 69H86L95 87H43L50 69Z" fill="url(#bridgeRibbon)"/>
+  <path d="M70 20L104 54L96 78L62 45L70 20Z" fill="#78E1FF" fill-opacity="0.95"/>
+
+  <path d="M22 106L55 20H71" stroke="#A4EEFF" stroke-opacity="0.22" stroke-width="2"/>
+  <path d="M67 20H84L105 106" stroke="#D7F6FF" stroke-opacity="0.18" stroke-width="2"/>
+</svg>
