@@ -630,6 +630,129 @@
     }
   }
 
+  function appendExtractedTasks(message, skipPersist) {
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ai';
+    let persistedEntry = skipPersist && message && message.kind === 'extractedTasks' && Array.isArray(message.tasks)
+      ? message
+      : null;
+
+    const card = document.createElement('div');
+    card.className = 'confirm-card';
+    const title = document.createElement('div');
+    title.textContent = '已提取以下任务，请勾选需要执行的任务：';
+    card.appendChild(title);
+
+    const tasks = Array.isArray(message.tasks) ? message.tasks : [];
+    const internalTasks = tasks.map(function(t) { return {...t, currentChecked: t.checked === true}; });
+
+    const tableWrap = document.createElement('div');
+    tableWrap.style.overflowX = 'auto';
+    tableWrap.style.marginTop = '8px';
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.fontSize = '12px';
+
+    const head = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['选择', 'Name', 'Problem', 'ProblemNotes', 'ResolverNotes', 'ProblemType', 'Status', 'Object_ID'].forEach(function (label) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      th.style.textAlign = 'left';
+      th.style.padding = '6px 8px';
+      th.style.border = '1px solid var(--vscode-panel-border)';
+      th.style.background = 'color-mix(in srgb, var(--vscode-editor-background) 84%, var(--vscode-focusBorder))';
+      th.style.whiteSpace = 'nowrap';
+      headRow.appendChild(th);
+    });
+    head.appendChild(headRow);
+    table.appendChild(head);
+
+    const body = document.createElement('tbody');
+
+    function createTextCell(text) {
+      const td = document.createElement('td');
+      td.textContent = String(text || '');
+      td.style.padding = '6px 8px';
+      td.style.border = '1px solid var(--vscode-panel-border)';
+      td.style.verticalAlign = 'top';
+      td.style.whiteSpace = 'pre-wrap';
+      td.style.wordBreak = 'break-word';
+      return td;
+    }
+
+    internalTasks.forEach(function(t) {
+      const row = document.createElement('tr');
+
+      const selectCell = document.createElement('td');
+      selectCell.style.padding = '6px 8px';
+      selectCell.style.border = '1px solid var(--vscode-panel-border)';
+      selectCell.style.verticalAlign = 'top';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = t.currentChecked;
+      cb.addEventListener('change', function(e) {
+        t.currentChecked = e.target.checked;
+        if (persistedEntry && Array.isArray(persistedEntry.tasks)) {
+          const stTask = persistedEntry.tasks.find(function(it) { return it.id === t.id; });
+          if (stTask) {
+            stTask.checked = t.currentChecked;
+            syncState();
+          }
+        }
+      });
+      selectCell.appendChild(cb);
+      row.appendChild(selectCell);
+
+      row.appendChild(createTextCell(t.name));
+      row.appendChild(createTextCell(t.problem));
+      row.appendChild(createTextCell(t.problemNotes));
+      row.appendChild(createTextCell(t.resolverNotes));
+      row.appendChild(createTextCell(t.problemType));
+      row.appendChild(createTextCell(t.status));
+      row.appendChild(createTextCell(t.objectId));
+
+      body.appendChild(row);
+    });
+
+    table.appendChild(body);
+    tableWrap.appendChild(table);
+    card.appendChild(tableWrap);
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'confirm-btn';
+    confirmBtn.style.marginTop = '12px';
+    confirmBtn.textContent = '确认生成任务文件';
+    confirmBtn.addEventListener('click', function() {
+        const finalTasks = internalTasks.map(function(t) { 
+            return Object.assign({}, t, { checked: t.currentChecked }); 
+        });
+        vscode.postMessage({
+            type: 'submitExtractedTasks',
+            tasks: finalTasks
+        });
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '已提交...';
+    });
+
+    card.appendChild(confirmBtn);
+    bubble.appendChild(card);
+    thread.appendChild(bubble);
+    scrollThreadToBottom();
+    
+    if (!skipPersist) {
+      persistedEntry = {
+            kind: 'extractedTasks',
+            tasks: internalTasks.map(function(t) { return Object.assign({}, t, { checked: t.currentChecked }); })
+      };
+      state.thread.push(persistedEntry);
+        syncState();
+    }
+  }
+
   function updateSkillMetaCore() {
     if (state.confirmedMenu === 'auto') {
       renderStatusBanner('当前工作状态', [
@@ -904,6 +1027,9 @@
         updateSkillMeta();
         updateSendButtonLabel();
         syncState();
+        if (step.key === 'extract-tasks') {
+          setTimeout(sendRequest, 100);
+        }
       });
       appendButtonWithHelp(row, button, helpUrls.step[step.key], '查看' + step.label + '帮助');
     });
@@ -1171,6 +1297,11 @@
 
       if (item.kind === 'autoSuggestion') {
         appendAutoSuggestion(item, true);
+        return;
+      }
+
+      if (item.kind === 'extractedTasks') {
+        appendExtractedTasks(item, true);
       }
     });
 
@@ -1218,6 +1349,10 @@
     }
     if (message.type === 'autoSuggestion') {
       appendAutoSuggestion(message);
+      return;
+    }
+    if (message.type === 'extractTasksResult') {
+      appendExtractedTasks(message);
       return;
     }
     if (message.type === 'configSummary') {

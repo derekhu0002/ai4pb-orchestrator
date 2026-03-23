@@ -1,8 +1,8 @@
 {
   "EA_AUTOGEN_CONFIG": {
-    "needallmaintenace": "onlyActive",
+    "needallmaintenace": "All",
     "needbrowserlocation": true,
-    "maintenacetype": "forllm"
+    "maintenacetype": "forproject"
   },
   "AGENT_ROUTER_CONFIG": {
     "default_agent": "copilot",

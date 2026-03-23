@@ -79,7 +79,8 @@ const SKILL_PROMPT_PATHS = {
     'task-list': BUNDLED_PATHS.taskListPrompt,
     'task-support': BUNDLED_PATHS.taskSupportPrompt,
     'weekly-report': BUNDLED_PATHS.weeklyReportPrompt,
-    'iteration-issues': BUNDLED_PATHS.iterationIssuesPrompt
+    'iteration-issues': BUNDLED_PATHS.iterationIssuesPrompt,
+    'extract-tasks': ''
 };
 const SKILL_PROMPT_REFERENCE = {
     init: '#ai4pb-init',
@@ -87,6 +88,7 @@ const SKILL_PROMPT_REFERENCE = {
     wrapup: '#ai4pb-wrapup',
     'iteration-summary': '#ai4pb-iteration-summary',
     'task-list': '#ai4pb-task-list',
+    'extract-tasks': '',
     'task-support': '#ai4pb-task-support',
     'weekly-report': '#ai4pb-weekly-report',
     'iteration-issues': '#ai4pb-iteration-issues'
@@ -97,6 +99,7 @@ const SKILL_DISPLAY_LABEL = {
     wrapup: '迭代收尾',
     'iteration-summary': '提交总结',
     'task-list': '待办梳理',
+    'extract-tasks': '提取任务',
     'task-support': '执行支持',
     'weekly-report': '周报输出',
     'iteration-issues': '问题处理'
@@ -123,8 +126,9 @@ const WORKFLOW_FLOW_OPTIONS = [
     {
         key: 'planning',
         label: '计划与汇报流程',
-        description: '待办梳理 -> 周报输出',
+        description: '提取任务 -> 待办梳理 -> 周报输出',
         steps: [
+            { key: 'extract-tasks', label: '提取任务' },
             { key: 'task-list', label: '待办梳理' },
             { key: 'weekly-report', label: '周报输出' }
         ]
@@ -161,6 +165,7 @@ const HELP_URLS = {
         wrapup: `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'iteration-summary': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'task-list': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
+        'extract-tasks': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'task-support': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'weekly-report': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'iteration-issues': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`
@@ -355,6 +360,10 @@ class WorkflowViewProvider {
                 await this.handleAutoConfirm(message.text, message.skill);
                 return;
             }
+            if (message.type === 'submitExtractedTasks' && message.tasks) {
+                await this.handleSubmitExtractedTasks(message.tasks);
+                return;
+            }
             if (message.type === 'statusAction' && message.key) {
                 await this.handleStatusAction(message.key);
                 return;
@@ -405,6 +414,10 @@ class WorkflowViewProvider {
                 await this.handleAutoConfirm(message.text, message.skill);
                 return;
             }
+            if (message.type === 'submitExtractedTasks' && message.tasks) {
+                await this.handleSubmitExtractedTasks(message.tasks);
+                return;
+            }
             if (message.type === 'statusAction' && message.key) {
                 await this.handleStatusAction(message.key);
                 return;
@@ -437,6 +450,89 @@ class WorkflowViewProvider {
     async handleChatRequest(rawText, rawSkill) {
         const text = (rawText ?? '').trim();
         const explicitSkill = normalizeSkillKey(rawSkill);
+        if (explicitSkill === 'extract-tasks') {
+            try {
+                const root = getWorkspaceRoot();
+                const archPath = getArchitectureJsonPath(root);
+                if (!exists(archPath)) {
+                    await this.postMessage({
+                        type: 'autoAnalysisError',
+                        message: `找不到架构文件: ${archPath}`
+                    });
+                    return;
+                }
+                const archContent = fs.readFileSync(archPath, 'utf8');
+                const archJson = JSON.parse(archContent);
+                const tasks = [];
+                // Walk through the architecture JSON to extract tasks
+                if (archJson.components) {
+                    for (const comp of archJson.components) {
+                        if (comp.maintenance_tasks) {
+                            for (const t of comp.maintenance_tasks) {
+                                tasks.push({
+                                    id: t.task_id || Math.random().toString(),
+                                    name: comp.name || '未命名元素',
+                                    problem: t.task_name || t.name || '未命名任务',
+                                    problemNotes: t.description || '',
+                                    resolverNotes: t.progress || '',
+                                    problemType: t.type || 'ToDo',
+                                    status: t.status || 'Active',
+                                    objectId: t.task_id || comp.id || '',
+                                    reporter: t.reporter || '',
+                                    assignedTo: t.assigned_to || '',
+                                    startDate: t.start_date || '',
+                                    dueDate: t.due_date || '',
+                                    priority: t.priority || '',
+                                    checked: false
+                                });
+                            }
+                        }
+                    }
+                }
+                if (archJson.elements) {
+                    for (const elem of archJson.elements) {
+                        if (elem.project_info && Array.isArray(elem.project_info.tasks)) {
+                            for (const t of elem.project_info.tasks) {
+                                tasks.push({
+                                    id: t.task_id || Math.random().toString(),
+                                    name: elem.name || '未命名元素',
+                                    problem: t.name || t.task_name || '未命名任务',
+                                    problemNotes: t.description || '',
+                                    resolverNotes: t.progress || '',
+                                    problemType: t.type || 'ToDo',
+                                    status: t.status || 'Active',
+                                    objectId: t.task_id || elem.id || '',
+                                    reporter: t.reporter || '',
+                                    assignedTo: t.assigned_to || '',
+                                    startDate: t.start_date || '',
+                                    dueDate: t.due_date || '',
+                                    priority: t.priority || '',
+                                    checked: false
+                                });
+                            }
+                        }
+                    }
+                }
+                if (tasks.length === 0) {
+                    await this.postMessage({
+                        type: 'autoAnalysisError',
+                        message: `在 ${archPath} 中没有提取到任何维护任务。`
+                    });
+                    return;
+                }
+                await this.postMessage({
+                    type: 'extractTasksResult',
+                    tasks
+                });
+            }
+            catch (e) {
+                await this.postMessage({
+                    type: 'autoAnalysisError',
+                    message: `提取任务失败: ${e}`
+                });
+            }
+            return;
+        }
         if (explicitSkill) {
             const seedText = buildSkillSeedText(explicitSkill, text);
             await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[explicitSkill]} skill`, explicitSkill);
@@ -472,6 +568,46 @@ class WorkflowViewProvider {
             skill: selectedSkill,
             skillLabel: SKILL_DISPLAY_LABEL[selectedSkill]
         });
+    }
+    async handleSubmitExtractedTasks(tasks) {
+        try {
+            const root = getWorkspaceRoot();
+            const outputDir = path.join(root, 'design', 'tasks');
+            if (!exists(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+            const selected = tasks.filter((t) => t.checked);
+            if (selected.length === 0) {
+                vscode.window.showWarningMessage('没有勾选任何任务，无法生成。');
+                return;
+            }
+            const formatTableCell = (value) => {
+                if (!value) {
+                    return '';
+                }
+                return value
+                    .replace(/\r\n|\r|\n/g, '<br>')
+                    .replace(/\|/g, '\\|')
+                    .replace(/\t/g, '    ')
+                    .trim();
+            };
+            const header = '# Task And Issues For LLM\n\n| Name | Problem | ProblemNotes | ResolverNotes | ProblemType | Status | Object_ID |\n| --- | --- | --- | --- | --- | --- | --- |\n';
+            const rows = selected.map((t) => {
+                return `| ${formatTableCell(t.name)} | ${formatTableCell(t.problem)} | ${formatTableCell(t.problemNotes)} | ${formatTableCell(t.resolverNotes)} | ${formatTableCell(t.problemType || 'ToDo')} | ${formatTableCell(t.status || 'Active')} | ${formatTableCell(t.objectId || t.id || '')} |`;
+            }).join('\n');
+            const content = header + rows + '\n';
+            const outputPath = path.join(outputDir, 'taskandissues_for_LLM.md');
+            fs.writeFileSync(outputPath, content, 'utf8');
+            vscode.window.showInformationMessage(`已生成任务文件: ${outputPath}`);
+            await openFileIfExists(outputPath);
+            await this.postMessage({
+                type: 'configSummary',
+                text: `已为你生成任务文件：[taskandissues_for_LLM.md](${vscode.Uri.file(outputPath).toString()})`
+            });
+        }
+        catch (e) {
+            vscode.window.showErrorMessage(`生成任务文件失败: ${e}`);
+        }
     }
     // @ArchitectureID: 1213
     async handleStatusAction(key) {
@@ -2070,6 +2206,110 @@ class WorkflowViewProvider {
       }
     }
 
+    function appendExtractedTasks(message, skipPersist) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ai';
+
+      const card = document.createElement('div');
+      card.className = 'confirm-card';
+
+      const title = document.createElement('div');
+      title.textContent = '已提取以下任务，请勾选需要执行的任务：';
+      card.appendChild(title);
+
+      const tasks = Array.isArray(message.tasks) ? message.tasks : [];
+      const internalTasks = tasks.map((t) => ({...t, currentChecked: t.checked === true}));
+
+      const list = document.createElement('div');
+      list.style.display = 'flex';
+      list.style.flexDirection = 'column';
+      list.style.gap = '8px';
+
+      internalTasks.forEach((t, idx) => {
+          const item = document.createElement('label');
+          item.style.display = 'flex';
+          item.style.alignItems = 'flex-start';
+          item.style.gap = '6px';
+          item.style.cursor = 'pointer';
+          item.style.padding = '4px 0';
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.style.margin = '2px 0 0 0';
+          cb.checked = t.currentChecked;
+          cb.addEventListener('change', (e) => {
+              t.currentChecked = e.target.checked;
+              if (skipPersist) {
+                 const stItem = state.thread.find(function(it) { return it.kind === 'extractedTasks' && JSON.stringify(it.tasks) === JSON.stringify(tasks); });
+                 if (stItem) {
+                     const stTask = stItem.tasks.find(function(it) { return it.id === t.id; });
+                     if (stTask) stTask.checked = t.currentChecked;
+                     syncState();
+                 }
+              }
+          });
+
+          const infoDiv = document.createElement('div');
+          infoDiv.style.display = 'flex';
+          infoDiv.style.flexDirection = 'column';
+          infoDiv.style.fontSize = '12px';
+          infoDiv.style.gap = '2px';
+          
+          const titleSpan = document.createElement('div');
+          titleSpan.style.fontWeight = 'bold';
+          titleSpan.style.color = 'var(--vscode-foreground)';
+          titleSpan.textContent = '[' + (t.name || 'Unknown') + '] ' + (t.problem || '');
+          infoDiv.appendChild(titleSpan);
+          
+          if (t.problemNotes) {
+              const descSpan = document.createElement('div');
+              descSpan.style.color = 'var(--vscode-descriptionForeground)';
+              descSpan.textContent = 'ProblemNotes: ' + t.problemNotes;
+              infoDiv.appendChild(descSpan);
+          }
+          
+          if (t.resolverNotes) {
+              const progSpan = document.createElement('div');
+              progSpan.style.color = 'var(--vscode-descriptionForeground)';
+              progSpan.textContent = 'ResolverNotes: ' + t.resolverNotes;
+              infoDiv.appendChild(progSpan);
+          }
+
+          item.appendChild(cb);
+          item.appendChild(infoDiv);
+          list.appendChild(item);
+      });
+
+      card.appendChild(list);
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'confirm-btn';
+      confirmBtn.style.marginTop = '12px';
+      confirmBtn.textContent = '确认生成任务文件';
+      confirmBtn.addEventListener('click', () => {
+          const finalTasks = internalTasks.map((t) => Object.assign({}, t, { checked: t.currentChecked }));
+          vscode.postMessage({
+              type: 'submitExtractedTasks',
+              tasks: finalTasks
+          });
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = '已提交...';
+      });
+
+      card.appendChild(confirmBtn);
+      bubble.appendChild(card);
+      thread.appendChild(bubble);
+      scrollThreadToBottom();
+      
+      if (!skipPersist) {
+        state.thread.push({
+          kind: 'extractedTasks',
+          tasks: internalTasks.map((t) => Object.assign({}, t, { checked: t.currentChecked }))
+        });
+        syncState();
+      }
+    }
+
     function updateSkillMetaCore() {
       if (state.confirmedMenu === 'auto') {
         renderStatusBanner('当前工作状态', [
@@ -2328,6 +2568,9 @@ class WorkflowViewProvider {
           renderSkills();
           updateSkillMeta();
           syncState();
+          if (step.key === 'extract-tasks') {
+            setTimeout(sendRequest, 100);
+          }
         });
         appendButtonWithHelp(row, button, helpUrls.step[step.key], '查看' + step.label + '帮助');
       });
@@ -2472,6 +2715,10 @@ class WorkflowViewProvider {
         appendAutoSuggestion(message);
         return;
       }
+      if (message.type === 'extractTasksResult') {
+        appendExtractedTasks(message);
+        return;
+      }
       if (message.type === 'configSummary') {
         appendBubble('ai', String(message.text || '当前未读取到参数配置。'));
         return;
@@ -2601,6 +2848,9 @@ class WorkflowViewProvider {
           if (item.kind === 'autoSuggestion') {
             appendAutoSuggestion(item, true);
           }
+          if (item.kind === 'extractedTasks') {
+            appendExtractedTasks(item, true);
+          }
         } catch {
           // Skip malformed restored items so the rest of the UI can still load.
         }
@@ -2705,6 +2955,37 @@ function sanitizeWorkflowViewState(raw) {
                 text: typeof item.text === 'string' ? item.text : '',
                 suggestions
             });
+            continue;
+        }
+        if (item.kind === 'extractedTasks') {
+            const tasks = Array.isArray(item.tasks)
+                ? item.tasks
+                    .map((t) => {
+                    if (!t || typeof t !== 'object')
+                        return undefined;
+                    return {
+                        id: typeof t.id === 'string' ? t.id : '',
+                        name: typeof t.name === 'string' ? t.name : '',
+                        checked: t.checked === true,
+                        problem: typeof t.problem === 'string' ? t.problem : '',
+                        problemNotes: typeof t.problemNotes === 'string' ? t.problemNotes : '',
+                        resolverNotes: typeof t.resolverNotes === 'string' ? t.resolverNotes : '',
+                        problemType: typeof t.problemType === 'string' ? t.problemType : '',
+                        status: typeof t.status === 'string' ? t.status : '',
+                        objectId: typeof t.objectId === 'string' ? t.objectId : '',
+                        reporter: typeof t.reporter === 'string' ? t.reporter : '',
+                        assignedTo: typeof t.assignedTo === 'string' ? t.assignedTo : '',
+                        startDate: typeof t.startDate === 'string' ? t.startDate : '',
+                        dueDate: typeof t.dueDate === 'string' ? t.dueDate : '',
+                        priority: typeof t.priority === 'string' ? t.priority : ''
+                    };
+                })
+                    .filter((t) => Boolean(t))
+                : [];
+            thread.push({
+                kind: 'extractedTasks',
+                tasks
+            });
         }
     }
     return {
@@ -2738,6 +3019,9 @@ function normalizeSkillKey(value) {
         case 'task-list':
         case 'task list':
             return 'task-list';
+        case 'extract-tasks':
+        case 'extract tasks':
+            return 'extract-tasks';
         case 'task-support':
         case 'task support':
             return 'task-support';
@@ -3830,12 +4114,9 @@ function describeMaintenanceType(value) {
     };
 }
 function buildGuidedOptionSummary(root) {
-    const configPath = getAiConfigPath(root);
-    const configExists = exists(configPath);
     const effectiveOptions = getEffectiveGuidedOptions(loadAiConfig(root));
     const scopeInfo = describeMaintenanceScope(effectiveOptions.needallmaintenace);
     const typeInfo = describeMaintenanceType(effectiveOptions.maintenacetype);
-    const architecturePath = getArchitectureJsonPath(root);
     return [
         '当前参数列表如下：',
         '',
@@ -3851,13 +4132,7 @@ function buildGuidedOptionSummary(root) {
         '',
         `3. 任务处理模式: ${typeInfo.label}`,
         `业务含义: ${typeInfo.explanation}`,
-        `当前配置值: ${effectiveOptions.maintenacetype}`,
-        '',
-        `4. 架构语料路径: ${exists(architecturePath) ? '已定位' : '未找到'}`,
-        '业务含义: 该文件是后续流程、审计和任务生成时使用的基础架构语料来源。',
-        `当前路径: ${architecturePath}`,
-        '',
-        `参数来源: ${configExists ? configPath : '未找到 .aicodingconfig，当前显示的是扩展默认参数'}`
+        `当前配置值: ${effectiveOptions.maintenacetype}`
     ].join('\n');
 }
 // @ArchitectureID: 1209
