@@ -1052,7 +1052,7 @@
         updateSkillMeta();
         updateSendButtonLabel();
         syncState();
-        if (step.key === 'extract-tasks') {
+        if (step.key === 'extract-tasks' || step.key === 'issue-feedback') {
           setTimeout(sendRequest, 100);
         }
       });

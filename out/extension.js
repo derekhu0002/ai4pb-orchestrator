@@ -77,6 +77,7 @@ const SKILL_PROMPT_PATHS = {
     wrapup: BUNDLED_PATHS.wrapPrompt,
     'iteration-summary': BUNDLED_PATHS.iterationSummaryPrompt,
     'task-list': BUNDLED_PATHS.taskListPrompt,
+    'issue-feedback': '',
     'task-support': BUNDLED_PATHS.taskSupportPrompt,
     'weekly-report': BUNDLED_PATHS.weeklyReportPrompt,
     'iteration-issues': BUNDLED_PATHS.iterationIssuesPrompt,
@@ -88,6 +89,7 @@ const SKILL_PROMPT_REFERENCE = {
     wrapup: '#ai4pb-wrapup',
     'iteration-summary': '#ai4pb-iteration-summary',
     'task-list': '#ai4pb-task-list',
+    'issue-feedback': '',
     'extract-tasks': '',
     'task-support': '#ai4pb-task-support',
     'weekly-report': '#ai4pb-weekly-report',
@@ -99,6 +101,7 @@ const SKILL_DISPLAY_LABEL = {
     wrapup: '迭代收尾',
     'iteration-summary': '提交总结',
     'task-list': '待办梳理',
+    'issue-feedback': '问题反馈',
     'extract-tasks': '提取任务',
     'task-support': '执行支持',
     'weekly-report': '周报输出',
@@ -108,10 +111,11 @@ const WORKFLOW_FLOW_OPTIONS = [
     {
         key: 'delivery',
         label: 'SCRUM敏捷开发流程',
-        description: '待办梳理 -> 迭代启动 -> 问题处理 -> 迭代收尾 -> 提交总结',
+        description: '待办梳理 -> 迭代启动 -> 问题反馈 -> 问题处理 -> 迭代收尾 -> 提交总结',
         steps: [
             { key: 'task-list', label: '待办梳理' },
             { key: 'init', label: '迭代启动' },
+            { key: 'issue-feedback', label: '问题反馈' },
             { key: 'iteration-issues', label: '问题处理' },
             { key: 'wrapup', label: '迭代收尾' },
             { key: 'iteration-summary', label: '提交总结' }
@@ -165,6 +169,7 @@ const HELP_URLS = {
         wrapup: `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'iteration-summary': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'task-list': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
+        'issue-feedback': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'extract-tasks': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'task-support': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
         'weekly-report': `${GITHUB_DOC_BASE_URL}/docs/getting-started/05-scrum-workflow.md`,
@@ -533,6 +538,14 @@ class WorkflowViewProvider {
             }
             return;
         }
+        if (explicitSkill === 'issue-feedback') {
+            await this.openIssueFeedbackEditor();
+            await this.postMessage({
+                type: 'configSummary',
+                text: '已打开“问题反馈”编辑页。请填写 ResolverNotes 后点击“确认写入反馈”。'
+            });
+            return;
+        }
         if (explicitSkill) {
             const seedText = buildSkillSeedText(explicitSkill, text);
             await openCopilotWithPromptReference(seedText, `${SKILL_DISPLAY_LABEL[explicitSkill]} skill`, explicitSkill);
@@ -609,6 +622,58 @@ class WorkflowViewProvider {
             vscode.window.showErrorMessage(`生成任务文件失败: ${e}`);
         }
     }
+    async openIssueFeedbackEditor() {
+        const root = getWorkspaceRoot();
+        const taskFilePath = path.join(root, 'design', 'tasks', 'taskandissues_for_LLM.md');
+        if (!exists(taskFilePath)) {
+            void vscode.window.showWarningMessage(`未找到任务文件: ${taskFilePath}`);
+            return;
+        }
+        const parsed = parseTaskIssuesMarkdown(taskFilePath);
+        if (!parsed) {
+            void vscode.window.showWarningMessage('未在任务文件中识别到可解析的表格。');
+            return;
+        }
+        const activeRows = parsed.rows
+            .map((row) => {
+            const status = row.cells[parsed.statusColumn] ?? '';
+            if (!isTaskActiveStatus(status)) {
+                return undefined;
+            }
+            return {
+                lineIndex: row.lineIndex,
+                objectId: row.cells[parsed.objectIdColumn] ?? '',
+                name: row.cells[parsed.nameColumn] ?? '',
+                problem: row.cells[parsed.problemColumn] ?? '',
+                resolverNotes: row.cells[parsed.resolverNotesColumn] ?? '',
+                status
+            };
+        })
+            .filter((row) => Boolean(row));
+        if (activeRows.length === 0) {
+            void vscode.window.showInformationMessage('当前没有 Active 状态任务，无需反馈。');
+            return;
+        }
+        const panel = vscode.window.createWebviewPanel('ai4pb.issueFeedback', 'AI4PB 问题反馈', vscode.ViewColumn.Active, {
+            enableScripts: true,
+            retainContextWhenHidden: true
+        });
+        panel.webview.html = buildIssueFeedbackWebviewHtml(panel.webview, activeRows);
+        panel.webview.onDidReceiveMessage(async (message) => {
+            if (message.type !== 'submitIssueFeedback') {
+                return;
+            }
+            const updatedCount = applyIssueFeedbackToTaskTable(parsed, message.feedbacks ?? []);
+            if (updatedCount <= 0) {
+                void vscode.window.showWarningMessage('未检测到有效反馈，未写入任务文件。');
+                return;
+            }
+            fs.writeFileSync(parsed.filePath, parsed.lines.join('\n'), 'utf8');
+            void vscode.window.showInformationMessage(`已写入 ${updatedCount} 条反馈到任务文件。`);
+            await openFileIfExists(parsed.filePath);
+            panel.dispose();
+        });
+    }
     // @ArchitectureID: 1213
     async handleStatusAction(key) {
         try {
@@ -641,6 +706,10 @@ class WorkflowViewProvider {
                     type: 'configSummary',
                     text: buildGuidedOptionSummary(root)
                 });
+                return;
+            }
+            if (key === 'issue-feedback') {
+                await this.openIssueFeedbackEditor();
                 return;
             }
             if (key === 'copilotInit') {
@@ -3019,6 +3088,10 @@ function normalizeSkillKey(value) {
         case 'task-list':
         case 'task list':
             return 'task-list';
+        case 'issue-feedback':
+        case 'issue feedback':
+        case 'feedback':
+            return 'issue-feedback';
         case 'extract-tasks':
         case 'extract tasks':
             return 'extract-tasks';
@@ -3040,6 +3113,9 @@ function inferSkillFromText(input) {
     const text = input.toLowerCase();
     if (/task\s*list|任务列表|待办清单|task-list/.test(text)) {
         return 'task-list';
+    }
+    if (/反馈|回填|问题反馈|issue\s*feedback/.test(text)) {
+        return 'issue-feedback';
     }
     if (/task\s*support|任务支持|执行步骤|task-support/.test(text)) {
         return 'task-support';
@@ -3083,7 +3159,7 @@ async function analyzeAutoSkillSuggestions(userText) {
         const instruction = [
             '你是 AI4PB workflow router。',
             '根据用户输入，在以下技能中选出最匹配的 3 个 key，并按优先级排序：',
-            'init, audit, wrapup, iteration-summary, task-list, task-support, weekly-report, iteration-issues。',
+            'init, audit, wrapup, iteration-summary, task-list, issue-feedback, task-support, weekly-report, iteration-issues。',
             '只返回 JSON 数组，格式: [{"skill":"<key>","reason":"<中文一句话理由>"}]。',
             '如果不足 3 个，也至少返回 1 个。不要输出 markdown。',
             `用户输入: ${userText}`
@@ -3174,6 +3250,7 @@ function rankSkillsFromText(input) {
         ['wrapup', 0],
         ['iteration-summary', 0],
         ['task-list', 0],
+        ['issue-feedback', 0],
         ['task-support', 0],
         ['weekly-report', 0],
         ['iteration-issues', 0]
@@ -3183,6 +3260,9 @@ function rankSkillsFromText(input) {
     };
     if (/task\s*list|任务列表|待办清单|task-list/.test(text)) {
         addScore('task-list', 5);
+    }
+    if (/反馈|回填|问题反馈|issue\s*feedback/.test(text)) {
+        addScore('issue-feedback', 5);
     }
     if (/task\s*support|任务支持|执行步骤|task-support|怎么做|如何实现/.test(text)) {
         addScore('task-support', 5);
@@ -4221,6 +4301,212 @@ async function configureGuidedOptions(root) {
 }
 function exists(filePath) {
     return fs.existsSync(filePath);
+}
+function splitMarkdownTableRow(line) {
+    const trimmed = line.trim();
+    const normalized = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
+    const content = normalized.endsWith('|') ? normalized.slice(0, -1) : normalized;
+    const cells = [];
+    let current = '';
+    for (let index = 0; index < content.length; index += 1) {
+        const ch = content[index];
+        const next = content[index + 1];
+        if (ch === '\\' && next === '|') {
+            current += '|';
+            index += 1;
+            continue;
+        }
+        if (ch === '|') {
+            cells.push(current.trim());
+            current = '';
+            continue;
+        }
+        current += ch;
+    }
+    cells.push(current.trim());
+    return cells;
+}
+function isMarkdownTableDivider(line) {
+    const cells = splitMarkdownTableRow(line);
+    return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+function parseTaskIssuesMarkdown(filePath) {
+    const raw = fs.readFileSync(filePath, 'utf8').replace(/\r\n?/g, '\n');
+    const lines = raw.split('\n');
+    for (let index = 0; index < lines.length - 1; index += 1) {
+        const headerLine = lines[index];
+        if (!headerLine.includes('|') || !isMarkdownTableDivider(lines[index + 1])) {
+            continue;
+        }
+        const headerCells = splitMarkdownTableRow(headerLine);
+        const lowerHeaders = headerCells.map((cell) => cell.trim().toLowerCase());
+        const resolverNotesColumn = lowerHeaders.indexOf('resolvernotes');
+        const statusColumn = lowerHeaders.indexOf('status');
+        const objectIdColumn = lowerHeaders.indexOf('object_id');
+        const nameColumn = lowerHeaders.indexOf('name');
+        const problemColumn = lowerHeaders.indexOf('problem');
+        if (resolverNotesColumn < 0 || statusColumn < 0 || objectIdColumn < 0 || nameColumn < 0 || problemColumn < 0) {
+            continue;
+        }
+        const rows = [];
+        for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+            const line = lines[rowIndex];
+            if (!line.trim().startsWith('|')) {
+                break;
+            }
+            const cells = splitMarkdownTableRow(line);
+            while (cells.length < headerCells.length) {
+                cells.push('');
+            }
+            rows.push({ lineIndex: rowIndex, cells });
+        }
+        return {
+            filePath,
+            lines,
+            headerCells,
+            resolverNotesColumn,
+            statusColumn,
+            objectIdColumn,
+            nameColumn,
+            problemColumn,
+            rows
+        };
+    }
+    return undefined;
+}
+function normalizeTaskTableCellForWrite(value) {
+    return String(value ?? '')
+        .replace(/\r\n?|\n/g, '<br>')
+        .replace(/\|/g, '\\|');
+}
+function buildMarkdownTableRow(cells) {
+    const normalized = cells.map((cell) => normalizeTaskTableCellForWrite(cell).trim());
+    return `| ${normalized.join(' | ')} |`;
+}
+function isTaskActiveStatus(status) {
+    return String(status ?? '').trim().toLowerCase() === 'active';
+}
+function formatFeedbackTimestamp(date) {
+    const pad = (value) => value.toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hour = pad(date.getHours());
+    const minute = pad(date.getMinutes());
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+function applyIssueFeedbackToTaskTable(parsed, feedbacks) {
+    if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+        return 0;
+    }
+    const rowMap = new Map();
+    for (const row of parsed.rows) {
+        rowMap.set(row.lineIndex, row);
+    }
+    const timestamp = formatFeedbackTimestamp(new Date());
+    const handled = new Set();
+    let updatedCount = 0;
+    for (const item of feedbacks) {
+        const lineIndex = typeof item?.lineIndex === 'number' ? item.lineIndex : NaN;
+        const feedback = typeof item?.feedback === 'string' ? item.feedback.trim() : '';
+        if (!Number.isFinite(lineIndex) || !feedback || handled.has(lineIndex)) {
+            continue;
+        }
+        const row = rowMap.get(lineIndex);
+        if (!row) {
+            continue;
+        }
+        const status = row.cells[parsed.statusColumn] ?? '';
+        if (!isTaskActiveStatus(status)) {
+            continue;
+        }
+        const existing = (row.cells[parsed.resolverNotesColumn] ?? '').trim();
+        const feedbackLine = `[反馈 ${timestamp}] ${feedback.replace(/\r\n?|\n/g, '<br>')}`;
+        row.cells[parsed.resolverNotesColumn] = existing ? `${existing}<br>${feedbackLine}` : feedbackLine;
+        parsed.lines[row.lineIndex] = buildMarkdownTableRow(row.cells);
+        handled.add(lineIndex);
+        updatedCount += 1;
+    }
+    return updatedCount;
+}
+function escapeHtmlForWebview(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+function buildIssueFeedbackWebviewHtml(webview, rows) {
+    const nonce = (0, crypto_1.randomBytes)(16).toString('base64');
+    const rowHtml = rows.map((row) => {
+        const displayResolverNotes = row.resolverNotes ? row.resolverNotes.replace(/<br>/g, '\n') : '（暂无）';
+        return [
+            '<tr>',
+            `<td>${escapeHtmlForWebview(row.objectId)}</td>`,
+            `<td>${escapeHtmlForWebview(row.name)}</td>`,
+            `<td>${escapeHtmlForWebview(row.problem)}</td>`,
+            `<td><div class="existing">当前内容: ${escapeHtmlForWebview(displayResolverNotes)}</div><textarea data-line-index="${row.lineIndex}" placeholder="在此填写反馈意见"></textarea></td>`,
+            '</tr>'
+        ].join('');
+    }).join('');
+    const cspSource = webview.cspSource;
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>问题反馈</title>
+  <style>
+    body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 12px; }
+    .hint { margin-bottom: 10px; color: var(--vscode-descriptionForeground); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border: 1px solid var(--vscode-panel-border); padding: 6px 8px; vertical-align: top; }
+    th { text-align: left; background: color-mix(in srgb, var(--vscode-editor-background) 86%, var(--vscode-focusBorder)); }
+    textarea { width: 100%; min-height: 72px; resize: vertical; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); }
+    .existing { margin-bottom: 6px; white-space: pre-wrap; color: var(--vscode-descriptionForeground); }
+    .actions { margin-top: 12px; }
+    button { border: 1px solid var(--vscode-button-border, transparent); background: var(--vscode-button-background); color: var(--vscode-button-foreground); padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="hint">仅展示 Active 状态任务。请在 ResolverNotes 列填写反馈，点击确认后系统将自动追加反馈日期并写回原任务文件。</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Object_ID</th>
+        <th>Name</th>
+        <th>Problem</th>
+        <th>ResolverNotes</th>
+      </tr>
+    </thead>
+    <tbody>${rowHtml}</tbody>
+  </table>
+  <div class="actions">
+    <button id="confirmBtn">确认写入反馈</button>
+  </div>
+  <script nonce="${nonce}">
+    const vscode = acquireVsCodeApi();
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.addEventListener('click', () => {
+      const feedbacks = [];
+      document.querySelectorAll('textarea[data-line-index]').forEach((el) => {
+        const lineIndex = Number(el.getAttribute('data-line-index'));
+        const feedback = String(el.value || '').trim();
+        if (Number.isFinite(lineIndex) && feedback.length > 0) {
+          feedbacks.push({ lineIndex, feedback });
+        }
+      });
+
+      vscode.postMessage({
+        type: 'submitIssueFeedback',
+        feedbacks
+      });
+    });
+  </script>
+</body>
+</html>`;
 }
 function readBundledSkillText(skillRelativePath) {
     const skillPath = resolveExtensionPath(skillRelativePath);
