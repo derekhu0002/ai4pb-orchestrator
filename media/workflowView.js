@@ -643,6 +643,13 @@
     title.textContent = '已提取以下任务，请勾选需要执行的任务：';
     card.appendChild(title);
 
+    const hint = document.createElement('div');
+    hint.textContent = '提示：仅 Active 状态任务可勾选，其他状态仅展示不可选择。';
+    hint.style.marginTop = '6px';
+    hint.style.fontSize = '12px';
+    hint.style.color = 'var(--vscode-descriptionForeground)';
+    card.appendChild(hint);
+
     const tasks = Array.isArray(message.tasks) ? message.tasks : [];
     const internalTasks = tasks.map(function(t) { return {...t, currentChecked: t.checked === true}; });
 
@@ -683,8 +690,17 @@
       return td;
     }
 
+    function isTaskSelectable(status) {
+      const normalizedStatus = String(status || '').trim().toLowerCase();
+      return normalizedStatus === 'active' || normalizedStatus === 'activity';
+    }
+
     internalTasks.forEach(function(t) {
       const row = document.createElement('tr');
+      const selectable = isTaskSelectable(t.status);
+      if (!selectable) {
+        t.currentChecked = false;
+      }
 
       const selectCell = document.createElement('td');
       selectCell.style.padding = '6px 8px';
@@ -694,6 +710,11 @@
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = t.currentChecked;
+      cb.disabled = !selectable;
+      if (!selectable) {
+        cb.title = '仅 Active 状态任务可勾选';
+        row.style.opacity = '0.55';
+      }
       cb.addEventListener('change', function(e) {
         t.currentChecked = e.target.checked;
         if (persistedEntry && Array.isArray(persistedEntry.tasks)) {
@@ -712,7 +733,11 @@
       row.appendChild(createTextCell(t.problemNotes));
       row.appendChild(createTextCell(t.resolverNotes));
       row.appendChild(createTextCell(t.problemType));
-      row.appendChild(createTextCell(t.status));
+      const statusCell = createTextCell(t.status);
+      if (!selectable) {
+        statusCell.title = '当前任务状态不是 Active，不能勾选';
+      }
+      row.appendChild(statusCell);
       row.appendChild(createTextCell(t.objectId));
 
       body.appendChild(row);
