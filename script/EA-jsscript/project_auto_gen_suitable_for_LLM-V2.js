@@ -877,6 +877,19 @@ function main() {
     finalJsonString += '}';
     // --- FILE WRITING (UTF-8 WITHOUT BOM) ---
     try {
+        // Ensure directory exists
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var folderPath = fso.GetParentFolderName(filePath);
+        var foldersToCreate = [];
+        var currFolder = folderPath;
+        while (currFolder != "" && !fso.FolderExists(currFolder)) {
+            foldersToCreate.unshift(currFolder);
+            currFolder = fso.GetParentFolderName(currFolder);
+        }
+        for (var i = 0; i < foldersToCreate.length; i++) {
+            fso.CreateFolder(foldersToCreate[i]);
+        }
+
         // Step 1: Write the text to a temporary text stream, which includes the BOM
         var textStream = new ActiveXObject("ADODB.Stream");
         textStream.Type = 2; // Text

@@ -1362,10 +1362,24 @@ class WorkflowViewProvider {
 
     function normalizeStreamContent(content, fallbackStatus) {
       const raw = content && typeof content === 'object' ? content : {};
+      let thinking = typeof raw.thinking === 'string' ? raw.thinking : '';
+      let response = typeof raw.response === 'string' ? raw.response : '';
+      const errorText = typeof raw.errorText === 'string' ? raw.errorText : '';
+
+      let extractedThinking = '';
+      response = response.replace(/<think>([\s\S]*?)(?:<\/think>|$)/g, (match, p1) => {
+        extractedThinking += (extractedThinking ? '\n\n' : '') + p1;
+        return '';
+      });
+
+      if (extractedThinking) {
+        thinking = thinking ? (thinking + '\n\n' + extractedThinking) : extractedThinking;
+      }
+
       return {
-        thinking: typeof raw.thinking === 'string' ? raw.thinking : '',
-        response: typeof raw.response === 'string' ? raw.response : '',
-        errorText: typeof raw.errorText === 'string' ? raw.errorText : '',
+        thinking: thinking,
+        response: response.replace(/^\s+/, ''),
+        errorText: errorText,
         thinkingExpanded: raw.thinkingExpanded === true,
         status: raw.status === 'failed' ? 'failed' : raw.status === 'completed' ? 'completed' : (fallbackStatus || 'streaming')
       };
@@ -1654,7 +1668,20 @@ class WorkflowViewProvider {
     function setBubbleContent(bubble, role, text) {
       if (role === 'ai') {
         try {
-          bubble.innerHTML = renderMarkdown(text);
+          const strText = String(text || '');
+          if (strText.includes('<think>')) {
+            const normalized = normalizeStreamContent({ response: strText }, 'completed');
+            const sections = [];
+            if (normalized.thinking.trim().length > 0) {
+              sections.push(renderStreamSectionHtml('thinking', 'Thinking', normalized.thinking, { collapsible: true, expanded: false }));
+            }
+            if (normalized.response.trim().length > 0) {
+              sections.push('<div class="ai-response-content">' + renderMarkdown(normalized.response) + '</div>');
+            }
+            bubble.innerHTML = sections.join('');
+          } else {
+            bubble.innerHTML = renderMarkdown(strText);
+          }
         } catch {
           bubble.textContent = String(text || '');
         }
@@ -1750,17 +1777,39 @@ class WorkflowViewProvider {
         return entry;
       }
 
+      let existingEntry = null;
+      for (let i = 0; i < state.thread.length; i++) {
+        if (state.thread[i].kind === 'streamBubble' && state.thread[i].streamId === streamId) {
+          existingEntry = state.thread[i];
+          break;
+        }
+      }
+
       const bubble = createBubbleNode('ai', '');
       bubble.classList.add('streaming');
       bubble.dataset.streamId = streamId;
       thread.appendChild(bubble);
 
+      const safeContent = existingEntry ? existingEntry.stream : normalizeStreamContent(undefined, 'streaming');
+
       entry = {
         bubble,
-        label: String(label || 'OpenCode'),
-        content: normalizeStreamContent(undefined, 'streaming')
+        label: String(label || (existingEntry ? existingEntry.stream.label : 'OpenCode')),
+        content: safeContent
       };
+
       activeStreams.set(streamId, entry);
+
+      if (!existingEntry) {
+        existingEntry = {
+          kind: 'streamBubble',
+          streamId: streamId,
+          stream: entry.content
+        };
+        state.thread.push(existingEntry);
+        syncState();
+      }
+
       setStreamBubbleContent(bubble, entry.label, entry.content);
       scrollThreadToBottom();
       return entry;
@@ -1769,15 +1818,18 @@ class WorkflowViewProvider {
     function updateStreamBubble(streamId, label, content) {
       const entry = ensureStreamBubble(streamId, label);
       entry.label = String(label || entry.label || 'OpenCode');
-      entry.content = normalizeStreamContent(content, 'streaming');
+      const normalized = normalizeStreamContent(content, 'streaming');
+      Object.assign(entry.content, normalized);
       setStreamBubbleContent(entry.bubble, entry.label, entry.content);
+      syncState();
       scrollThreadToBottom();
     }
 
     function finishStreamBubble(streamId, label, content, status) {
       const entry = ensureStreamBubble(streamId, label);
       entry.label = String(label || entry.label || 'OpenCode');
-      entry.content = normalizeStreamContent(content, status);
+      const normalized = normalizeStreamContent(content, status);
+      Object.assign(entry.content, normalized);
       entry.bubble.classList.remove('streaming');
       if (status === 'failed') {
         entry.bubble.classList.add('failed');
@@ -1785,16 +1837,6 @@ class WorkflowViewProvider {
 
       setStreamBubbleContent(entry.bubble, entry.label, entry.content);
       activeStreams.delete(streamId);
-      state.thread.push({
-        kind: 'streamBubble',
-        stream: {
-          label: entry.label,
-          thinking: entry.content.thinking,
-          response: entry.content.response,
-          errorText: entry.content.errorText,
-          status: status === 'failed' ? 'failed' : 'completed'
-        }
-      });
       syncState();
       scrollThreadToBottom();
     }
@@ -2540,12 +2582,21 @@ class WorkflowViewProvider {
           if (item.kind === 'streamBubble') {
             const bubble = createBubbleNode('ai', '');
             setStreamBubbleContent(bubble, item.stream.label, item.stream);
-            if (item.stream.status === 'failed') {
-              bubble.classList.add('failed');
-            }
-            thread.appendChild(bubble);
-            return;
-          }
+              
+              if (item.stream.status === 'failed') {
+                bubble.classList.add('failed');
+              } else if (item.stream.status === 'streaming') {
+                bubble.classList.add('streaming');
+                bubble.dataset.streamId = item.streamId || '';
+                if (item.streamId) {
+                  activeStreams.set(item.streamId, {
+                    bubble: bubble,
+                    label: item.stream.label,
+                    content: item.stream
+                  });
+                }
+              }
+              
 
           if (item.kind === 'autoSuggestion') {
             appendAutoSuggestion(item, true);
@@ -2621,6 +2672,7 @@ function sanitizeWorkflowViewState(raw) {
             const stream = item.stream && typeof item.stream === 'object' ? item.stream : undefined;
             thread.push({
                 kind: 'streamBubble',
+                streamId: typeof item.streamId === 'string' ? item.streamId : undefined,
                 stream: {
                     label: typeof stream?.label === 'string' ? stream.label : 'OpenCode',
                     thinking: typeof stream?.thinking === 'string' ? stream.thinking : '',
