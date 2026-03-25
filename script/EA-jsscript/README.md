@@ -2,16 +2,7 @@
 
 本目录用于 Enterprise Architect (EA) 的 JScript 自动化脚本。
 
-## 使用前提
-- 运行环境：Sparx EA（支持 JScript）
-- 常用内置对象：`Repository`、`Session`
-- 依赖组件：
-  - `ADODB.Stream`（读写 UTF-8 文件）
-  - `Scripting.FileSystemObject`（文件系统操作）
-  - `Word.Application`（仅部分脚本用于 RTF→PDF，需要本机安装 Word）
-- 部分脚本含**硬编码路径**，使用前请先修改文件路径变量
-
-## 推荐：集中维护（避免每个 EA 模型重复粘贴）
+## 默认工作方式：bootstrap + 共享脚本
 
 如果你有多个 EA 模型，建议改成“**每个模型只保留一个 bootstrap 脚本**，真正逻辑放在本仓库共享文件”模式：
 
@@ -27,6 +18,14 @@
 > 这样你只需一次性在各模型配置 bootstrap，后续不再需要反复复制完整脚本。
 
 > 若读取失败，请先确认 `SHARED_SCRIPT_PATH` / `SHARED_SCRIPT_LOCAL_FALLBACK_PATH` 指向本机真实存在的脚本文件。
+
+## 使用前提
+- 运行环境：Sparx EA（支持 JScript）
+- 常用内置对象：`Repository`、`Session`
+- 依赖组件：
+  - `ADODB.Stream`（读写 UTF-8 文件）
+  - `Scripting.FileSystemObject`（文件系统操作）
+  - `Word.Application`（仅部分脚本用于 RTF→PDF，需要本机安装 Word）
 
 ### `.aicodingconfig` 示例
 
@@ -56,6 +55,16 @@ var EA_AUTOGEN_CONFIG = {
 ```
 
 ---
+
+## 次选：直接运行旧脚本（仅兼容或临时场景）
+
+若你尚未切换到 bootstrap 模式，也可以直接运行本目录中的历史脚本，但这应视为次选方案而不是默认做法。
+
+使用旧脚本时请注意：
+
+- 部分脚本仍带有**硬编码路径**，运行前需要手工修改文件路径变量
+- 一旦逻辑升级，你需要在多个 EA 模型之间重复复制脚本，维护成本更高
+- 对 AI4PB 当前工作流而言，优先推荐 `project_auto_gen_suitable_for_LLM-V2-bootstrap.js` + `project_auto_gen_suitable_for_LLM-V2.js` 的组合
 
 ## 脚本总览
 

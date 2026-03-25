@@ -135,6 +135,7 @@
 "name": "System Architecture Description"
 ,"type": "ArchiMate_BusinessObject"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Business/Business/System Architecture Description"
+,"description": "架构描述或者模型，相当于“意图”类拼图"
 ,"subdiagram_views": [
 {
 "view_id": "155",
@@ -189,6 +190,7 @@
 "name": "Target System"
 ,"type": "ArchiMate_BusinessObject"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Business/Business/Target System"
+,"description": "此时的代码或系统实现相当于“实现”类拼图的转测试版本，需要验证其和“意图”类拼图是否严丝合缝。\r\n"
 },
 {
 "id": "1178",
@@ -216,18 +218,21 @@
 "name": "Final Target System"
 ,"type": "ArchiMate_BusinessObject"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Business/Business/Final Target System"
+,"description": "最终的代码或系统相当于“实现”类拼图和“意图”类拼图完美缝合在一起。\r\n\r\n"
 },
 {
 "id": "1180",
 "name": "BugOrIssue"
 ,"type": "ArchiMate_BusinessObject"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Business/Business/BugOrIssue"
+,"description": "在验证过程中，如果出现实现问题，则反馈问题给实现阶段"
 },
 {
 "id": "1181",
 "name": "Issue"
 ,"type": "ArchiMate_BusinessObject"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Business/Business/Issue"
+,"description": "如果发现“实现”类拼图无论怎么做都无法缝合“意图”类拼图，则反馈ISSUE给需求分析和架构设计阶段"
 },
 {
 "id": "1182",
@@ -544,7 +549,7 @@
 },
 {
 "name": "readme",
-"content": "Relative File Path:D:\\\\projects\\\\AICodingAgent\\\\ai4pb-orchestrator\\\\README.md\n\n# AI4PB Orchestrator\n\nAI4PB Orchestrator 是一个 VS Code 扩展，用来把企业架构模型、AI 编码执行、设计审计和迭代复盘串成一条可重复的交付流程。\n\n它面向的不是“随便让 AI 帮我写点代码”的场景，而是“让 AI 在架构约束下参与真实项目交付”的场景。\n\n## 这个项目解决什么问题\n\n很多团队开始用 AI 写代码后，会很快遇到几个问题：\n\n- AI 不知道系统设计边界，只能根据局部上下文生成代码\n- 架构图、任务、缺陷、代码和复盘分散在不同工具里\n- 代码可能能跑，但不一定符合原始设计职责\n- 迭代结束后，缺少可追踪的审计和总结产物\n\nAI4PB 的解决方式是：\n\n1. 在 Sparx EA 中维护架构、Task、Issue。\n2. 导出机器可读的架构上下文和任务文档。\n3. 在 VS Code 中通过工作流面板驱动 Coding Agent 执行。\n4. 在每轮 Sprint 中，按 规划 → 启动 → 执行 → 修复 → 审计 → 收尾 → 总结 → 汇报 的节奏推进，所有阶段均在 AI4PB 侧边栏一键触发。\n\n一句话概括：\n\n> 不是让 AI 自由发挥，而是让 AI 在你的架构和流程里工作。\n\n## 你可以用它做什么\n\n- 从 EA 模型导出当前迭代的 AI 输入\n- 让 Copilot/Opencode 基于架构任务启动开发，而不是靠临时提示词\n- 为具体任务生成执行说明并进入编码\n- 根据 Issue 继续多轮修复\n- 审计代码与架构是否偏离\n- 自动沉淀任务清单、审计报告、提交说明和周报\n\n## 用这个项目的收益\n\n- 更少跑偏：AI 输入来自架构和任务，不是零散聊天上下文\n- 更易协作：架构师、开发、测试、管理看到的是同一条流程\n- 更可追踪：从 Task 到代码，再到审计和复盘都有对应产物\n- 更易治理：每轮迭代都可以检查代码是否仍符合设计\n- 更快复用：常见 SCRUM 阶段已经封装成现成动作\n\n## 它是怎么工作的\n\nAI4PB 把工作分成两端：\n\n- 架构端：在 EA 中建模、挂载 Task/Issue、导出上下文\n- 执行端：在 VS Code 中驱动 AI 按流程执行（扩展同时兼容 GitHub Copilot 和 OpenCode，可在 `.aicodingconfig` 中按需切换，详见下方\"快速开始\"章节）\n\n核心闭环如下：\n\n1. 在 EA 中维护架构和任务\n2. 从 EA 导出 `design/KG/SystemArchitecture.json`\n3. 在 AI4PB 侧边栏点击 **计划与汇报流** -> **提取任务**，自动生成任务清单（`design/tasks/taskandissues_for_LLM.md`）\n4. 按 SCRUM 节奏完成后续迭代阶段：Init（启动）→ Task Support（执行）→ Iteration Issues（问题反馈与修复）\n5. 执行 Design Audit 做架构对齐检查\n6. 完成 Wrap-up、Iteration Summary、Weekly Report，收尾本轮迭代\n\n## 快速开始\n\n### 1. 准备环境\n\n- Sparx Enterprise Architect 15+\n- VS Code 1.95+\n- GitHub Copilot\n- AI4PB Orchestrator 扩展\n- OpenCode（可选，用于替代或补充 Copilot 引擎）：\n  - 在 WSL 中安装：`npm install -g opencode-ai`\n  - 在 WSL 中启动服务：`opencode serve`（默认监听 `http://127.0.0.1:4096`）\n  - 在项目的 `.aicodingconfig` 中配置地址与路由策略，示例如下：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"opencode\",\n    \"opencode\": {\n      \"transport\": \"server\",\n      \"executionHost\": \"wsl\",\n      \"server\": {\n        \"baseUrl\": \"http://127.0.0.1:4096\"\n      }\n    }\n  }\n}\n```\n\n### 2. 安装扩展\n\n如果你是使用者：\n\n- 从 Marketplace 安装，或\n- 本地构建 VSIX 后安装\n\n如果你是维护者，在仓库根目录执行：\n\n```bash\nnpm install\nnpm run compile\nnpm run release:vsix:nobump\n```\n\n### 3. 初始化工作区\n\n打开 VS Code 后：\n\n1. 打开 AI4PB 侧边栏\n2. 在侧边栏中点击 **初始化 EA 模板** 按钮\n3. 在工作区中生成模板和流程基础文件\n\n### 4. 在 EA 中准备 AI 输入\n\n在架构元素上挂载 Task / Issue，建议遵循：\n\n- `Status = Active`\n- `Assigned To = llm`\n- `Name` 写成可执行任务说明\n\n然后从 EA 导出：\n\n- `design/KG/SystemArchitecture.json`\n\n任务清单（`design/tasks/taskandissues_for_LLM.md`）由扩展在执行 **提取任务** 步骤时自动生成，无需从 EA 手动导出。\n\n### 5. 在 VS Code 中驱动迭代\n\n在 AI4PB 侧边栏按照 SCRUM 节奏依次点击：\n\n| SCRUM 阶段 | 步骤//TODO：下面换成面板中具体按钮名称，所有按钮都要覆盖不要遗漏 | 说明                    |\n| -------- | ----------------------------------- | --------------------- |\n| 规划       | Task List                           | AI 读取架构任务，生成本期迭代看板    |\n| 启动       | Init                                | 建立本轮迭代的上下文边界与目标       |\n| 执行       | Task Support                        | 对每个任务生成执行说明并开始编码      |\n| 修复       | Iteration Issues                    | 根据 Issue 记录进行多轮缺陷修复   |\n| 审计       | Design Audit                        | 逐项核查代码与架构声明的一致性       |\n| 收尾       | Wrap-up                             | 确认本轮交付范围，归档本轮成果       |\n| 总结       | Iteration Summary                   | 生成 Git Commit Message |\n| 汇报       | Weekly Report                       | 为干系人输出管理层周报           |\n\n**切换 AI 引擎（Copilot / OpenCode）**\n\n扩展默认使用 GitHub Copilot。若需切换为 OpenCode，在项目根目录 `.aicodingconfig` 中修改：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"opencode\"\n  }\n}\n```\n\n也可仅对特定阶段路由到 OpenCode，其余阶段保持 Copilot：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"copilot\",\n    \"task_specific_agents\": {\n      \"task-list\": \"opencode\"\n    }\n  }\n}\n```\n\n## 核心使用方式：AI4PB 侧边栏\n\n安装扩展后，VS Code 左侧活动栏出现 **AI4PB DEV** 图标，点击后打开工作流面板。\n\n面板按 SCRUM 阶段排列，提供从架构初始化到迭代复盘的全套操作入口：\n\n- 点击任意阶段按钮，扩展自动将架构上下文和专属指令注入 AI 会话\n- 使用 GitHub Copilot 时：自动开启新 Chat 对话，架构 JSON 和角色 Prompt 随之注入\n- 使用 OpenCode 时：向 OpenCode Server 发起请求，流式响应直接展示在面板内\n\n不需要手动复制 Prompt，不需要记忆命令，每个迭代阶段都有一键操作入口。\n\n## 主要产物\n\n业务交付物：\n\n- `implementation/task-list.md`\n- `implementation/taskhelpinfos/*.md`\n- `implementation/reports/*.md`\n\n过程工件：\n\n- `design/temp/audit.md`\n- `debug/iteration-commit-message.md`\n\n这意味着你得到的不只是代码，还有设计校验、过程记录和管理沟通材料。\n\n## 适合谁\n\n- 已经有 EA / ArchiMate 建模基础的团队\n- 想把架构设计和 AI 编码真正打通的团队\n- 需要可审计、可复盘、可追踪流程的企业项目\n- 希望把 Task / Issue 直接转成 AI 执行输入的团队\n\n如果你只是想要一个通用聊天型代码助手，这个项目会偏重。\n如果你要的是“架构驱动的 AI 研发流程”，这个项目就是为这个场景设计的。\n\n## 项目结构一览\n\n- `src/`：VS Code 扩展源码\n- `media/`：工作流 webview 前端资源\n- `skills/`：AI4PB Prompt Tools 和技能模板\n- `script/EA-jsscript/`：EA 导出与辅助脚本\n- `design/`：架构上下文、审计和设计过程文件\n- `implementation/`：任务说明、报告等交付物\n- `.opencode/`：OpenCode 集成实现\n\n## 深入文档\n\n- [快速上手总览](docs/getting-started/README.md)\n- [完整上手指南](docs/getting-started/00-getting-started-overview.md)\n- [环境准备](docs/getting-started/02-prerequisites.md)\n- [EA 建模与导出](docs/getting-started/03-modeling-and-export.md)\n- [扩展与工作流说明](docs/getting-started/04-orchestrator-extension.md)\n- [SCRUM 执行流程](docs/getting-started/05-scrum-workflow.md)\n- [最佳实践](docs/getting-started/06-best-practices.md)\n\n## 开发扩展\n\n仓库根目录常用命令：\n\n```bash\nnpm install\nnpm run compile\nnpx tsc --noEmit\nnpm run watch\n```\n\n构建 VSIX：\n\n```bash\nnpm run release:vsix\n```\n\n说明：当前仓库没有配置正式的自动化测试套件，日常验证以 TypeScript 编译、手动检查扩展行为和流程产物为主。\n\n## 总结\n\n如果你要解决的是“怎么让 AI 更快写几段代码”，这不是最轻量的方案。\n\n如果你要解决的是：\n\n- 如何让 AI 基于架构执行\n- 如何把任务、缺陷、代码、审计、总结串成闭环\n- 如何让企业项目中的 AI 编码过程更可控、更可追踪\n\n那么 AI4PB Orchestrator 提供的是一套完整且可执行的答案。\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r\n\r\n"
+"content": "Relative File Path:D:\\\\projects\\\\AICodingAgent\\\\ai4pb-orchestrator\\\\README.md\n\n# AI4PB Orchestrator\n\nAI4PB Orchestrator 是一个 VS Code 扩展，用来把企业架构模型、AI 编码执行、设计审计和迭代复盘串成一条可重复的交付流程。\n\n它面向的不是“随便让 AI 帮我写点代码”的场景，而是“让 AI 在架构约束下参与真实项目交付”的场景。\n\n## 这个项目解决什么问题\n\n很多团队开始用 AI 写代码后，会很快遇到几个问题：\n\n- AI 不知道系统设计边界，只能根据局部上下文生成代码\n- 架构图、任务、缺陷、代码和复盘分散在不同工具里\n- 代码可能能跑，但不一定符合原始设计职责\n- 迭代结束后，缺少可追踪的审计和总结产物\n\nAI4PB 的解决方式是：\n\n1. 在 Sparx EA 中维护架构、Task、Issue。\n2. 导出机器可读的架构上下文和任务文档。\n3. 在 VS Code 中通过工作流面板驱动 Coding Agent 执行。\n4. 在每轮 Sprint 中，按 规划 → 启动 → 执行 → 修复 → 审计 → 收尾 → 总结 → 汇报 的节奏推进，所有阶段均在 AI4PB 侧边栏一键触发。\n\n一句话概括：\n\n> 不是让 AI 自由发挥，而是让 AI 在你的架构和流程里工作。\n\n## 你可以用它做什么\n\n- 从 EA 模型导出当前迭代的 AI 输入\n- 让 Copilot/Opencode 基于架构任务启动开发，而不是靠临时提示词\n- 为具体任务生成执行说明并进入编码\n- 根据 Issue 继续多轮修复\n- 审计代码与架构是否偏离\n- 自动沉淀任务清单、审计报告、提交说明和周报\n\n## 用这个项目的收益\n\n- 更少跑偏：AI 输入来自架构和任务，不是零散聊天上下文\n- 更易协作：架构师、开发、测试、管理看到的是同一条流程\n- 更可追踪：从 Task 到代码，再到审计和复盘都有对应产物\n- 更易治理：每轮迭代都可以检查代码是否仍符合设计\n- 更快复用：常见 SCRUM 阶段已经封装成现成动作\n\n## 它是怎么工作的\n\nAI4PB 把工作分成两端：\n\n- 架构端：在 EA 中建模、挂载 Task/Issue、导出上下文\n- 执行端：在 VS Code 中驱动 AI 按流程执行（扩展同时兼容 GitHub Copilot 和 OpenCode，可在 `.aicodingconfig` 中按需切换，详见下方\"快速开始\"章节）\n\n核心闭环如下：\n\n1. 在 EA 中维护架构和任务\n2. 从 EA 导出 `design/KG/SystemArchitecture.json`\n3. 在 AI4PB 侧边栏点击 **计划与汇报流** -> **提取任务**，自动生成任务清单（`design/tasks/taskandissues_for_LLM.md`）\n4. 按 SCRUM 节奏完成后续迭代阶段：Init（启动）→ Task Support（执行）→ Iteration Issues（问题反馈与修复）\n5. 执行 Design Audit 做架构对齐检查\n6. 完成 Wrap-up、Iteration Summary、Weekly Report，收尾本轮迭代\n\n## 快速开始\n\n### 1. 准备环境\n\n- Sparx Enterprise Architect 15+\n- VS Code 1.95+\n- GitHub Copilot\n- AI4PB Orchestrator 扩展\n- OpenCode（可选，用于替代或补充 Copilot 引擎）：\n  - 在 WSL 中安装：`npm install -g opencode-ai`\n  - 在 WSL 中启动服务：`opencode serve`（默认监听 `http://127.0.0.1:4096`）\n  - 在项目的 `.aicodingconfig` 中配置地址与路由策略，示例如下：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"opencode\",\n    \"opencode\": {\n      \"transport\": \"server\",\n      \"executionHost\": \"wsl\",\n      \"server\": {\n        \"baseUrl\": \"http://127.0.0.1:4096\"\n      }\n    }\n  }\n}\n```\n\n### 2. 安装扩展\n\n如果你是使用者：\n\n- 从 Marketplace 安装，或\n- 本地构建 VSIX 后安装\n\n如果你是维护者，在仓库根目录执行：\n\n```bash\nnpm install\nnpm run compile\nnpm run release:vsix:nobump\n```\n\n### 3. 初始化工作区\n\n打开 VS Code 后：\n\n1. 打开 AI4PB 侧边栏\n2. 在侧边栏中点击 **初始化 EA 模板** 按钮\n3. 在工作区中生成模板和流程基础文件\n\n### 4. 在 EA 中准备 AI 输入\n\n在架构元素上挂载 Task / Issue，建议遵循：\n\n- `Status = Active`\n- `Assigned To = llm`\n- `Name` 写成可执行任务说明\n\n然后从 EA 导出：\n\n- `design/KG/SystemArchitecture.json`\n\n任务清单（`design/tasks/taskandissues_for_LLM.md`）由扩展在执行 **提取任务** 步骤时自动生成，无需从 EA 手动导出。\n\n### 5. 在 VS Code 中驱动迭代\n\n在 AI4PB 侧边栏按照 SCRUM 节奏依次点击：\n\n| SCRUM 阶段 | 步骤//TODO：下面换成面板中具体按钮名称，所有按钮都要覆盖不要遗漏 | 说明                    |\n| -------- | ----------------------------------- | --------------------- |\n| 规划       | Task List                           | AI 读取架构任务，生成本期迭代看板    |\n| 启动       | Init                                | 建立本轮迭代的上下文边界与目标       |\n| 执行       | Task Support                        | 对每个任务生成执行说明并开始编码      |\n| 修复       | Iteration Issues                    | 根据 Issue 记录进行多轮缺陷修复   |\n| 审计       | Design Audit                        | 逐项核查代码与架构声明的一致性       |\n| 收尾       | Wrap-up                             | 确认本轮交付范围，归档本轮成果       |\n| 总结       | Iteration Summary                   | 生成 Git Commit Message |\n| 汇报       | Weekly Report                       | 为干系人输出管理层周报           |\n\n**切换 AI 引擎（Copilot / OpenCode）**\n\n扩展默认使用 GitHub Copilot。若需切换为 OpenCode，在项目根目录 `.aicodingconfig` 中修改：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"opencode\"\n  }\n}\n```\n\n也可仅对特定阶段路由到 OpenCode，其余阶段保持 Copilot：\n\n```json\n{\n  \"AGENT_ROUTER_CONFIG\": {\n    \"default_agent\": \"copilot\",\n    \"task_specific_agents\": {\n      \"task-list\": \"opencode\"\n    }\n  }\n}\n```\n\n## 核心使用方式：AI4PB 侧边栏\n\n安装扩展后，VS Code 左侧活动栏出现 **AI4PB DEV** 图标，点击后打开工作流面板。\n\n面板按 SCRUM 阶段排列，提供从架构初始化到迭代复盘的全套操作入口：\n\n- 点击任意阶段按钮，扩展自动将架构上下文和专属指令注入 AI 会话\n- 使用 GitHub Copilot 时：自动开启新 Chat 对话，架构 JSON 和角色 Prompt 随之注入\n- 使用 OpenCode 时：向 OpenCode Server 发起请求，流式响应直接展示在面板内\n\n不需要手动复制 Prompt，不需要记忆命令，每个迭代阶段都有一键操作入口。\n\n## 主要产物\n\n业务交付物：\n\n- `implementation/task-list.md`\n- `implementation/taskhelpinfos/*.md`\n- `implementation/reports/*.md`\n\n过程工件：\n\n- `design/temp/audit.md`\n- `debug/iteration-commit-message.md`\n\n这意味着你得到的不只是代码，还有设计校验、过程记录和管理沟通材料。\n\n## 适合谁\n\n- 已经有 EA / ArchiMate 建模基础的团队\n- 想把架构设计和 AI 编码真正打通的团队\n- 需要可审计、可复盘、可追踪流程的企业项目\n- 希望把 Task / Issue 直接转成 AI 执行输入的团队\n\n如果你只是想要一个通用聊天型代码助手，这个项目会偏重。\n如果你要的是“架构驱动的 AI 研发流程”，这个项目就是为这个场景设计的。\n\n## 项目结构一览\n\n- `src/`：VS Code 扩展源码\n- `media/`：工作流 webview 前端资源\n- `skills/`：AI4PB Prompt Tools 和技能模板\n- `script/EA-jsscript/`：EA 导出与辅助脚本\n- `design/`：架构上下文、审计和设计过程文件\n- `implementation/`：任务说明、报告等交付物\n- `.opencode/`：OpenCode 集成实现\n\n## 深入文档\n\n- [快速上手总览](docs/getting-started/README.md)\n- [完整上手指南](docs/getting-started/00-getting-started-overview.md)\n- [环境准备](docs/getting-started/02-prerequisites.md)\n- [EA 建模与导出](docs/getting-started/03-modeling-and-export.md)\n- [扩展与工作流说明](docs/getting-started/04-orchestrator-extension.md)\n- [SCRUM 执行流程](docs/getting-started/05-scrum-workflow.md)\n- [最佳实践](docs/getting-started/06-best-practices.md)\n\n## 开发扩展\n\n仓库根目录常用命令：\n\n```bash\nnpm install\nnpm run compile\nnpx tsc --noEmit\nnpm run watch\n```\n\n构建 VSIX：\n\n```bash\nnpm run release:vsix\n```\n\n说明：当前仓库没有配置正式的自动化测试套件，日常验证以 TypeScript 编译、手动检查扩展行为和流程产物为主。\n\n## 总结\n\n如果你要解决的是“怎么让 AI 更快写几段代码”，这不是最轻量的方案。\n\n如果你要解决的是：\n\n- 如何让 AI 基于架构执行\n- 如何把任务、缺陷、代码、审计、总结串成闭环\n- 如何让企业项目中的 AI 编码过程更可控、更可追踪\n\n那么 AI4PB Orchestrator 提供的是一套完整且可执行的答案。\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r\n\r\n\r\n"
 }
 ]
 ,"project_info": {
@@ -1235,6 +1240,26 @@
 "name": "SCRUM"
 ,"type": "ArchiMate_Grouping"
 ,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/Application/Application/AI4PB VS插件/AI4PBAgentApplicationBundle/SKILL/SCRUM"
+},
+{
+"id": "1272",
+"name": "架构描述或者模型，相当于“意图”，而代码最终实现相当于“实现”，他们像拼图块，我们的AI辅助项目构建的目标，就是提供一套工具让AI和人类协作，最终要让这些拼图严丝合缝地拼接在一起。"
+,"type": "ArchiMate_Goal"
+,"browser_path": "Model/AI-For-Project-Building-SystemArchitecture/StrategyAndMotivation/StrategyAndMotivation/架构描述或者模型，相当于“意图”，而代码最终实现相当于“实现”，他们像拼图块，我们的AI辅助项目构建的目标，就是提供一套工具让AI和人类协作，最终要让这些拼图严丝合缝地拼接在一起。"
+,"project_info": {
+"tasks": [
+{
+"name": "要实现这个目标，我们现在的架构还缺什么？需要做什么？"
+,"type": "ToDo"
+,"status": "Active"
+,"start_date": "2026-3-24"
+,"due_date": "2026-3-24"
+,"reporter": "derek"
+,"priority": "Low",
+"assigned_to": "llm"
+}
+]
+}
 }
 ],
 "relationships": [
@@ -2742,7 +2767,8 @@
 ,"parent_element_id": "1159"
 ,"parent_element_name": "StrategyAndMotivation"
 ,"included_elements": [
-"1246"
+"1246",
+"1272"
 ]
 ,"included_relationships": [
 

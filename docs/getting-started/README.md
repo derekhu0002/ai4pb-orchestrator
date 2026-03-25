@@ -25,6 +25,8 @@ AI4PB（AI for Project Building）的核心在于消除“架构设计”与“�
 ## 当前实现提示
 
 - `.aicodingconfig` 已不再只是最小导出配置，当前还可通过 `AGENT_ROUTER_CONFIG` 配置执行代理路由，并支持 `opencode.server` 传输参数。
+- AI4PB 已内置 `.opencode` 资产包，包含 OpenCode 插件入口、ECC hook 插件、自定义工具包、技能镜像和运行配置；可通过侧边栏的 `初始化AICodingAgent配置` 一次性复制到当前工作区。
+- OpenCode 当前支持双传输模型：`transport = "cli"` 直接调用本地或 WSL 命令，`transport = "server"` 通过 `opencode serve` 的 HTTP 服务执行并回传流式结果。
 - AI4PB 工作流界面的实现已拆分为 `src/extension.ts` 中的宿主逻辑与 `media/workflowView.js` 中的外置 webview 前端运行时。
 - Design Audit 的审计结果应写入 `design/temp/audit.md`，该文件属于临时架构对齐工件，而非 `implementation/*` 交付文档。
 

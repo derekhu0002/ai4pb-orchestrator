@@ -124,18 +124,25 @@ npm run release:vsix:nobump
 
 ### 5. 在 VS Code 中驱动迭代
 
-在 AI4PB 侧边栏按照 SCRUM 节奏依次点击：
+当前 AI4PB 侧边栏中的主操作按钮如下，按钮名称与界面保持一致：
 
-| SCRUM 阶段 | 步骤//TODO：下面换成面板中具体按钮名称，所有按钮都要覆盖不要遗漏 | 说明                    |
+| 区域 | 当前侧边栏动作名称 | 说明 |
 | -------- | ----------------------------------- | --------------------- |
-| 规划       | Task List                           | AI 读取架构任务，生成本期迭代看板    |
-| 启动       | Init                                | 建立本轮迭代的上下文边界与目标       |
-| 执行       | Task Support                        | 对每个任务生成执行说明并开始编码      |
-| 修复       | Iteration Issues                    | 根据 Issue 记录进行多轮缺陷修复   |
-| 审计       | Design Audit                        | 逐项核查代码与架构声明的一致性       |
-| 收尾       | Wrap-up                             | 确认本轮交付范围，归档本轮成果       |
-| 总结       | Iteration Summary                   | 生成 Git Commit Message |
-| 汇报       | Weekly Report                       | 为干系人输出管理层周报           |
+| 环境配置 | EA模板初始化 | 初始化 EA 模板与基础工作区结构 |
+| 环境配置 | 初始化AICodingAgent配置 | 将扩展内置的 `.github`、`.opencode`、`skills`、`.agents`、`.claude`、`rules` 初始化到当前工作区 |
+| 环境配置 | EA导出参数配置 | 配置 `.aicodingconfig` / `.aicodingconfig.json` 中的导出与维护参数 |
+| 环境配置 | 参数查询 | 查看当前导出参数摘要 |
+| 计划与汇报流程 | 提取任务 | 从 `design/KG/SystemArchitecture.json` 中提取维护任务并生成任务反馈输入 |
+| 计划与汇报流程 | 待办梳理 | 生成当前迭代待办清单 |
+| 计划与汇报流程 | 周报输出 | 生成管理层周报 |
+| 执行支持流程 | 执行支持 | 为任务生成执行说明并进入实现支持 |
+| SCRUM敏捷开发流程 | 待办梳理 | 回看当前 Sprint 的优先级与待办范围 |
+| SCRUM敏捷开发流程 | 迭代启动 | 为本轮迭代建立上下文、范围和目标 |
+| SCRUM敏捷开发流程 | 问题反馈 | 打开问题反馈编辑页，回填 ResolverNotes 并确认写入反馈 |
+| SCRUM敏捷开发流程 | 问题处理 | 根据 Issue 记录继续多轮缺陷修复 |
+| SCRUM敏捷开发流程 | 迭代收尾 | 对本轮交付范围做收尾检查 |
+| SCRUM敏捷开发流程 | 提交总结 | 生成提交总结与 Git Commit Message |
+| 设计审计流程 | 设计审计 | 执行代码与架构对齐审计并输出 `design/temp/audit.md` |
 
 **切换 AI 引擎（Copilot / OpenCode）**
 
@@ -162,6 +169,24 @@ npm run release:vsix:nobump
 }
 ```
 
+### 6. OpenCode 集成包与传输模式
+
+AI4PB 并不是只“调用一个外部 OpenCode 命令”这么简单。扩展本身内置了一套 `.opencode` 资产包，用于把 OpenCode 作为可初始化、可复制、可治理的执行环境接入工作区。
+
+这套内置资产至少包括：
+
+- OpenCode 插件包骨架与入口（`.opencode/package.json`、`.opencode/index.ts`）
+- ECC Hook 插件实现（`.opencode/plugins/*`）
+- 自定义工具包（`.opencode/tools/*`），包含 `run-tests`、`check-coverage`、`security-audit`、`format-code`、`lint-check`、`git-summary`
+- 与 OpenCode 对齐的技能镜像与配置文件（`.opencode/skills/*`、`.opencode/opencode.json`）
+
+扩展当前支持两种 OpenCode 传输模式，统一通过 `.aicodingconfig` 的 `AGENT_ROUTER_CONFIG.opencode` 配置：
+
+- `transport = "cli"`：直接调用本机或 WSL 中的 `opencode` 命令，适合本地命令式执行
+- `transport = "server"`：通过 `opencode serve` 暴露的 HTTP 服务进行会话创建、事件订阅与流式响应，适合常驻服务模式
+
+此外，扩展会根据 `executionHost`、`wslDistribution`、`server.directory`、`server.workspace` 等配置自动处理 Windows 与 WSL 路径归一化，保证 CLI 模式和 Server 模式都能在同一工作区路由规则下工作。
+
 ## 核心使用方式：AI4PB 侧边栏
 
 安装扩展后，VS Code 左侧活动栏出现 **AI4PB DEV** 图标，点击后打开工作流面板。
@@ -170,7 +195,7 @@ npm run release:vsix:nobump
 
 - 点击任意阶段按钮，扩展自动将架构上下文和专属指令注入 AI 会话
 - 使用 GitHub Copilot 时：自动开启新 Chat 对话，架构 JSON 和角色 Prompt 随之注入
-- 使用 OpenCode 时：向 OpenCode Server 发起请求，流式响应直接展示在面板内
+- 使用 OpenCode 时：既可以走本地 CLI，也可以走 `opencode serve` 的 Server 模式；两种模式都会由扩展统一接管并在面板内展示执行反馈
 
 不需要手动复制 Prompt，不需要记忆命令，每个迭代阶段都有一键操作入口。
 
@@ -207,7 +232,7 @@ npm run release:vsix:nobump
 - `script/EA-jsscript/`：EA 导出与辅助脚本
 - `design/`：架构上下文、审计和设计过程文件
 - `implementation/`：任务说明、报告等交付物
-- `.opencode/`：OpenCode 集成实现
+- `.opencode/`：内置 OpenCode 插件、工具包、技能镜像与运行配置
 
 ## 深入文档
 
