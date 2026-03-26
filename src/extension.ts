@@ -5,6 +5,7 @@ import * as http from 'http';
 import * as https from 'https';
 import * as path from 'path';
 import { randomBytes } from 'crypto';
+import { runArchitectureRealityAlignment } from './architectureRealityService';
 
 type AgentExecutor = 'copilot' | 'opencode';
 
@@ -5565,45 +5566,16 @@ async function startIterationFromModel(): Promise<void> {
 async function runDesignCodeAlignment(): Promise<void> {
   try {
     const root = getWorkspaceRoot();
-    const now = new Date();
-    const stamp = now.toISOString().replace(/[:.]/g, '-');
-    const reportDir = resolvePath(root, 'TEMP');
-    fs.mkdirSync(reportDir, { recursive: true });
-
     const archPath = getArchitectureJsonPath(root);
-    const initPrompt = resolveExtensionPath(BUNDLED_PATHS.initialPrompt);
-    const wrapPrompt = resolveExtensionPath(BUNDLED_PATHS.wrapPrompt);
-    const reversePrompt = resolveExtensionPath(BUNDLED_PATHS.reversePrompt);
+    if (!exists(archPath)) {
+      void vscode.window.showErrorMessage(`Architecture JSON not found: ${archPath}`);
+      return;
+    }
 
-    const reportPath = path.join(reportDir, `design-code-alignment-${stamp}.md`);
+    const result = await runArchitectureRealityAlignment(root, archPath, output);
+    await openFileIfExists(result.gapMarkdownPath);
 
-    const lines = [
-      '# Design-Code Alignment Report',
-      '',
-      `- Generated At: ${toIsoLocal(now)}`,
-      `- Workspace: ${root}`,
-      '',
-      '## Artifact Checks',
-      '',
-      `- Architecture JSON: ${exists(archPath) ? 'OK' : 'MISSING'} (${archPath})`,
-      `- Managed Options Config: ${exists(getAiConfigPath(root)) ? 'OK' : 'MISSING'}`,
-      `- Initial Prompt: ${exists(initPrompt) ? 'OK' : 'MISSING'}`,
-      `- Wrap-up Prompt: ${exists(wrapPrompt) ? 'OK' : 'MISSING'}`,
-      `- Reverse Prompt: ${exists(reversePrompt) ? 'OK' : 'MISSING'}`,
-      '',
-      '## Suggested Review Checklist',
-      '',
-      '- [ ] Confirm architecture JSON reflects latest EA export',
-      '- [ ] Confirm generated/changed code maps to active tasks in model',
-      '- [ ] Confirm unresolved issues are fed back into model tasks',
-      '- [ ] Run wrap-up and reverse-engineer prompts before closing iteration',
-      ''
-    ];
-
-    fs.writeFileSync(reportPath, lines.join('\n'), 'utf-8');
-    await openFileIfExists(reportPath);
-
-    output.appendLine(`[AI4PB] Alignment report generated: ${reportPath}`);
+    output.appendLine(`[AI4PB] Alignment report generated: ${result.gapMarkdownPath}`);
     output.show(true);
     void vscode.window.showInformationMessage('AI4PB design-code alignment report generated.');
   } catch (error) {

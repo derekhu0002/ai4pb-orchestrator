@@ -1,0 +1,3535 @@
+# ARCH_IMPL_GAP
+
+- Generated At: 2026-03-26T03:22:42.016Z
+- Intent Model: design/KG/SystemArchitecture.json
+- Reality Model: D:\projects\AICodingAgent\ai4pb-orchestrator\design\intention_reality_audit\reality.json
+
+## Raw Metrics
+
+- Coverage: 0.88%
+- Accuracy: 0.00%
+- Purity: 50.69%
+- Seamless Fit Index: 0.00%
+- Total Intent Elements: 113
+- Total Intent Relationships: 146
+- Total Reality Elements: 1312
+
+## Missing Elements
+
+- Business (Class)
+- Application (Class)
+- Technology (Class)
+- StrategyAndMotivation (Class)
+- Raw Requirement (ArchiMate_BusinessObject)
+- Requirement Analysis And System Architecture Analysis (ArchiMate_BusinessProcess)
+- System Requirement (ArchiMate_BusinessObject)
+- Core Architecture Gap (ArchiMate_BusinessObject)
+- Target Core Architecture (ArchiMate_BusinessObject)
+- Business Target Architecture (ArchiMate_BusinessObject)
+- Application Target Architecture (ArchiMate_BusinessObject)
+- Technology Target Architecture (ArchiMate_BusinessObject)
+- System Architecture Description (ArchiMate_BusinessObject)
+- Value Stream (ArchiMate_BusinessObject)
+- Capability (ArchiMate_BusinessObject)
+- CouseOfAction (ArchiMate_BusinessObject)
+- StrategyBehavior (ArchiMate_BusinessObject)
+- OutCome (ArchiMate_BusinessObject)
+- Resource (ArchiMate_BusinessObject)
+- Implementation (ArchiMate_BusinessProcess)
+- Target System (ArchiMate_BusinessObject)
+- TestAndVerification (ArchiMate_BusinessProcess)
+- Final Target System (ArchiMate_BusinessObject)
+- BugOrIssue (ArchiMate_BusinessObject)
+- Issue (ArchiMate_BusinessObject)
+- AI Copilot (ArchiMate_BusinessActor)
+- TestEngineer (ArchiMate_BusinessActor)
+- SystemEngineer (ArchiMate_BusinessActor)
+- AI Copilot (ArchiMate_BusinessActor)
+- VS Code (ArchiMate_ApplicationComponent)
+- Github Copilot (ArchiMate_ApplicationComponent)
+- ai4pb-wrapup (ArchiMate_DataObject)
+- ai4pb-init (ArchiMate_DataObject)
+- ai4pb-audit (ArchiMate_DataObject)
+- Sparx EA (ArchiMate_ApplicationService)
+- JSON Format of Archimate Model (ArchiMate_DataObject)
+- AI for Business (Class)
+- Model Driven AI for Business (Class)
+- Model Driven AI for  Project Building (Class)
+- Developer (ArchiMate_BusinessActor)
+- Goal (ArchiMate_BusinessObject)
+- Driver (ArchiMate_BusinessObject)
+- Assessment (ArchiMate_BusinessObject)
+- Stakeholder (ArchiMate_BusinessObject)
+- Constrain (ArchiMate_BusinessObject)
+- Principle (ArchiMate_BusinessObject)
+- Value (ArchiMate_BusinessObject)
+- AI4PB VS插件 (ArchiMate_ApplicationComponent)
+- JSON格式模型提取JS脚本 (ArchiMate_DataObject)
+- ai4pb-task-support (ArchiMate_DataObject)
+- Release VSIX Toolchain (ArchiMate_TechnologyService)
+- EA Script Utility Suite (ArchiMate_ApplicationComponent)
+- Prompt Tool Registry (ArchiMate_ApplicationService)
+- Post-Tools Utilities (ArchiMate_ApplicationComponent)
+- EA SQL Audit Queries (ArchiMate_ApplicationService)
+- ai4pb-iteration-issues (ArchiMate_DataObject)
+- ai4pb-iteration-summary (ArchiMate_DataObject)
+- AUTO Skill Router (ArchiMate_ApplicationService)
+- TestReport (ArchiMate_BusinessObject)
+- Executor_Router (ArchiMate_ApplicationComponent)
+- Open Code AI Coding Agent (ArchiMate_ApplicationComponent)
+- Task Help Infomation (ArchiMate_DataObject)
+- AI Coding Agent (ArchiMate_ApplicationComponent)
+- .aicodingconfig (ArchiMate_DataObject)
+- OpenCode CLI 适配器 (ArchiMate_ApplicationComponent)
+- Strategy (Class)
+- AgentApplication (Class)
+- OpencodeAgentApplication (Class)
+- AgentFrameworkWithOpencode (Class)
+- OverallAgentFrameworkArchitecture (Class)
+- AgentFrameworkWithOpenclaw (Class)
+- AgentFrameworkWithClaudecode (Class)
+- Memory (Class)
+- Custom Prompts (Class)
+- GithubCopilot (Class)
+- AgentFrameworkWithGithubCopilot (Class)
+- AgentOrientedSystemArchitecture (ArchiMate_Assessment)
+- AgentFramework (Class)
+- Opencode (Class)
+- Openclaw (Class)
+- Claude code (Class)
+- BusinessApplication (Class)
+- Business (Class)
+- LLM (Class)
+- MCP (Class)
+- Tool (Class)
+- Skill (Class)
+- Agent (Class)
+- KnowledgeGraph (Class)
+- Ontology(Schema) (Class)
+- GraphRag MCP (Class)
+- AI4PBAgentApplicationBundle (ArchiMate_DataObject)
+- SKILL (ArchiMate_DataObject)
+- Maintenance (Class)
+- Agent (ArchiMate_DataObject)
+- MCP_config (ArchiMate_ApplicationComponent)
+- Tool_config (ArchiMate_ApplicationComponent)
+- ai4pb-task-list (ArchiMate_DataObject)
+- ai4pb-weekly-report (ArchiMate_DataObject)
+- ai4pb-workflows (ArchiMate_DataObject)
+- SCRUM (ArchiMate_Grouping)
+- 架构描述或者模型，相当于“意图”，而代码最终实现相当于“实现”，他们像拼图块，我们的AI辅助项目构建的目标，就是提供一套工具让AI和人类协作，最终要让这些拼图严丝合缝地拼接在一起。 (ArchiMate_Goal)
+- ECC Hooks Plugin (ArchiMate_ApplicationComponent)
+- ECC Tool Pack (ArchiMate_ApplicationComponent)
+- Reality Scanner Orchestrator (ArchiMate_ApplicationComponent)
+- TypeScript Scanner Adapter (ArchiMate_ApplicationComponent)
+- Python Scanner Adapter (ArchiMate_ApplicationComponent)
+- Language-Specific Scanner Scripts (ArchiMate_ApplicationComponent)
+- reality.json (ArchiMate_DataObject)
+- Architecture Reconciliation Service (ArchiMate_ApplicationService)
+- ARCH_IMPL_GAP (ArchiMate_DataObject)
+- 架构设计必须考虑遵守SOLID原则 (ArchiMate_Principle)
+
+## Relationship Differences
+
+- Core Architecture Gap --(ArchiMate_Association)--> System Requirement
+- Target Core Architecture --(ArchiMate_Association)--> Core Architecture Gap
+- Business Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- Application Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- Technology Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- Value Stream --(ArchiMate_Specialization)--> StrategyBehavior
+- Capability --(ArchiMate_Specialization)--> StrategyBehavior
+- StrategyBehavior --(realize or serve)--> CouseOfAction
+- Target Core Architecture --(ArchiMate_Realization)--> StrategyBehavior
+- CouseOfAction --(ArchiMate_Realization)--> OutCome
+- Resource --(ArchiMate_Assignment)--> StrategyBehavior
+- Target Core Architecture --(ArchiMate_Realization)--> Resource
+- CouseOfAction --(ArchiMate_Realization)--> System Requirement
+- AI Copilot --(ArchiMate_Assignment)--> Implementation
+- TestEngineer --(ArchiMate_Assignment)--> TestAndVerification
+- AI Copilot --(ArchiMate_Assignment)--> TestAndVerification
+- SystemEngineer --(ArchiMate_Assignment)--> Requirement Analysis And System Architecture Analysis
+- AI Copilot --(ArchiMate_Assignment)--> Requirement Analysis And System Architecture Analysis
+- VS Code --(ArchiMate_Composition)--> Github Copilot
+- Sparx EA --(ArchiMate_Flow)--> JSON Format of Archimate Model
+- Raw Requirement --(ArchiMate_Flow)--> Requirement Analysis And System Architecture Analysis
+- Requirement Analysis And System Architecture Analysis --(ArchiMate_Flow)--> System Architecture Description
+- Issue --(ArchiMate_Flow)--> Requirement Analysis And System Architecture Analysis
+- Implementation --(ArchiMate_Flow)--> Issue
+- System Requirement --(ArchiMate_Flow)--> Implementation
+- BugOrIssue --(ArchiMate_Flow)--> Implementation
+- Implementation --(ArchiMate_Flow)--> Target System
+- Target System --(ArchiMate_Flow)--> TestAndVerification
+- TestAndVerification --(ArchiMate_Flow)--> Final Target System
+- TestAndVerification --(ArchiMate_Flow)--> BugOrIssue
+- System Architecture Description --(ArchiMate_Flow)--> Implementation
+- Model Driven AI for Business --(Generalization)--> AI for Business
+- Model Driven AI for  Project Building --(Generalization)--> Model Driven AI for Business
+- Developer --(ArchiMate_Assignment)--> Implementation
+- OutCome --(realize)--> Goal
+- Driver --(drive)--> Goal
+- Driver --(ArchiMate_Association)--> Assessment
+- Assessment --(drive)--> Goal
+- Stakeholder --(has)--> Driver
+- Constrain --(ArchiMate_Specialization)--> System Requirement
+- Principle --(ArchiMate_Specialization)--> System Requirement
+- Value --(ArchiMate_Association)--> OutCome
+- Stakeholder --(ArchiMate_Association)--> Value
+- VS Code --(ArchiMate_Composition)--> AI4PB VS插件
+- Requirement Analysis And System Architecture Analysis --(ArchiMate_Triggering)--> Implementation
+- Implementation --(ArchiMate_Triggering)--> TestAndVerification
+- TestAndVerification --(ArchiMate_Triggering)--> Requirement Analysis And System Architecture Analysis
+- AI4PB VS插件 --(ArchiMate_Composition)--> WorkflowViewProvider
+- Executor_Router --(dispatch tasks)--> AI Coding Agent
+- AI4PB VS插件 --(ArchiMate_Composition)--> JSON格式模型提取JS脚本
+- Github Copilot --(ArchiMate_Access)--> Prompt Tool Registry
+- Sparx EA --(ArchiMate_Access)--> EA SQL Audit Queries
+- AI4PB VS插件 --(ArchiMate_Realization)--> AUTO Skill Router
+- WorkflowViewProvider --(ArchiMate_Triggering)--> AUTO Skill Router
+- AUTO Skill Router --(ArchiMate_Triggering)--> Github Copilot
+- TestAndVerification --(ArchiMate_Flow)--> TestReport
+- AI4PB VS插件 --(ArchiMate_Composition)--> Executor_Router
+- Sparx EA --(ArchiMate_Flow)--> Task Help Infomation
+- Open Code AI Coding Agent --(ArchiMate_Specialization)--> AI Coding Agent
+- Github Copilot --(ArchiMate_Specialization)--> AI Coding Agent
+- AI4PB VS插件 --(ArchiMate_Access)--> .aicodingconfig
+- Open Code AI Coding Agent --(ArchiMate_Composition)--> OpenCode CLI 适配器
+- AgentFramework --(Association)--> Tool
+- AgentFramework --(Association)--> MCP
+- AgentFramework --(Association)--> Skill
+- AgentFramework --(Association)--> LLM
+- Business --(uses)--> AgentApplication
+- AgentFrameworkWithGithubCopilot --(Generalization)--> OverallAgentFrameworkArchitecture
+- BusinessApplication --(uses)--> Claude code
+- Business --(uses)--> Claude code
+- Business --(uses)--> OpencodeAgentApplication
+- AgentFrameworkWithOpencode --(Generalization)--> OverallAgentFrameworkArchitecture
+- AgentFrameworkWithOpenclaw --(Generalization)--> OverallAgentFrameworkArchitecture
+- AgentFrameworkWithClaudecode --(Generalization)--> OverallAgentFrameworkArchitecture
+- Opencode --(uses)--> Memory
+- Opencode --(uses)--> Custom Prompts
+- GithubCopilot --(Generalization)--> AgentFramework
+- Claude code --(Association)--> LLM
+- Claude code --(Association)--> Tool
+- Claude code --(Association)--> Agent
+- BusinessApplication --(uses)--> GithubCopilot
+- Business --(uses)--> GithubCopilot
+- GithubCopilot --(Association)--> Skill
+- GithubCopilot --(Association)--> Agent
+- GithubCopilot --(Association)--> MCP
+- GithubCopilot --(Association)--> Tool
+- GithubCopilot --(Association)--> LLM
+- Business --(uses)--> Openclaw
+- BusinessApplication --(uses)--> Openclaw
+- Openclaw --(Association)--> Skill
+- Openclaw --(Association)--> Agent
+- Openclaw --(Association)--> MCP
+- Openclaw --(Association)--> Tool
+- Openclaw --(Association)--> LLM
+- AgentFramework --(Association)--> Agent
+- Business --(uses)--> BusinessApplication
+- AgentApplication --(uses)--> AgentFramework
+- BusinessApplication --(uses)--> AgentApplication
+- Opencode --(uses)--> Skill
+- Strategy --(uses)--> Business
+- Opencode --(Generalization)--> AgentFramework
+- Openclaw --(Generalization)--> AgentFramework
+- Claude code --(Generalization)--> AgentFramework
+- Opencode --(uses)--> Agent
+- Claude code --(Association)--> MCP
+- Claude code --(Association)--> Skill
+- Opencode --(uses)--> MCP
+- Opencode --(uses)--> LLM
+- Opencode --(uses)--> Tool
+- BusinessApplication --(uses)--> OpencodeAgentApplication
+- OpencodeAgentApplication --(uses)--> Opencode
+- Ontology(Schema) --(defines)--> KnowledgeGraph
+- Business --(extracts ontology from business)--> Ontology(Schema)
+- GraphRag MCP --(reads/writes)--> KnowledgeGraph
+- KnowledgeGraph --(be used to train)--> LLM
+- GraphRag MCP --(Generalization)--> MCP
+- JSON Format of Archimate Model --(ArchiMate_Flow)--> AI Coding Agent
+- Task Help Infomation --(ArchiMate_Flow)--> AI Coding Agent
+- AI4PBAgentApplicationBundle --(ArchiMate_Flow)--> AI Coding Agent
+- JSON格式模型提取JS脚本 --(ArchiMate_Flow)--> Sparx EA
+- SCRUM --(ArchiMate_Composition)--> ai4pb-workflows
+- SCRUM --(ArchiMate_Composition)--> ai4pb-task-support
+- SCRUM --(ArchiMate_Composition)--> ai4pb-weekly-report
+- SCRUM --(ArchiMate_Composition)--> ai4pb-wrapup
+- SCRUM --(ArchiMate_Composition)--> ai4pb-iteration-summary
+- SCRUM --(ArchiMate_Composition)--> ai4pb-iteration-issues
+- SCRUM --(ArchiMate_Composition)--> ai4pb-init
+- SCRUM --(ArchiMate_Composition)--> ai4pb-task-list
+- SCRUM --(ArchiMate_Composition)--> ai4pb-audit
+- WorkflowViewProvider --(ArchiMate_Triggering)--> Executor_Router
+- AI4PB VS插件 --(ArchiMate_Access)--> AI4PBAgentApplicationBundle
+- Prompt Tool Registry --(ArchiMate_Access)--> AI4PBAgentApplicationBundle
+- Open Code AI Coding Agent --(ArchiMate_Composition)--> ECC Hooks Plugin
+- Open Code AI Coding Agent --(ArchiMate_Composition)--> ECC Tool Pack
+- Reality Scanner Orchestrator --(ArchiMate_Composition)--> TypeScript Scanner Adapter
+- Reality Scanner Orchestrator --(ArchiMate_Composition)--> Python Scanner Adapter
+- Python Scanner Adapter --(ArchiMate_Triggering)--> Language-Specific Scanner Scripts
+- TypeScript Scanner Adapter --(ArchiMate_Access)--> Target System
+- Python Scanner Adapter --(ArchiMate_Access)--> Target System
+- Reality Scanner Orchestrator --(ArchiMate_Flow)--> reality.json
+- Architecture Reconciliation Service --(ArchiMate_Access)--> reality.json
+- Architecture Reconciliation Service --(ArchiMate_Access)--> JSON Format of Archimate Model
+- Architecture Reconciliation Service --(ArchiMate_Flow)--> ARCH_IMPL_GAP
+- Final Target System --(ArchiMate_Flow)--> Reality Scanner Orchestrator
+- JSON Format of Archimate Model --(ArchiMate_Realization)--> System Architecture Description
+- ARCH_IMPL_GAP --(ArchiMate_Flow)--> Implementation
+
+## Ignored Implementation Details
+
+- normalizeStreamContent (temp-test.js)
+- normalizeSkillList (scripts/claw.js)
+- skillExists (scripts/claw.js)
+- showHelp (scripts/doctor.js)
+- parseArgs (scripts/doctor.js)
+- statusLabel (scripts/doctor.js)
+- printHuman (scripts/doctor.js)
+- main (scripts/doctor.js)
+- showHelp (scripts/ecc.js)
+- resolveCommand (scripts/ecc.js)
+- runCommand (scripts/ecc.js)
+- main (scripts/ecc.js)
+- normalizeScope (scripts/harness-audit.js)
+- fileExists (scripts/harness-audit.js)
+- readText (scripts/harness-audit.js)
+- countFiles (scripts/harness-audit.js)
+- safeRead (scripts/harness-audit.js)
+- getChecks (scripts/harness-audit.js)
+- summarizeCategoryScores (scripts/harness-audit.js)
+- printText (scripts/harness-audit.js)
+- showHelp (scripts/harness-audit.js)
+- main (scripts/harness-audit.js)
+- showHelp (scripts/install-apply.js)
+- printHumanPlan (scripts/install-apply.js)
+- main (scripts/install-apply.js)
+- showHelp (scripts/install-plan.js)
+- parseArgs (scripts/install-plan.js)
+- printProfiles (scripts/install-plan.js)
+- printModules (scripts/install-plan.js)
+- printComponents (scripts/install-plan.js)
+- printPlan (scripts/install-plan.js)
+- main (scripts/install-plan.js)
+- showHelp (scripts/list-installed.js)
+- parseArgs (scripts/list-installed.js)
+- printHuman (scripts/list-installed.js)
+- main (scripts/list-installed.js)
+- usage (scripts/orchestrate-worktrees.js)
+- parseArgs (scripts/orchestrate-worktrees.js)
+- loadPlanConfig (scripts/orchestrate-worktrees.js)
+- printDryRun (scripts/orchestrate-worktrees.js)
+- usage (scripts/orchestration-status.js)
+- parseArgs (scripts/orchestration-status.js)
+- showHelp (scripts/repair.js)
+- parseArgs (scripts/repair.js)
+- printHuman (scripts/repair.js)
+- main (scripts/repair.js)
+- usage (scripts/session-inspect.js)
+- inspectSkillLoopTarget (scripts/session-inspect.js)
+- showHelp (scripts/sessions-cli.js)
+- printSessionList (scripts/sessions-cli.js)
+- printWorkers (scripts/sessions-cli.js)
+- printSkillRuns (scripts/sessions-cli.js)
+- printDecisions (scripts/sessions-cli.js)
+- printSessionDetail (scripts/sessions-cli.js)
+- showHelp (scripts/setup-package-manager.js)
+- detectAndShow (scripts/setup-package-manager.js)
+- listAvailable (scripts/setup-package-manager.js)
+- setGlobal (scripts/setup-package-manager.js)
+- setProject (scripts/setup-package-manager.js)
+- box (scripts/skill-create-output.js)
+- stripAnsi (scripts/skill-create-output.js)
+- progressBar (scripts/skill-create-output.js)
+- sleep (scripts/skill-create-output.js)
+- animateProgress (scripts/skill-create-output.js)
+- showHelp (scripts/skills-health.js)
+- requireValue (scripts/skills-health.js)
+- parseArgs (scripts/skills-health.js)
+- main (scripts/skills-health.js)
+- showHelp (scripts/status.js)
+- printActiveSessions (scripts/status.js)
+- printSkillRuns (scripts/status.js)
+- printInstallHealth (scripts/status.js)
+- printGovernance (scripts/status.js)
+- printHuman (scripts/status.js)
+- showHelp (scripts/uninstall.js)
+- parseArgs (scripts/uninstall.js)
+- printHuman (scripts/uninstall.js)
+- main (scripts/uninstall.js)
+- scanPythonReality (src/architectureRealityService.ts)
+- buildRealityModel (src/architectureRealityService.ts)
+- reconcileArchitectureModels (src/architectureRealityService.ts)
+- classifyOrphanedElement (src/architectureRealityService.ts)
+- renderGapMarkdown (src/architectureRealityService.ts)
+- readIntentArchitecture (src/architectureRealityService.ts)
+- resolvePythonCommand (src/architectureRealityService.ts)
+- buildNameIndex (src/architectureRealityService.ts)
+- normalizeRelationshipKey (src/architectureRealityService.ts)
+- normalizeName (src/architectureRealityService.ts)
+- normalizeFilePath (src/architectureRealityService.ts)
+- ratio (src/architectureRealityService.ts)
+- clamp01 (src/architectureRealityService.ts)
+- roundMetric (src/architectureRealityService.ts)
+- formatMetric (src/architectureRealityService.ts)
+- uniqueStrings (src/architectureRealityService.ts)
+- OrphanClassification (src/architectureRealityService.ts)
+- DifferenceItem (src/architectureRealityService.ts)
+- ReconciliationReport (src/architectureRealityService.ts)
+- AlignmentOptions (src/architectureRealityService.ts)
+- PythonScannerResponse (src/architectureRealityService.ts)
+- IntentArchitectureDocument (src/architectureRealityService.ts)
+- PromptTemplateTool (src/extension.ts)
+- registerPromptTools (src/extension.ts)
+- sanitizeWorkflowViewState (src/extension.ts)
+- normalizeSkillKey (src/extension.ts)
+- inferSkillFromText (src/extension.ts)
+- postWorkflowRuntimeMessage (src/extension.ts)
+- createWorkflowStreamId (src/extension.ts)
+- analyzeAutoSkillSuggestions (src/extension.ts)
+- parseAutoSuggestionJson (src/extension.ts)
+- safeParseJson (src/extension.ts)
+- buildFallbackAutoSkillSuggestions (src/extension.ts)
+- rankSkillsFromText (src/extension.ts)
+- dedupeAutoSkillSuggestions (src/extension.ts)
+- buildSkillSeedText (src/extension.ts)
+- extractUserDirectiveFromSeedText (src/extension.ts)
+- buildOpenCodePromptText (src/extension.ts)
+- normalizeAgentExecutor (src/extension.ts)
+- normalizeSkillRoutingKey (src/extension.ts)
+- normalizeOpenCodeExecutionHost (src/extension.ts)
+- normalizeOpenCodeTransport (src/extension.ts)
+- isBareCommandName (src/extension.ts)
+- toWslPath (src/extension.ts)
+- normalizeOpenCodeServerPath (src/extension.ts)
+- quotePosixShellArg (src/extension.ts)
+- isCommandNotFoundFailure (src/extension.ts)
+- stripKnownWslWarnings (src/extension.ts)
+- decodeProcessChunk (src/extension.ts)
+- normalizeOpenCodeBaseUrl (src/extension.ts)
+- buildOpenCodeServerUrl (src/extension.ts)
+- buildOpenCodeServerAuthHeader (src/extension.ts)
+- summarizeHttpErrorBody (src/extension.ts)
+- extractTextFromOpenCodeParts (src/extension.ts)
+- createDeferred (src/extension.ts)
+- asRecord (src/extension.ts)
+- readString (src/extension.ts)
+- readNestedString (src/extension.ts)
+- appendUniquePartOrder (src/extension.ts)
+- buildOrderedPartText (src/extension.ts)
+- parseOpenCodeServerError (src/extension.ts)
+- subscribeOpenCodeServerEvents (src/extension.ts)
+- requestOpenCodeServer (src/extension.ts)
+- requestOpenCodeServerJson (src/extension.ts)
+- getEffectiveAgentRouterConfig (src/extension.ts)
+- resolveAgentExecutorForSkill (src/extension.ts)
+- getAgentDisplayLabel (src/extension.ts)
+- buildSkillAgentDisplayMap (src/extension.ts)
+- getSkillAgentDisplayMapForWorkspace (src/extension.ts)
+- replaceOpenCodeTemplate (src/extension.ts)
+- buildOpenCodeInvocation (src/extension.ts)
+- runOpenCodeServerInvocation (src/extension.ts)
+- executeOpenCodeSpawn (src/extension.ts)
+- buildWslOpenCodeSpawn (src/extension.ts)
+- runOpenCodeInvocation (src/extension.ts)
+- getWorkspaceRoot (src/extension.ts)
+- resolvePath (src/extension.ts)
+- resolveExtensionPath (src/extension.ts)
+- getBundledPromptPaths (src/extension.ts)
+- getEffectiveGuidedOptions (src/extension.ts)
+- describeMaintenanceScope (src/extension.ts)
+- describeMaintenanceType (src/extension.ts)
+- buildGuidedOptionSummary (src/extension.ts)
+- buildGuidedAiConfig (src/extension.ts)
+- ensureGuidedAiConfig (src/extension.ts)
+- configureGuidedOptions (src/extension.ts)
+- exists (src/extension.ts)
+- splitMarkdownTableRow (src/extension.ts)
+- isMarkdownTableDivider (src/extension.ts)
+- parseTaskIssuesMarkdown (src/extension.ts)
+- normalizeTaskTableCellForWrite (src/extension.ts)
+- buildMarkdownTableRow (src/extension.ts)
+- isTaskActiveStatus (src/extension.ts)
+- formatFeedbackTimestamp (src/extension.ts)
+- applyIssueFeedbackToTaskTable (src/extension.ts)
+- escapeHtmlForWebview (src/extension.ts)
+- buildIssueFeedbackWebviewHtml (src/extension.ts)
+- readBundledSkillText (src/extension.ts)
+- initializeAICodingAgentWorkspaceProjectConfig (src/extension.ts)
+- initializeWorkspaceProjectConfigs (src/extension.ts)
+- replaceDirectoryFromSource (src/extension.ts)
+- copyFilesRecursivelyOverwrite (src/extension.ts)
+- fileMtime (src/extension.ts)
+- clearDirectoryContents (src/extension.ts)
+- toIsoLocal (src/extension.ts)
+- loadAiConfig (src/extension.ts)
+- getAiConfigPath (src/extension.ts)
+- getArchitectureJsonPath (src/extension.ts)
+- openFileIfExists (src/extension.ts)
+- refreshArchitectureContext (src/extension.ts)
+- initializeFromTemplate (src/extension.ts)
+- startIterationFromModel (src/extension.ts)
+- runDesignCodeAlignment (src/extension.ts)
+- generateWrapUpReport (src/extension.ts)
+- openNextAction (src/extension.ts)
+- getGuidedPrecheck (src/extension.ts)
+- runGuidedWorkflow (src/extension.ts)
+- openCopilotWithInitPrompt (src/extension.ts)
+- openCopilotWithDesignAuditPrompt (src/extension.ts)
+- openCopilotWithWrapUpPrompt (src/extension.ts)
+- openCopilotWithTaskListPrompt (src/extension.ts)
+- openCopilotWithTaskSupportPrompt (src/extension.ts)
+- openCopilotWithWeeklyReportPrompt (src/extension.ts)
+- openCopilotWithIterationIssuesPrompt (src/extension.ts)
+- openCopilotWithIterationSummaryPrompt (src/extension.ts)
+- openCopilotWithPromptReference (src/extension.ts)
+- openOpenCodeWithPrompt (src/extension.ts)
+- openGitHubCopilotWithPromptReference (src/extension.ts)
+- trySubmitCopilotChat (src/extension.ts)
+- AgentExecutor (src/extension.ts)
+- OpenCodeTransport (src/extension.ts)
+- OpenCodeExecutionHost (src/extension.ts)
+- OpenCodeServerConfig (src/extension.ts)
+- OpenCodeCliConfig (src/extension.ts)
+- AgentRouterConfig (src/extension.ts)
+- AiConfig (src/extension.ts)
+- MaintenanceScope (src/extension.ts)
+- GuidedOptions (src/extension.ts)
+- WorkspaceProjectConfigCopySpec (src/extension.ts)
+- SkillKey (src/extension.ts)
+- WorkflowFlowKey (src/extension.ts)
+- WorkflowMenuKey (src/extension.ts)
+- ChatBubbleRole (src/extension.ts)
+- AutoSuggestionViewItem (src/extension.ts)
+- WorkflowStreamBubbleState (src/extension.ts)
+- WorkflowThreadEntry (src/extension.ts)
+- WorkflowViewState (src/extension.ts)
+- IssueFeedbackRow (src/extension.ts)
+- ParsedTaskIssuesTable (src/extension.ts)
+- PromptToolInput (src/extension.ts)
+- AutoSkillSuggestion (src/extension.ts)
+- EffectiveOpenCodeServerConfig (src/extension.ts)
+- EffectiveOpenCodeConfig (src/extension.ts)
+- EffectiveAgentRouterConfig (src/extension.ts)
+- OpenCodeExecutionContext (src/extension.ts)
+- OpenCodeInvocation (src/extension.ts)
+- OpenCodeCommandResult (src/extension.ts)
+- OpenCodeStreamHandlers (src/extension.ts)
+- OpenCodeServerHealth (src/extension.ts)
+- OpenCodeServerSession (src/extension.ts)
+- OpenCodeServerPromptResponse (src/extension.ts)
+- OpenCodeServerEvent (src/extension.ts)
+- Deferred (src/extension.ts)
+- OpenCodeServerEventStream (src/extension.ts)
+- ParsedAutoSuggestion (src/extension.ts)
+- test (tests/codex-config.test.js)
+- test (tests/opencode-config.test.js)
+- matchesTestGlob (tests/run-all.js)
+- walkFiles (tests/run-all.js)
+- discoverTestFiles (tests/run-all.js)
+- main (script/EA-jsscript/ea_to_stix.js)
+- getAttributeValue (script/EA-jsscript/ea_to_stix.js)
+- parseValue (script/EA-jsscript/ea_to_stix.js)
+- saveFile (script/EA-jsscript/ea_to_stix.js)
+- GenerateGUID (script/EA-jsscript/ea_to_stix.js)
+- main (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- runSearchXml (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- runModelSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- runSqlFallbackSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- parseDaysFromSearchTerm (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- getDefaultOutputPath (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- ensureFolderExists (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- xmlToJson (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- getNodeValue (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- getNodeValueByAliases (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- writeToFile (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- toMarkdownString (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- toMarkdownCell (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- toJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- escapeJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- main (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- runSearchXml (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- runModelSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- runSqlFallbackSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- parseDaysFromSearchTerm (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- getDefaultOutputPath (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- ensureFolderExists (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- xmlToJson (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- getNodeValue (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- getNodeValueByAliases (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- writeToFile (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- toMarkdownString (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- toMarkdownCell (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- toJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- escapeJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- main (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- runSearchXml (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- runModelSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- runSqlFallbackSearch (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- parseDaysFromSearchTerm (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- getDefaultOutputPath (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- ensureFolderExists (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- xmlToJson (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- getNodeValue (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- getNodeValueByAliases (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- writeToFile (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- toMarkdownString (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- toMarkdownCell (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- toJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- escapeJsonString (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- trimString (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getConnectionProperty (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- stripWrappedQuotes (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- resolveModelFilePathFromConnectionString (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- resolveProjectPathFromCurrentModel (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- normalizeProjectPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getProjectConfigPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- readTextFileUtf8 (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- fileExists (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- appendUniquePath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getParentFolderPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getVsCodeExtensionRootCandidates (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- extractVersionTextFromExtensionFolderName (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- parseVersionParts (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- compareVersionTextsDesc (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getProjectManagedSharedScriptCandidates (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getInstalledExtensionSharedScriptCandidates (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- getLocalSharedScriptCandidates (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- tryLoadSharedScriptFromLocalCandidates (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- readSharedScriptText (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- parseAiCodingConfig (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- applyExternalConfig (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- sanitizeForEval (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- mainBootstrap (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- jsonEscape (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getCode (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getDate (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getPackagePath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getElementChainPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getElementBrowserPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getDiagramBrowserPath (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- getProjectinfo (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- saveRtfAsPdf (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- extractFromDiagram (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- isRtfEmpty (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- logGlobalRuntimeConfig (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- main (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- jsonEscape (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- getCode (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- getDate (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- getProjectinfo (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- saveRtfAsPdf (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- extractFromDiagram (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- isRtfEmpty (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- main (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- jsonEscape (script/EA-jsscript/project_auto_gen.js)
+- getCode (script/EA-jsscript/project_auto_gen.js)
+- getDate (script/EA-jsscript/project_auto_gen.js)
+- getProjectinfo (script/EA-jsscript/project_auto_gen.js)
+- saveRtfAsPdf (script/EA-jsscript/project_auto_gen.js)
+- extractFromDiagram (script/EA-jsscript/project_auto_gen.js)
+- isRtfEmpty (script/EA-jsscript/project_auto_gen.js)
+- main (script/EA-jsscript/project_auto_gen.js)
+- main (script/EA-jsscript/PUT-all-elements-on-diagram.js)
+- isArrayContains (script/EA-jsscript/PUT-all-elements-on-diagram.js)
+- collectFromPackageRecursive (script/EA-jsscript/PUT-all-elements-on-diagram.js)
+- collectElementAndChildrenRecursive (script/EA-jsscript/PUT-all-elements-on-diagram.js)
+- jsonEscape (script/EA-jsscript/schema_diagram_to_json.js)
+- extractFromDiagram (script/EA-jsscript/schema_diagram_to_json.js)
+- getTag (script/EA-jsscript/schema_diagram_to_json.js)
+- main (script/EA-jsscript/schema_diagram_to_json.js)
+- main (script/EA-jsscript/schema_json_to_diagram.js)
+- putTag (script/EA-jsscript/schema_json_to_diagram.js)
+- main (script/EA-jsscript/stix_to_ea.js)
+- readFile (script/EA-jsscript/stix_to_ea.js)
+- addAttributes (script/EA-jsscript/stix_to_ea.js)
+- normalizePathSegments (scripts/ci/catalog.js)
+- listMatchingFiles (scripts/ci/catalog.js)
+- buildCatalog (scripts/ci/catalog.js)
+- readFileOrThrow (scripts/ci/catalog.js)
+- parseReadmeExpectations (scripts/ci/catalog.js)
+- parseAgentsDocExpectations (scripts/ci/catalog.js)
+- evaluateExpectations (scripts/ci/catalog.js)
+- formatExpectation (scripts/ci/catalog.js)
+- renderText (scripts/ci/catalog.js)
+- renderMarkdown (scripts/ci/catalog.js)
+- main (scripts/ci/catalog.js)
+- extractFrontmatter (scripts/ci/validate-agents.js)
+- validateAgents (scripts/ci/validate-agents.js)
+- validateCommands (scripts/ci/validate-commands.js)
+- isNonEmptyString (scripts/ci/validate-hooks.js)
+- isNonEmptyStringArray (scripts/ci/validate-hooks.js)
+- validateHookEntry (scripts/ci/validate-hooks.js)
+- validateHooks (scripts/ci/validate-hooks.js)
+- readJson (scripts/ci/validate-install-manifests.js)
+- normalizeRelativePath (scripts/ci/validate-install-manifests.js)
+- validateSchema (scripts/ci/validate-install-manifests.js)
+- validateInstallManifests (scripts/ci/validate-install-manifests.js)
+- collectFiles (scripts/ci/validate-no-personal-paths.js)
+- collectRuleFiles (scripts/ci/validate-rules.js)
+- validateRules (scripts/ci/validate-rules.js)
+- validateSkills (scripts/ci/validate-skills.js)
+- walkDir (scripts/codemaps/generate.ts)
+- rel (scripts/codemaps/generate.ts)
+- classifyFiles (scripts/codemaps/generate.ts)
+- lineCount (scripts/codemaps/generate.ts)
+- buildTree (scripts/codemaps/generate.ts)
+- generateAreaDoc (scripts/codemaps/generate.ts)
+- generateIndex (scripts/codemaps/generate.ts)
+- main (scripts/codemaps/generate.ts)
+- AreaInfo (scripts/codemaps/generate.ts)
+- toNumber (scripts/hooks/cost-tracker.js)
+- estimateCost (scripts/hooks/cost-tracker.js)
+- isAllowedDocPath (scripts/hooks/doc-file-warning.js)
+- main (scripts/hooks/evaluate-session.js)
+- isEnabled (scripts/hooks/insaits-security-wrapper.js)
+- readToken (scripts/hooks/pre-bash-dev-server-block.js)
+- shouldSkipOptionValue (scripts/hooks/pre-bash-dev-server-block.js)
+- isOptionToken (scripts/hooks/pre-bash-dev-server-block.js)
+- normalizeCommandWord (scripts/hooks/pre-bash-dev-server-block.js)
+- getLeadingCommandWord (scripts/hooks/pre-bash-dev-server-block.js)
+- main (scripts/hooks/pre-compact.js)
+- exec (scripts/hooks/quality-gate.js)
+- log (scripts/hooks/quality-gate.js)
+- maybeRunQualityGate (scripts/hooks/quality-gate.js)
+- readStdinRaw (scripts/hooks/run-with-flags.js)
+- getPluginRoot (scripts/hooks/run-with-flags.js)
+- main (scripts/hooks/run-with-flags.js)
+- extractSessionSummary (scripts/hooks/session-end.js)
+- runMain (scripts/hooks/session-end.js)
+- getSessionMetadata (scripts/hooks/session-end.js)
+- extractHeaderField (scripts/hooks/session-end.js)
+- buildSessionHeader (scripts/hooks/session-end.js)
+- mergeSessionHeader (scripts/hooks/session-end.js)
+- main (scripts/hooks/session-end.js)
+- buildSummarySection (scripts/hooks/session-end.js)
+- buildSummaryBlock (scripts/hooks/session-end.js)
+- escapeRegExp (scripts/hooks/session-end.js)
+- main (scripts/hooks/session-start.js)
+- main (scripts/hooks/suggest-compact.js)
+- getPackageVersion (scripts/lib/install-executor.js)
+- getManifestVersion (scripts/lib/install-executor.js)
+- getRepoCommit (scripts/lib/install-executor.js)
+- readDirectoryNames (scripts/lib/install-executor.js)
+- validateLegacyTarget (scripts/lib/install-executor.js)
+- listFilesRecursive (scripts/lib/install-executor.js)
+- isGeneratedRuntimeSourcePath (scripts/lib/install-executor.js)
+- createStatePreview (scripts/lib/install-executor.js)
+- buildCopyFileOperation (scripts/lib/install-executor.js)
+- addRecursiveCopyOperations (scripts/lib/install-executor.js)
+- addFileCopyOperation (scripts/lib/install-executor.js)
+- addMatchingRuleOperations (scripts/lib/install-executor.js)
+- isDirectoryNonEmpty (scripts/lib/install-executor.js)
+- planClaudeLegacyInstall (scripts/lib/install-executor.js)
+- planCursorLegacyInstall (scripts/lib/install-executor.js)
+- planAntigravityLegacyInstall (scripts/lib/install-executor.js)
+- materializeScaffoldOperation (scripts/lib/install-executor.js)
+- readPackageVersion (scripts/lib/install-lifecycle.js)
+- compareStringArrays (scripts/lib/install-lifecycle.js)
+- getManagedOperations (scripts/lib/install-lifecycle.js)
+- resolveOperationSourcePath (scripts/lib/install-lifecycle.js)
+- areFilesEqual (scripts/lib/install-lifecycle.js)
+- readFileUtf8 (scripts/lib/install-lifecycle.js)
+- isPlainObject (scripts/lib/install-lifecycle.js)
+- cloneJsonValue (scripts/lib/install-lifecycle.js)
+- parseJsonLikeValue (scripts/lib/install-lifecycle.js)
+- getOperationTextContent (scripts/lib/install-lifecycle.js)
+- getOperationJsonPayload (scripts/lib/install-lifecycle.js)
+- getOperationPreviousContent (scripts/lib/install-lifecycle.js)
+- getOperationPreviousJson (scripts/lib/install-lifecycle.js)
+- formatJson (scripts/lib/install-lifecycle.js)
+- readJsonFile (scripts/lib/install-lifecycle.js)
+- ensureParentDir (scripts/lib/install-lifecycle.js)
+- deepMergeJson (scripts/lib/install-lifecycle.js)
+- jsonContainsSubset (scripts/lib/install-lifecycle.js)
+- deepRemoveJsonSubset (scripts/lib/install-lifecycle.js)
+- hydrateRecordedOperations (scripts/lib/install-lifecycle.js)
+- buildRecordedStatePreview (scripts/lib/install-lifecycle.js)
+- shouldRepairFromRecordedOperations (scripts/lib/install-lifecycle.js)
+- executeRepairOperation (scripts/lib/install-lifecycle.js)
+- executeUninstallOperation (scripts/lib/install-lifecycle.js)
+- inspectManagedOperation (scripts/lib/install-lifecycle.js)
+- summarizeManagedOperationHealth (scripts/lib/install-lifecycle.js)
+- buildDiscoveryRecord (scripts/lib/install-lifecycle.js)
+- buildIssue (scripts/lib/install-lifecycle.js)
+- determineStatus (scripts/lib/install-lifecycle.js)
+- analyzeRecord (scripts/lib/install-lifecycle.js)
+- createRepairPlanFromRecord (scripts/lib/install-lifecycle.js)
+- cleanupEmptyParentDirs (scripts/lib/install-lifecycle.js)
+- readJson (scripts/lib/install-manifests.js)
+- dedupeStrings (scripts/lib/install-manifests.js)
+- assertKnownModuleIds (scripts/lib/install-manifests.js)
+- intersectTargets (scripts/lib/install-manifests.js)
+- expandComponentIdsToModuleIds (scripts/lib/install-manifests.js)
+- cloneJsonValue (scripts/lib/install-state.js)
+- readJson (scripts/lib/install-state.js)
+- getValidator (scripts/lib/install-state.js)
+- createFallbackValidator (scripts/lib/install-state.js)
+- formatValidationErrors (scripts/lib/install-state.js)
+- assertValidInstallState (scripts/lib/install-state.js)
+- stripCodeTicks (scripts/lib/orchestration-session.js)
+- parseSection (scripts/lib/orchestration-session.js)
+- parseBullets (scripts/lib/orchestration-session.js)
+- parseWorkerStatus (scripts/lib/orchestration-session.js)
+- parseWorkerTask (scripts/lib/orchestration-session.js)
+- parseWorkerHandoff (scripts/lib/orchestration-session.js)
+- readTextIfExists (scripts/lib/orchestration-session.js)
+- listWorkerDirectories (scripts/lib/orchestration-session.js)
+- loadWorkerSnapshots (scripts/lib/orchestration-session.js)
+- listTmuxPanes (scripts/lib/orchestration-session.js)
+- summarizeWorkerStates (scripts/lib/orchestration-session.js)
+- buildSessionSnapshot (scripts/lib/orchestration-session.js)
+- resolveSnapshotTarget (scripts/lib/orchestration-session.js)
+- collectSessionSnapshot (scripts/lib/orchestration-session.js)
+- getConfigPath (scripts/lib/package-manager.js)
+- loadConfig (scripts/lib/package-manager.js)
+- saveConfig (scripts/lib/package-manager.js)
+- escapeRegex (scripts/lib/package-manager.js)
+- fileExists (scripts/lib/project-detect.js)
+- hasFileWithExtension (scripts/lib/project-detect.js)
+- getRunnerFromPackageManager (scripts/lib/resolve-formatter.js)
+- getDefaultAliases (scripts/lib/session-aliases.js)
+- shellQuote (scripts/lib/tmux-worktree-orchestrator.js)
+- formatCommand (scripts/lib/tmux-worktree-orchestrator.js)
+- buildTemplateVariables (scripts/lib/tmux-worktree-orchestrator.js)
+- buildSessionBannerCommand (scripts/lib/tmux-worktree-orchestrator.js)
+- buildWorkerArtifacts (scripts/lib/tmux-worktree-orchestrator.js)
+- runCommand (scripts/lib/tmux-worktree-orchestrator.js)
+- commandSucceeds (scripts/lib/tmux-worktree-orchestrator.js)
+- canonicalizePath (scripts/lib/tmux-worktree-orchestrator.js)
+- branchExists (scripts/lib/tmux-worktree-orchestrator.js)
+- listWorktrees (scripts/lib/tmux-worktree-orchestrator.js)
+- cleanupExisting (scripts/lib/tmux-worktree-orchestrator.js)
+- test (tests/ci/validators.test.js)
+- createTestDir (tests/ci/validators.test.js)
+- cleanupTestDir (tests/ci/validators.test.js)
+- writeJson (tests/ci/validators.test.js)
+- writeInstallComponentsManifest (tests/ci/validators.test.js)
+- runValidatorWithDir (tests/ci/validators.test.js)
+- runValidatorWithDirs (tests/ci/validators.test.js)
+- runValidator (tests/ci/validators.test.js)
+- runCatalogValidator (tests/ci/validators.test.js)
+- writeCatalogFixture (tests/ci/validators.test.js)
+- runTests (tests/ci/validators.test.js)
+- test (tests/hooks/auto-tmux-dev.test.js)
+- runScript (tests/hooks/auto-tmux-dev.test.js)
+- runTests (tests/hooks/auto-tmux-dev.test.js)
+- test (tests/hooks/check-hook-enabled.test.js)
+- runScript (tests/hooks/check-hook-enabled.test.js)
+- runTests (tests/hooks/check-hook-enabled.test.js)
+- test (tests/hooks/cost-tracker.test.js)
+- makeTempDir (tests/hooks/cost-tracker.test.js)
+- runScript (tests/hooks/cost-tracker.test.js)
+- runTests (tests/hooks/cost-tracker.test.js)
+- test (tests/hooks/doc-file-warning.test.js)
+- runScript (tests/hooks/doc-file-warning.test.js)
+- runTests (tests/hooks/doc-file-warning.test.js)
+- test (tests/hooks/evaluate-session.test.js)
+- createTestDir (tests/hooks/evaluate-session.test.js)
+- cleanupTestDir (tests/hooks/evaluate-session.test.js)
+- createTranscript (tests/hooks/evaluate-session.test.js)
+- runEvaluate (tests/hooks/evaluate-session.test.js)
+- runTests (tests/hooks/evaluate-session.test.js)
+- test (tests/hooks/hook-flags.test.js)
+- withEnv (tests/hooks/hook-flags.test.js)
+- runTests (tests/hooks/hook-flags.test.js)
+- toBashPath (tests/hooks/hooks.test.js)
+- sleepMs (tests/hooks/hooks.test.js)
+- test (tests/hooks/hooks.test.js)
+- asyncTest (tests/hooks/hooks.test.js)
+- runScript (tests/hooks/hooks.test.js)
+- runShellScript (tests/hooks/hooks.test.js)
+- createTestDir (tests/hooks/hooks.test.js)
+- cleanupTestDir (tests/hooks/hooks.test.js)
+- createCommandShim (tests/hooks/hooks.test.js)
+- readCommandLog (tests/hooks/hooks.test.js)
+- withPrependedPath (tests/hooks/hooks.test.js)
+- assertNoProjectDetectionSideEffects (tests/hooks/hooks.test.js)
+- assertObserveSkipBeforeProjectDetection (tests/hooks/hooks.test.js)
+- runPatchedRunAll (tests/hooks/hooks.test.js)
+- runTests (tests/hooks/hooks.test.js)
+- test (tests/hooks/observer-memory.test.js)
+- createTempDir (tests/hooks/observer-memory.test.js)
+- cleanupDir (tests/hooks/observer-memory.test.js)
+- test (tests/hooks/post-bash-hooks.test.js)
+- runScript (tests/hooks/post-bash-hooks.test.js)
+- test (tests/hooks/pre-bash-dev-server-block.test.js)
+- runScript (tests/hooks/pre-bash-dev-server-block.test.js)
+- runTests (tests/hooks/pre-bash-dev-server-block.test.js)
+- test (tests/hooks/pre-bash-reminders.test.js)
+- runScript (tests/hooks/pre-bash-reminders.test.js)
+- runTests (tests/hooks/pre-bash-reminders.test.js)
+- test (tests/hooks/quality-gate.test.js)
+- test (tests/hooks/suggest-compact.test.js)
+- runCompact (tests/hooks/suggest-compact.test.js)
+- getCounterFilePath (tests/hooks/suggest-compact.test.js)
+- runTests (tests/hooks/suggest-compact.test.js)
+- _test (tests/integration/hooks.test.js)
+- asyncTest (tests/integration/hooks.test.js)
+- runHookWithInput (tests/integration/hooks.test.js)
+- runHookCommand (tests/integration/hooks.test.js)
+- createTestDir (tests/integration/hooks.test.js)
+- cleanupTestDir (tests/integration/hooks.test.js)
+- runTests (tests/integration/hooks.test.js)
+- test (tests/lib/install-config.test.js)
+- createTempDir (tests/lib/install-config.test.js)
+- cleanup (tests/lib/install-config.test.js)
+- writeJson (tests/lib/install-config.test.js)
+- runTests (tests/lib/install-config.test.js)
+- test (tests/lib/install-lifecycle.test.js)
+- createTempDir (tests/lib/install-lifecycle.test.js)
+- cleanup (tests/lib/install-lifecycle.test.js)
+- writeState (tests/lib/install-lifecycle.test.js)
+- runTests (tests/lib/install-lifecycle.test.js)
+- test (tests/lib/install-manifests.test.js)
+- createTestRepo (tests/lib/install-manifests.test.js)
+- cleanupTestRepo (tests/lib/install-manifests.test.js)
+- writeJson (tests/lib/install-manifests.test.js)
+- runTests (tests/lib/install-manifests.test.js)
+- test (tests/lib/install-request.test.js)
+- runTests (tests/lib/install-request.test.js)
+- test (tests/lib/install-state.test.js)
+- createTestDir (tests/lib/install-state.test.js)
+- cleanupTestDir (tests/lib/install-state.test.js)
+- runTests (tests/lib/install-state.test.js)
+- normalizedRelativePath (tests/lib/install-targets.test.js)
+- test (tests/lib/install-targets.test.js)
+- runTests (tests/lib/install-targets.test.js)
+- test (tests/lib/orchestration-session.test.js)
+- test (tests/lib/package-manager.test.js)
+- createTestDir (tests/lib/package-manager.test.js)
+- cleanupTestDir (tests/lib/package-manager.test.js)
+- runTests (tests/lib/package-manager.test.js)
+- test (tests/lib/project-detect.test.js)
+- createTempDir (tests/lib/project-detect.test.js)
+- cleanupDir (tests/lib/project-detect.test.js)
+- writeTestFile (tests/lib/project-detect.test.js)
+- runTests (tests/lib/project-detect.test.js)
+- test (tests/lib/resolve-formatter.test.js)
+- makeTmpDir (tests/lib/resolve-formatter.test.js)
+- cleanupTmpDirs (tests/lib/resolve-formatter.test.js)
+- runTests (tests/lib/resolve-formatter.test.js)
+- test (tests/lib/session-adapters.test.js)
+- withHome (tests/lib/session-adapters.test.js)
+- test (tests/lib/session-aliases.test.js)
+- resetAliases (tests/lib/session-aliases.test.js)
+- runTests (tests/lib/session-aliases.test.js)
+- test (tests/lib/session-manager.test.js)
+- createTempSessionDir (tests/lib/session-manager.test.js)
+- cleanup (tests/lib/session-manager.test.js)
+- runTests (tests/lib/session-manager.test.js)
+- test (tests/lib/shell-split.test.js)
+- test (tests/lib/skill-dashboard.test.js)
+- createTempDir (tests/lib/skill-dashboard.test.js)
+- cleanupTempDir (tests/lib/skill-dashboard.test.js)
+- createSkill (tests/lib/skill-dashboard.test.js)
+- appendJsonl (tests/lib/skill-dashboard.test.js)
+- runCli (tests/lib/skill-dashboard.test.js)
+- runTests (tests/lib/skill-dashboard.test.js)
+- test (tests/lib/skill-evolution.test.js)
+- createTempDir (tests/lib/skill-evolution.test.js)
+- cleanupTempDir (tests/lib/skill-evolution.test.js)
+- createSkill (tests/lib/skill-evolution.test.js)
+- appendJsonl (tests/lib/skill-evolution.test.js)
+- readJson (tests/lib/skill-evolution.test.js)
+- runCli (tests/lib/skill-evolution.test.js)
+- runTests (tests/lib/skill-evolution.test.js)
+- test (tests/lib/skill-improvement.test.js)
+- makeProjectRoot (tests/lib/skill-improvement.test.js)
+- cleanup (tests/lib/skill-improvement.test.js)
+- test (tests/lib/state-store.test.js)
+- createTempDir (tests/lib/state-store.test.js)
+- cleanupTempDir (tests/lib/state-store.test.js)
+- runNode (tests/lib/state-store.test.js)
+- parseJson (tests/lib/state-store.test.js)
+- seedStore (tests/lib/state-store.test.js)
+- runTests (tests/lib/state-store.test.js)
+- test (tests/lib/tmux-worktree-orchestrator.test.js)
+- test (tests/lib/utils.test.js)
+- runTests (tests/lib/utils.test.js)
+- test (tests/scripts/claw.test.js)
+- makeTmpDir (tests/scripts/claw.test.js)
+- runTests (tests/scripts/claw.test.js)
+- createTempDir (tests/scripts/doctor.test.js)
+- cleanup (tests/scripts/doctor.test.js)
+- writeState (tests/scripts/doctor.test.js)
+- run (tests/scripts/doctor.test.js)
+- test (tests/scripts/doctor.test.js)
+- runTests (tests/scripts/doctor.test.js)
+- runCli (tests/scripts/ecc.test.js)
+- createTempDir (tests/scripts/ecc.test.js)
+- parseJson (tests/scripts/ecc.test.js)
+- runTest (tests/scripts/ecc.test.js)
+- main (tests/scripts/ecc.test.js)
+- run (tests/scripts/harness-audit.test.js)
+- test (tests/scripts/harness-audit.test.js)
+- runTests (tests/scripts/harness-audit.test.js)
+- createTempDir (tests/scripts/install-apply.test.js)
+- cleanup (tests/scripts/install-apply.test.js)
+- readJson (tests/scripts/install-apply.test.js)
+- run (tests/scripts/install-apply.test.js)
+- test (tests/scripts/install-apply.test.js)
+- runTests (tests/scripts/install-apply.test.js)
+- run (tests/scripts/install-plan.test.js)
+- test (tests/scripts/install-plan.test.js)
+- runTests (tests/scripts/install-plan.test.js)
+- createTempDir (tests/scripts/install-ps1.test.js)
+- cleanup (tests/scripts/install-ps1.test.js)
+- resolvePowerShellCommand (tests/scripts/install-ps1.test.js)
+- run (tests/scripts/install-ps1.test.js)
+- test (tests/scripts/install-ps1.test.js)
+- runTests (tests/scripts/install-ps1.test.js)
+- createTempDir (tests/scripts/install-sh.test.js)
+- cleanup (tests/scripts/install-sh.test.js)
+- run (tests/scripts/install-sh.test.js)
+- test (tests/scripts/install-sh.test.js)
+- runTests (tests/scripts/install-sh.test.js)
+- createTempDir (tests/scripts/list-installed.test.js)
+- cleanup (tests/scripts/list-installed.test.js)
+- writeState (tests/scripts/list-installed.test.js)
+- run (tests/scripts/list-installed.test.js)
+- test (tests/scripts/list-installed.test.js)
+- runTests (tests/scripts/list-installed.test.js)
+- test (tests/scripts/orchestrate-codex-worker.test.js)
+- run (tests/scripts/orchestration-status.test.js)
+- test (tests/scripts/orchestration-status.test.js)
+- runTests (tests/scripts/orchestration-status.test.js)
+- createTempDir (tests/scripts/repair.test.js)
+- cleanup (tests/scripts/repair.test.js)
+- writeState (tests/scripts/repair.test.js)
+- runNode (tests/scripts/repair.test.js)
+- test (tests/scripts/repair.test.js)
+- runTests (tests/scripts/repair.test.js)
+- run (tests/scripts/session-inspect.test.js)
+- test (tests/scripts/session-inspect.test.js)
+- runTests (tests/scripts/session-inspect.test.js)
+- run (tests/scripts/setup-package-manager.test.js)
+- test (tests/scripts/setup-package-manager.test.js)
+- runTests (tests/scripts/setup-package-manager.test.js)
+- test (tests/scripts/skill-create-output.test.js)
+- stripAnsi (tests/scripts/skill-create-output.test.js)
+- captureLog (tests/scripts/skill-create-output.test.js)
+- runTests (tests/scripts/skill-create-output.test.js)
+- createTempDir (tests/scripts/uninstall.test.js)
+- cleanup (tests/scripts/uninstall.test.js)
+- writeState (tests/scripts/uninstall.test.js)
+- run (tests/scripts/uninstall.test.js)
+- test (tests/scripts/uninstall.test.js)
+- runTests (tests/scripts/uninstall.test.js)
+- readJson (scripts/lib/install/config.js)
+- getValidator (scripts/lib/install/config.js)
+- dedupeStrings (scripts/lib/install/config.js)
+- formatValidationErrors (scripts/lib/install/config.js)
+- dedupeStrings (scripts/lib/install/request.js)
+- normalizeRelativePath (scripts/lib/install-targets/helpers.js)
+- resolveBaseRoot (scripts/lib/install-targets/helpers.js)
+- buildValidationIssue (scripts/lib/install-targets/helpers.js)
+- listRelativeFiles (scripts/lib/install-targets/helpers.js)
+- createManagedOperation (scripts/lib/install-targets/helpers.js)
+- defaultValidateAdapterInput (scripts/lib/install-targets/helpers.js)
+- createRemappedOperation (scripts/lib/install-targets/helpers.js)
+- createNamespacedFlatRuleOperations (scripts/lib/install-targets/helpers.js)
+- createFlatRuleOperations (scripts/lib/install-targets/helpers.js)
+- createInstallTargetAdapter (scripts/lib/install-targets/helpers.js)
+- isObject (scripts/lib/session-adapters/canonical-session.js)
+- sanitizePathSegment (scripts/lib/session-adapters/canonical-session.js)
+- parseContextSeedPaths (scripts/lib/session-adapters/canonical-session.js)
+- ensureString (scripts/lib/session-adapters/canonical-session.js)
+- ensureOptionalString (scripts/lib/session-adapters/canonical-session.js)
+- ensureBoolean (scripts/lib/session-adapters/canonical-session.js)
+- ensureArrayOfStrings (scripts/lib/session-adapters/canonical-session.js)
+- ensureInteger (scripts/lib/session-adapters/canonical-session.js)
+- summarizeRawWorkerStates (scripts/lib/session-adapters/canonical-session.js)
+- deriveDmuxSessionState (scripts/lib/session-adapters/canonical-session.js)
+- resolveRecordingDir (scripts/lib/session-adapters/canonical-session.js)
+- readExistingRecording (scripts/lib/session-adapters/canonical-session.js)
+- writeFallbackSessionRecording (scripts/lib/session-adapters/canonical-session.js)
+- loadStateStore (scripts/lib/session-adapters/canonical-session.js)
+- resolveStateStoreWriter (scripts/lib/session-adapters/canonical-session.js)
+- deriveClaudeWorkerId (scripts/lib/session-adapters/canonical-session.js)
+- hydrateSessionFromPath (scripts/lib/session-adapters/claude-history.js)
+- resolveSessionRecord (scripts/lib/session-adapters/claude-history.js)
+- buildSourceTarget (scripts/lib/session-adapters/dmux-tmux.js)
+- buildDefaultAdapterOptions (scripts/lib/session-adapters/registry.js)
+- coerceTargetValue (scripts/lib/session-adapters/registry.js)
+- getTrendArrow (scripts/lib/skill-evolution/dashboard.js)
+- formatPercent (scripts/lib/skill-evolution/dashboard.js)
+- groupRecordsBySkill (scripts/lib/skill-evolution/dashboard.js)
+- roundRate (scripts/lib/skill-evolution/health.js)
+- formatRate (scripts/lib/skill-evolution/health.js)
+- listSkillsInRoot (scripts/lib/skill-evolution/health.js)
+- getFailureTrend (scripts/lib/skill-evolution/health.js)
+- countPendingAmendments (scripts/lib/skill-evolution/health.js)
+- getLastRun (scripts/lib/skill-evolution/health.js)
+- resolveRepoRoot (scripts/lib/skill-evolution/provenance.js)
+- resolveHomeDir (scripts/lib/skill-evolution/provenance.js)
+- normalizeSkillDir (scripts/lib/skill-evolution/provenance.js)
+- isWithinRoot (scripts/lib/skill-evolution/provenance.js)
+- isIsoTimestamp (scripts/lib/skill-evolution/provenance.js)
+- assertValidProvenance (scripts/lib/skill-evolution/provenance.js)
+- resolveHomeDir (scripts/lib/skill-evolution/tracker.js)
+- toNullableNumber (scripts/lib/skill-evolution/tracker.js)
+- readJsonl (scripts/lib/skill-evolution/tracker.js)
+- normalizeSkillDir (scripts/lib/skill-evolution/versioning.js)
+- getSkillFilePath (scripts/lib/skill-evolution/versioning.js)
+- ensureSkillExists (scripts/lib/skill-evolution/versioning.js)
+- parseVersionNumber (scripts/lib/skill-evolution/versioning.js)
+- readJsonl (scripts/lib/skill-evolution/versioning.js)
+- createProposalId (scripts/lib/skill-improvement/amendify.js)
+- summarizePatchPreview (scripts/lib/skill-improvement/amendify.js)
+- roundRate (scripts/lib/skill-improvement/evaluate.js)
+- summarize (scripts/lib/skill-improvement/evaluate.js)
+- roundRate (scripts/lib/skill-improvement/health.js)
+- rankCounts (scripts/lib/skill-improvement/health.js)
+- summarizeVariantRuns (scripts/lib/skill-improvement/health.js)
+- deriveSkillStatus (scripts/lib/skill-improvement/health.js)
+- ensureString (scripts/lib/skill-improvement/observations.js)
+- createObservationId (scripts/lib/skill-improvement/observations.js)
+- wrapSqlJsDatabase (scripts/lib/state-store/index.js)
+- openDatabase (scripts/lib/state-store/index.js)
+- ensureMigrationTable (scripts/lib/state-store/migrations.js)
+- normalizeLimit (scripts/lib/state-store/queries.js)
+- parseJsonColumn (scripts/lib/state-store/queries.js)
+- stringifyJson (scripts/lib/state-store/queries.js)
+- mapSessionRow (scripts/lib/state-store/queries.js)
+- mapSkillRunRow (scripts/lib/state-store/queries.js)
+- mapSkillVersionRow (scripts/lib/state-store/queries.js)
+- mapDecisionRow (scripts/lib/state-store/queries.js)
+- mapInstallStateRow (scripts/lib/state-store/queries.js)
+- mapGovernanceEventRow (scripts/lib/state-store/queries.js)
+- classifyOutcome (scripts/lib/state-store/queries.js)
+- toPercent (scripts/lib/state-store/queries.js)
+- summarizeSkillRuns (scripts/lib/state-store/queries.js)
+- summarizeInstallHealth (scripts/lib/state-store/queries.js)
+- normalizeSessionInput (scripts/lib/state-store/queries.js)
+- normalizeSkillRunInput (scripts/lib/state-store/queries.js)
+- normalizeSkillVersionInput (scripts/lib/state-store/queries.js)
+- normalizeDecisionInput (scripts/lib/state-store/queries.js)
+- normalizeInstallStateInput (scripts/lib/state-store/queries.js)
+- normalizeGovernanceEventInput (scripts/lib/state-store/queries.js)
+- getAjv (scripts/lib/state-store/schema.js)
+- getEntityValidator (scripts/lib/state-store/schema.js)
+- pushDeclarationElement (src/ast/ts/scanTypeScriptReality.ts)
+- normalizePath (src/ast/ts/scanTypeScriptReality.ts)
+- isExcluded (src/ast/ts/scanTypeScriptReality.ts)
+- __future__
+- _ensure_global_dirs (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _validate_file_path (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _validate_instinct_id (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _update_registry (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _load_instincts_from_dir (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _print_instincts_by_domain (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _find_cross_project_instincts (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _show_promotion_candidates (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _promote_specific (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _promote_auto (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _generate_evolved (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- _make_project (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+
+## Public Unmodeled APIs
+
+- temp-test.js (temp-test.js)
+- scripts/claw.js (scripts/claw.js)
+- isValidSessionName (scripts/claw.js)
+- getClawDir (scripts/claw.js)
+- getSessionPath (scripts/claw.js)
+- listSessions (scripts/claw.js)
+- loadHistory (scripts/claw.js)
+- appendTurn (scripts/claw.js)
+- loadECCContext (scripts/claw.js)
+- buildPrompt (scripts/claw.js)
+- askClaude (scripts/claw.js)
+- parseTurns (scripts/claw.js)
+- estimateTokenCount (scripts/claw.js)
+- getSessionMetrics (scripts/claw.js)
+- searchSessions (scripts/claw.js)
+- compactSession (scripts/claw.js)
+- exportSession (scripts/claw.js)
+- branchSession (scripts/claw.js)
+- handleClear (scripts/claw.js)
+- handleHistory (scripts/claw.js)
+- handleSessions (scripts/claw.js)
+- handleHelp (scripts/claw.js)
+- main (scripts/claw.js)
+- scripts/doctor.js (scripts/doctor.js)
+- scripts/ecc.js (scripts/ecc.js)
+- scripts/harness-audit.js (scripts/harness-audit.js)
+- parseArgs (scripts/harness-audit.js)
+- buildReport (scripts/harness-audit.js)
+- scripts/install-apply.js (scripts/install-apply.js)
+- scripts/install-plan.js (scripts/install-plan.js)
+- scripts/list-installed.js (scripts/list-installed.js)
+- scripts/orchestrate-worktrees.js (scripts/orchestrate-worktrees.js)
+- main (scripts/orchestrate-worktrees.js)
+- scripts/orchestration-status.js (scripts/orchestration-status.js)
+- main (scripts/orchestration-status.js)
+- scripts/repair.js (scripts/repair.js)
+- scripts/session-inspect.js (scripts/session-inspect.js)
+- parseArgs (scripts/session-inspect.js)
+- main (scripts/session-inspect.js)
+- scripts/sessions-cli.js (scripts/sessions-cli.js)
+- parseArgs (scripts/sessions-cli.js)
+- main (scripts/sessions-cli.js)
+- scripts/setup-package-manager.js (scripts/setup-package-manager.js)
+- scripts/skill-create-output.js (scripts/skill-create-output.js)
+- SkillCreateOutput (scripts/skill-create-output.js)
+- demo (scripts/skill-create-output.js)
+- scripts/skills-health.js (scripts/skills-health.js)
+- scripts/status.js (scripts/status.js)
+- parseArgs (scripts/status.js)
+- main (scripts/status.js)
+- scripts/uninstall.js (scripts/uninstall.js)
+- src/architectureRealityService.ts (src/architectureRealityService.ts)
+- runArchitectureRealityAlignment (src/architectureRealityService.ts)
+- AlignmentLogger (src/architectureRealityService.ts)
+- ArchitectureModelElement (src/architectureRealityService.ts)
+- ArchitectureModelRelationship (src/architectureRealityService.ts)
+- ArchitectureModelView (src/architectureRealityService.ts)
+- ArchitectureRealityModel (src/architectureRealityService.ts)
+- AlignmentRunResult (src/architectureRealityService.ts)
+- src/extension.ts (src/extension.ts)
+- activate (src/extension.ts)
+- deactivate (src/extension.ts)
+- tests/codex-config.test.js (tests/codex-config.test.js)
+- tests/opencode-config.test.js (tests/opencode-config.test.js)
+- tests/run-all.js (tests/run-all.js)
+- script/EA-jsscript/ea_to_stix.js (script/EA-jsscript/ea_to_stix.js)
+- script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js (script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js)
+- script/EA-jsscript/GetTasksAndIssuesForLLM-active.js (script/EA-jsscript/GetTasksAndIssuesForLLM-active.js)
+- script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js (script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js)
+- script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js)
+- script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js (script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js)
+- script/EA-jsscript/project_auto_gen_suitable_for_LLM.js (script/EA-jsscript/project_auto_gen_suitable_for_LLM.js)
+- script/EA-jsscript/project_auto_gen.js (script/EA-jsscript/project_auto_gen.js)
+- script/EA-jsscript/PUT-all-elements-on-diagram.js (script/EA-jsscript/PUT-all-elements-on-diagram.js)
+- script/EA-jsscript/schema_diagram_to_json.js (script/EA-jsscript/schema_diagram_to_json.js)
+- script/EA-jsscript/schema_json_to_diagram.js (script/EA-jsscript/schema_json_to_diagram.js)
+- script/EA-jsscript/stix_to_ea.js (script/EA-jsscript/stix_to_ea.js)
+- scripts/ci/catalog.js (scripts/ci/catalog.js)
+- scripts/ci/validate-agents.js (scripts/ci/validate-agents.js)
+- scripts/ci/validate-commands.js (scripts/ci/validate-commands.js)
+- scripts/ci/validate-hooks.js (scripts/ci/validate-hooks.js)
+- scripts/ci/validate-install-manifests.js (scripts/ci/validate-install-manifests.js)
+- scripts/ci/validate-no-personal-paths.js (scripts/ci/validate-no-personal-paths.js)
+- scripts/ci/validate-rules.js (scripts/ci/validate-rules.js)
+- scripts/ci/validate-skills.js (scripts/ci/validate-skills.js)
+- scripts/codemaps/generate.ts (scripts/codemaps/generate.ts)
+- scripts/hooks/cost-tracker.js (scripts/hooks/cost-tracker.js)
+- scripts/hooks/doc-file-warning.js (scripts/hooks/doc-file-warning.js)
+- scripts/hooks/evaluate-session.js (scripts/hooks/evaluate-session.js)
+- scripts/hooks/insaits-security-wrapper.js (scripts/hooks/insaits-security-wrapper.js)
+- scripts/hooks/post-edit-format.js (scripts/hooks/post-edit-format.js)
+- run (scripts/hooks/post-edit-format.js)
+- scripts/hooks/pre-bash-dev-server-block.js (scripts/hooks/pre-bash-dev-server-block.js)
+- scripts/hooks/pre-compact.js (scripts/hooks/pre-compact.js)
+- scripts/hooks/quality-gate.js (scripts/hooks/quality-gate.js)
+- run (scripts/hooks/quality-gate.js)
+- scripts/hooks/run-with-flags.js (scripts/hooks/run-with-flags.js)
+- scripts/hooks/session-end-marker.js (scripts/hooks/session-end-marker.js)
+- run (scripts/hooks/session-end-marker.js)
+- scripts/hooks/session-end.js (scripts/hooks/session-end.js)
+- scripts/hooks/session-start.js (scripts/hooks/session-start.js)
+- scripts/hooks/suggest-compact.js (scripts/hooks/suggest-compact.js)
+- scripts/lib/hook-flags.js (scripts/lib/hook-flags.js)
+- normalizeId (scripts/lib/hook-flags.js)
+- getHookProfile (scripts/lib/hook-flags.js)
+- getDisabledHookIds (scripts/lib/hook-flags.js)
+- parseProfiles (scripts/lib/hook-flags.js)
+- isHookEnabled (scripts/lib/hook-flags.js)
+- scripts/lib/install-executor.js (scripts/lib/install-executor.js)
+- getSourceRoot (scripts/lib/install-executor.js)
+- listAvailableLanguages (scripts/lib/install-executor.js)
+- applyInstallPlan (scripts/lib/install-executor.js)
+- createLegacyInstallPlan (scripts/lib/install-executor.js)
+- createLegacyCompatInstallPlan (scripts/lib/install-executor.js)
+- createManifestInstallPlan (scripts/lib/install-executor.js)
+- scripts/lib/install-lifecycle.js (scripts/lib/install-lifecycle.js)
+- normalizeTargets (scripts/lib/install-lifecycle.js)
+- discoverInstalledStates (scripts/lib/install-lifecycle.js)
+- buildDoctorReport (scripts/lib/install-lifecycle.js)
+- repairInstalledStates (scripts/lib/install-lifecycle.js)
+- uninstallInstalledStates (scripts/lib/install-lifecycle.js)
+- scripts/lib/install-manifests.js (scripts/lib/install-manifests.js)
+- getManifestPaths (scripts/lib/install-manifests.js)
+- loadInstallManifests (scripts/lib/install-manifests.js)
+- listInstallProfiles (scripts/lib/install-manifests.js)
+- listInstallModules (scripts/lib/install-manifests.js)
+- listLegacyCompatibilityLanguages (scripts/lib/install-manifests.js)
+- validateInstallModuleIds (scripts/lib/install-manifests.js)
+- listInstallComponents (scripts/lib/install-manifests.js)
+- resolveLegacyCompatibilitySelection (scripts/lib/install-manifests.js)
+- resolveInstallPlan (scripts/lib/install-manifests.js)
+- scripts/lib/install-state.js (scripts/lib/install-state.js)
+- validateInstallState (scripts/lib/install-state.js)
+- createInstallState (scripts/lib/install-state.js)
+- readInstallState (scripts/lib/install-state.js)
+- writeInstallState (scripts/lib/install-state.js)
+- scripts/lib/orchestration-session.js (scripts/lib/orchestration-session.js)
+- scripts/lib/package-manager.d.ts (scripts/lib/package-manager.d.ts)
+- getPackageManager (scripts/lib/package-manager.d.ts)
+- setPreferredPackageManager (scripts/lib/package-manager.d.ts)
+- setProjectPackageManager (scripts/lib/package-manager.d.ts)
+- getAvailablePackageManagers (scripts/lib/package-manager.d.ts)
+- detectFromLockFile (scripts/lib/package-manager.d.ts)
+- detectFromPackageJson (scripts/lib/package-manager.d.ts)
+- getRunCommand (scripts/lib/package-manager.d.ts)
+- getExecCommand (scripts/lib/package-manager.d.ts)
+- getSelectionPrompt (scripts/lib/package-manager.d.ts)
+- getCommandPattern (scripts/lib/package-manager.d.ts)
+- PackageManagerConfig (scripts/lib/package-manager.d.ts)
+- PackageManagerResult (scripts/lib/package-manager.d.ts)
+- GetPackageManagerOptions (scripts/lib/package-manager.d.ts)
+- PackageManagerName (scripts/lib/package-manager.d.ts)
+- DetectionSource (scripts/lib/package-manager.d.ts)
+- scripts/lib/package-manager.js (scripts/lib/package-manager.js)
+- detectFromLockFile (scripts/lib/package-manager.js)
+- detectFromPackageJson (scripts/lib/package-manager.js)
+- getAvailablePackageManagers (scripts/lib/package-manager.js)
+- getPackageManager (scripts/lib/package-manager.js)
+- setPreferredPackageManager (scripts/lib/package-manager.js)
+- setProjectPackageManager (scripts/lib/package-manager.js)
+- getRunCommand (scripts/lib/package-manager.js)
+- getExecCommand (scripts/lib/package-manager.js)
+- getSelectionPrompt (scripts/lib/package-manager.js)
+- getCommandPattern (scripts/lib/package-manager.js)
+- scripts/lib/project-detect.js (scripts/lib/project-detect.js)
+- getPackageJsonDeps (scripts/lib/project-detect.js)
+- getPythonDeps (scripts/lib/project-detect.js)
+- getGoDeps (scripts/lib/project-detect.js)
+- getRustDeps (scripts/lib/project-detect.js)
+- getComposerDeps (scripts/lib/project-detect.js)
+- getElixirDeps (scripts/lib/project-detect.js)
+- detectProjectType (scripts/lib/project-detect.js)
+- scripts/lib/resolve-formatter.js (scripts/lib/resolve-formatter.js)
+- findProjectRoot (scripts/lib/resolve-formatter.js)
+- detectFormatter (scripts/lib/resolve-formatter.js)
+- resolveFormatterBin (scripts/lib/resolve-formatter.js)
+- clearCaches (scripts/lib/resolve-formatter.js)
+- scripts/lib/session-aliases.d.ts (scripts/lib/session-aliases.d.ts)
+- getAliasesPath (scripts/lib/session-aliases.d.ts)
+- loadAliases (scripts/lib/session-aliases.d.ts)
+- saveAliases (scripts/lib/session-aliases.d.ts)
+- resolveAlias (scripts/lib/session-aliases.d.ts)
+- setAlias (scripts/lib/session-aliases.d.ts)
+- listAliases (scripts/lib/session-aliases.d.ts)
+- deleteAlias (scripts/lib/session-aliases.d.ts)
+- renameAlias (scripts/lib/session-aliases.d.ts)
+- resolveSessionAlias (scripts/lib/session-aliases.d.ts)
+- updateAliasTitle (scripts/lib/session-aliases.d.ts)
+- getAliasesForSession (scripts/lib/session-aliases.d.ts)
+- cleanupAliases (scripts/lib/session-aliases.d.ts)
+- AliasEntry (scripts/lib/session-aliases.d.ts)
+- AliasStore (scripts/lib/session-aliases.d.ts)
+- ResolvedAlias (scripts/lib/session-aliases.d.ts)
+- AliasListItem (scripts/lib/session-aliases.d.ts)
+- AliasResult (scripts/lib/session-aliases.d.ts)
+- SetAliasResult (scripts/lib/session-aliases.d.ts)
+- DeleteAliasResult (scripts/lib/session-aliases.d.ts)
+- RenameAliasResult (scripts/lib/session-aliases.d.ts)
+- CleanupResult (scripts/lib/session-aliases.d.ts)
+- ListAliasesOptions (scripts/lib/session-aliases.d.ts)
+- scripts/lib/session-aliases.js (scripts/lib/session-aliases.js)
+- getAliasesPath (scripts/lib/session-aliases.js)
+- loadAliases (scripts/lib/session-aliases.js)
+- saveAliases (scripts/lib/session-aliases.js)
+- resolveAlias (scripts/lib/session-aliases.js)
+- setAlias (scripts/lib/session-aliases.js)
+- listAliases (scripts/lib/session-aliases.js)
+- deleteAlias (scripts/lib/session-aliases.js)
+- renameAlias (scripts/lib/session-aliases.js)
+- resolveSessionAlias (scripts/lib/session-aliases.js)
+- updateAliasTitle (scripts/lib/session-aliases.js)
+- getAliasesForSession (scripts/lib/session-aliases.js)
+- cleanupAliases (scripts/lib/session-aliases.js)
+- scripts/lib/session-manager.d.ts (scripts/lib/session-manager.d.ts)
+- parseSessionFilename (scripts/lib/session-manager.d.ts)
+- getSessionPath (scripts/lib/session-manager.d.ts)
+- getSessionContent (scripts/lib/session-manager.d.ts)
+- parseSessionMetadata (scripts/lib/session-manager.d.ts)
+- getSessionStats (scripts/lib/session-manager.d.ts)
+- getSessionTitle (scripts/lib/session-manager.d.ts)
+- getSessionSize (scripts/lib/session-manager.d.ts)
+- getAllSessions (scripts/lib/session-manager.d.ts)
+- getSessionById (scripts/lib/session-manager.d.ts)
+- writeSessionContent (scripts/lib/session-manager.d.ts)
+- appendSessionContent (scripts/lib/session-manager.d.ts)
+- deleteSession (scripts/lib/session-manager.d.ts)
+- sessionExists (scripts/lib/session-manager.d.ts)
+- SessionFilenameMeta (scripts/lib/session-manager.d.ts)
+- SessionMetadata (scripts/lib/session-manager.d.ts)
+- SessionStats (scripts/lib/session-manager.d.ts)
+- Session (scripts/lib/session-manager.d.ts)
+- SessionListResult (scripts/lib/session-manager.d.ts)
+- GetAllSessionsOptions (scripts/lib/session-manager.d.ts)
+- scripts/lib/session-manager.js (scripts/lib/session-manager.js)
+- parseSessionFilename (scripts/lib/session-manager.js)
+- getSessionPath (scripts/lib/session-manager.js)
+- getSessionContent (scripts/lib/session-manager.js)
+- parseSessionMetadata (scripts/lib/session-manager.js)
+- getSessionStats (scripts/lib/session-manager.js)
+- getAllSessions (scripts/lib/session-manager.js)
+- getSessionById (scripts/lib/session-manager.js)
+- getSessionTitle (scripts/lib/session-manager.js)
+- getSessionSize (scripts/lib/session-manager.js)
+- writeSessionContent (scripts/lib/session-manager.js)
+- appendSessionContent (scripts/lib/session-manager.js)
+- deleteSession (scripts/lib/session-manager.js)
+- sessionExists (scripts/lib/session-manager.js)
+- scripts/lib/shell-split.js (scripts/lib/shell-split.js)
+- splitShellSegments (scripts/lib/shell-split.js)
+- scripts/lib/tmux-worktree-orchestrator.js (scripts/lib/tmux-worktree-orchestrator.js)
+- slugify (scripts/lib/tmux-worktree-orchestrator.js)
+- renderTemplate (scripts/lib/tmux-worktree-orchestrator.js)
+- normalizeSeedPaths (scripts/lib/tmux-worktree-orchestrator.js)
+- overlaySeedPaths (scripts/lib/tmux-worktree-orchestrator.js)
+- buildOrchestrationPlan (scripts/lib/tmux-worktree-orchestrator.js)
+- materializePlan (scripts/lib/tmux-worktree-orchestrator.js)
+- rollbackCreatedResources (scripts/lib/tmux-worktree-orchestrator.js)
+- executePlan (scripts/lib/tmux-worktree-orchestrator.js)
+- scripts/lib/utils.d.ts (scripts/lib/utils.d.ts)
+- getHomeDir (scripts/lib/utils.d.ts)
+- getClaudeDir (scripts/lib/utils.d.ts)
+- getSessionsDir (scripts/lib/utils.d.ts)
+- getLearnedSkillsDir (scripts/lib/utils.d.ts)
+- getTempDir (scripts/lib/utils.d.ts)
+- ensureDir (scripts/lib/utils.d.ts)
+- getDateString (scripts/lib/utils.d.ts)
+- getTimeString (scripts/lib/utils.d.ts)
+- getDateTimeString (scripts/lib/utils.d.ts)
+- getSessionIdShort (scripts/lib/utils.d.ts)
+- getGitRepoName (scripts/lib/utils.d.ts)
+- getProjectName (scripts/lib/utils.d.ts)
+- findFiles (scripts/lib/utils.d.ts)
+- readFile (scripts/lib/utils.d.ts)
+- writeFile (scripts/lib/utils.d.ts)
+- appendFile (scripts/lib/utils.d.ts)
+- replaceInFile (scripts/lib/utils.d.ts)
+- countInFile (scripts/lib/utils.d.ts)
+- grepFile (scripts/lib/utils.d.ts)
+- readStdinJson (scripts/lib/utils.d.ts)
+- log (scripts/lib/utils.d.ts)
+- output (scripts/lib/utils.d.ts)
+- commandExists (scripts/lib/utils.d.ts)
+- runCommand (scripts/lib/utils.d.ts)
+- isGitRepo (scripts/lib/utils.d.ts)
+- getGitModifiedFiles (scripts/lib/utils.d.ts)
+- FileMatch (scripts/lib/utils.d.ts)
+- FindFilesOptions (scripts/lib/utils.d.ts)
+- ReplaceInFileOptions (scripts/lib/utils.d.ts)
+- GrepMatch (scripts/lib/utils.d.ts)
+- ReadStdinJsonOptions (scripts/lib/utils.d.ts)
+- CommandResult (scripts/lib/utils.d.ts)
+- scripts/lib/utils.js (scripts/lib/utils.js)
+- getHomeDir (scripts/lib/utils.js)
+- getClaudeDir (scripts/lib/utils.js)
+- getSessionsDir (scripts/lib/utils.js)
+- getLearnedSkillsDir (scripts/lib/utils.js)
+- getTempDir (scripts/lib/utils.js)
+- ensureDir (scripts/lib/utils.js)
+- getDateString (scripts/lib/utils.js)
+- getTimeString (scripts/lib/utils.js)
+- getGitRepoName (scripts/lib/utils.js)
+- getProjectName (scripts/lib/utils.js)
+- getSessionIdShort (scripts/lib/utils.js)
+- getDateTimeString (scripts/lib/utils.js)
+- findFiles (scripts/lib/utils.js)
+- readStdinJson (scripts/lib/utils.js)
+- log (scripts/lib/utils.js)
+- output (scripts/lib/utils.js)
+- readFile (scripts/lib/utils.js)
+- writeFile (scripts/lib/utils.js)
+- appendFile (scripts/lib/utils.js)
+- commandExists (scripts/lib/utils.js)
+- runCommand (scripts/lib/utils.js)
+- isGitRepo (scripts/lib/utils.js)
+- getGitModifiedFiles (scripts/lib/utils.js)
+- replaceInFile (scripts/lib/utils.js)
+- countInFile (scripts/lib/utils.js)
+- grepFile (scripts/lib/utils.js)
+- tests/ci/validators.test.js (tests/ci/validators.test.js)
+- tests/hooks/auto-tmux-dev.test.js (tests/hooks/auto-tmux-dev.test.js)
+- tests/hooks/check-hook-enabled.test.js (tests/hooks/check-hook-enabled.test.js)
+- tests/hooks/cost-tracker.test.js (tests/hooks/cost-tracker.test.js)
+- tests/hooks/doc-file-warning.test.js (tests/hooks/doc-file-warning.test.js)
+- tests/hooks/evaluate-session.test.js (tests/hooks/evaluate-session.test.js)
+- tests/hooks/hook-flags.test.js (tests/hooks/hook-flags.test.js)
+- tests/hooks/hooks.test.js (tests/hooks/hooks.test.js)
+- tests/hooks/observer-memory.test.js (tests/hooks/observer-memory.test.js)
+- tests/hooks/post-bash-hooks.test.js (tests/hooks/post-bash-hooks.test.js)
+- tests/hooks/pre-bash-dev-server-block.test.js (tests/hooks/pre-bash-dev-server-block.test.js)
+- tests/hooks/pre-bash-reminders.test.js (tests/hooks/pre-bash-reminders.test.js)
+- tests/hooks/quality-gate.test.js (tests/hooks/quality-gate.test.js)
+- tests/hooks/suggest-compact.test.js (tests/hooks/suggest-compact.test.js)
+- tests/integration/hooks.test.js (tests/integration/hooks.test.js)
+- tests/lib/install-config.test.js (tests/lib/install-config.test.js)
+- tests/lib/install-lifecycle.test.js (tests/lib/install-lifecycle.test.js)
+- tests/lib/install-manifests.test.js (tests/lib/install-manifests.test.js)
+- tests/lib/install-request.test.js (tests/lib/install-request.test.js)
+- tests/lib/install-state.test.js (tests/lib/install-state.test.js)
+- tests/lib/install-targets.test.js (tests/lib/install-targets.test.js)
+- tests/lib/orchestration-session.test.js (tests/lib/orchestration-session.test.js)
+- tests/lib/package-manager.test.js (tests/lib/package-manager.test.js)
+- tests/lib/project-detect.test.js (tests/lib/project-detect.test.js)
+- tests/lib/resolve-formatter.test.js (tests/lib/resolve-formatter.test.js)
+- tests/lib/session-adapters.test.js (tests/lib/session-adapters.test.js)
+- tests/lib/session-aliases.test.js (tests/lib/session-aliases.test.js)
+- tests/lib/session-manager.test.js (tests/lib/session-manager.test.js)
+- tests/lib/shell-split.test.js (tests/lib/shell-split.test.js)
+- tests/lib/skill-dashboard.test.js (tests/lib/skill-dashboard.test.js)
+- tests/lib/skill-evolution.test.js (tests/lib/skill-evolution.test.js)
+- tests/lib/skill-improvement.test.js (tests/lib/skill-improvement.test.js)
+- tests/lib/state-store.test.js (tests/lib/state-store.test.js)
+- tests/lib/tmux-worktree-orchestrator.test.js (tests/lib/tmux-worktree-orchestrator.test.js)
+- tests/lib/utils.test.js (tests/lib/utils.test.js)
+- tests/scripts/claw.test.js (tests/scripts/claw.test.js)
+- tests/scripts/doctor.test.js (tests/scripts/doctor.test.js)
+- tests/scripts/ecc.test.js (tests/scripts/ecc.test.js)
+- tests/scripts/harness-audit.test.js (tests/scripts/harness-audit.test.js)
+- tests/scripts/install-apply.test.js (tests/scripts/install-apply.test.js)
+- tests/scripts/install-plan.test.js (tests/scripts/install-plan.test.js)
+- tests/scripts/install-ps1.test.js (tests/scripts/install-ps1.test.js)
+- tests/scripts/install-sh.test.js (tests/scripts/install-sh.test.js)
+- tests/scripts/list-installed.test.js (tests/scripts/list-installed.test.js)
+- tests/scripts/orchestrate-codex-worker.test.js (tests/scripts/orchestrate-codex-worker.test.js)
+- tests/scripts/orchestration-status.test.js (tests/scripts/orchestration-status.test.js)
+- tests/scripts/repair.test.js (tests/scripts/repair.test.js)
+- tests/scripts/session-inspect.test.js (tests/scripts/session-inspect.test.js)
+- tests/scripts/setup-package-manager.test.js (tests/scripts/setup-package-manager.test.js)
+- tests/scripts/skill-create-output.test.js (tests/scripts/skill-create-output.test.js)
+- tests/scripts/uninstall.test.js (tests/scripts/uninstall.test.js)
+- scripts/lib/install/apply.js (scripts/lib/install/apply.js)
+- applyInstallPlan (scripts/lib/install/apply.js)
+- scripts/lib/install/config.js (scripts/lib/install/config.js)
+- resolveInstallConfigPath (scripts/lib/install/config.js)
+- loadInstallConfig (scripts/lib/install/config.js)
+- scripts/lib/install/request.js (scripts/lib/install/request.js)
+- parseInstallArgs (scripts/lib/install/request.js)
+- normalizeInstallRequest (scripts/lib/install/request.js)
+- scripts/lib/install/runtime.js (scripts/lib/install/runtime.js)
+- createInstallPlanFromRequest (scripts/lib/install/runtime.js)
+- scripts/lib/install-targets/helpers.js (scripts/lib/install-targets/helpers.js)
+- scripts/lib/install-targets/registry.js (scripts/lib/install-targets/registry.js)
+- listInstallTargetAdapters (scripts/lib/install-targets/registry.js)
+- getInstallTargetAdapter (scripts/lib/install-targets/registry.js)
+- planInstallTargetScaffold (scripts/lib/install-targets/registry.js)
+- scripts/lib/session-adapters/canonical-session.js (scripts/lib/session-adapters/canonical-session.js)
+- buildAggregates (scripts/lib/session-adapters/canonical-session.js)
+- validateCanonicalSnapshot (scripts/lib/session-adapters/canonical-session.js)
+- getFallbackSessionRecordingPath (scripts/lib/session-adapters/canonical-session.js)
+- persistCanonicalSnapshot (scripts/lib/session-adapters/canonical-session.js)
+- normalizeDmuxSnapshot (scripts/lib/session-adapters/canonical-session.js)
+- normalizeClaudeHistorySession (scripts/lib/session-adapters/canonical-session.js)
+- scripts/lib/session-adapters/claude-history.js (scripts/lib/session-adapters/claude-history.js)
+- parseClaudeTarget (scripts/lib/session-adapters/claude-history.js)
+- isSessionFileTarget (scripts/lib/session-adapters/claude-history.js)
+- createClaudeHistoryAdapter (scripts/lib/session-adapters/claude-history.js)
+- scripts/lib/session-adapters/dmux-tmux.js (scripts/lib/session-adapters/dmux-tmux.js)
+- isPlanFileTarget (scripts/lib/session-adapters/dmux-tmux.js)
+- isSessionNameTarget (scripts/lib/session-adapters/dmux-tmux.js)
+- createDmuxTmuxAdapter (scripts/lib/session-adapters/dmux-tmux.js)
+- scripts/lib/session-adapters/registry.js (scripts/lib/session-adapters/registry.js)
+- createDefaultAdapters (scripts/lib/session-adapters/registry.js)
+- normalizeStructuredTarget (scripts/lib/session-adapters/registry.js)
+- createAdapterRegistry (scripts/lib/session-adapters/registry.js)
+- inspectSessionTarget (scripts/lib/session-adapters/registry.js)
+- scripts/lib/skill-evolution/dashboard.js (scripts/lib/skill-evolution/dashboard.js)
+- sparkline (scripts/lib/skill-evolution/dashboard.js)
+- horizontalBar (scripts/lib/skill-evolution/dashboard.js)
+- panelBox (scripts/lib/skill-evolution/dashboard.js)
+- bucketByDay (scripts/lib/skill-evolution/dashboard.js)
+- renderSuccessRatePanel (scripts/lib/skill-evolution/dashboard.js)
+- renderFailureClusterPanel (scripts/lib/skill-evolution/dashboard.js)
+- renderAmendmentPanel (scripts/lib/skill-evolution/dashboard.js)
+- renderVersionTimelinePanel (scripts/lib/skill-evolution/dashboard.js)
+- renderDashboard (scripts/lib/skill-evolution/dashboard.js)
+- scripts/lib/skill-evolution/health.js (scripts/lib/skill-evolution/health.js)
+- summarizeHealthReport (scripts/lib/skill-evolution/health.js)
+- discoverSkills (scripts/lib/skill-evolution/health.js)
+- calculateSuccessRate (scripts/lib/skill-evolution/health.js)
+- filterRecordsWithinDays (scripts/lib/skill-evolution/health.js)
+- collectSkillHealth (scripts/lib/skill-evolution/health.js)
+- formatHealthReport (scripts/lib/skill-evolution/health.js)
+- scripts/lib/skill-evolution/provenance.js (scripts/lib/skill-evolution/provenance.js)
+- getSkillRoots (scripts/lib/skill-evolution/provenance.js)
+- classifySkillPath (scripts/lib/skill-evolution/provenance.js)
+- requiresProvenance (scripts/lib/skill-evolution/provenance.js)
+- getProvenancePath (scripts/lib/skill-evolution/provenance.js)
+- validateProvenance (scripts/lib/skill-evolution/provenance.js)
+- readProvenance (scripts/lib/skill-evolution/provenance.js)
+- writeProvenance (scripts/lib/skill-evolution/provenance.js)
+- scripts/lib/skill-evolution/tracker.js (scripts/lib/skill-evolution/tracker.js)
+- getRunsFilePath (scripts/lib/skill-evolution/tracker.js)
+- normalizeExecutionRecord (scripts/lib/skill-evolution/tracker.js)
+- recordSkillExecution (scripts/lib/skill-evolution/tracker.js)
+- readSkillExecutionRecords (scripts/lib/skill-evolution/tracker.js)
+- scripts/lib/skill-evolution/versioning.js (scripts/lib/skill-evolution/versioning.js)
+- getVersionsDir (scripts/lib/skill-evolution/versioning.js)
+- getEvolutionDir (scripts/lib/skill-evolution/versioning.js)
+- getEvolutionLogPath (scripts/lib/skill-evolution/versioning.js)
+- ensureSkillVersioning (scripts/lib/skill-evolution/versioning.js)
+- listVersions (scripts/lib/skill-evolution/versioning.js)
+- getCurrentVersion (scripts/lib/skill-evolution/versioning.js)
+- appendEvolutionRecord (scripts/lib/skill-evolution/versioning.js)
+- getEvolutionLog (scripts/lib/skill-evolution/versioning.js)
+- createVersion (scripts/lib/skill-evolution/versioning.js)
+- rollbackTo (scripts/lib/skill-evolution/versioning.js)
+- scripts/lib/skill-improvement/amendify.js (scripts/lib/skill-improvement/amendify.js)
+- proposeSkillAmendment (scripts/lib/skill-improvement/amendify.js)
+- scripts/lib/skill-improvement/evaluate.js (scripts/lib/skill-improvement/evaluate.js)
+- buildSkillEvaluationScaffold (scripts/lib/skill-improvement/evaluate.js)
+- scripts/lib/skill-improvement/health.js (scripts/lib/skill-improvement/health.js)
+- buildSkillHealthReport (scripts/lib/skill-improvement/health.js)
+- scripts/lib/skill-improvement/observations.js (scripts/lib/skill-improvement/observations.js)
+- resolveProjectRoot (scripts/lib/skill-improvement/observations.js)
+- getSkillTelemetryRoot (scripts/lib/skill-improvement/observations.js)
+- getSkillObservationsPath (scripts/lib/skill-improvement/observations.js)
+- createSkillObservation (scripts/lib/skill-improvement/observations.js)
+- appendSkillObservation (scripts/lib/skill-improvement/observations.js)
+- readSkillObservations (scripts/lib/skill-improvement/observations.js)
+- scripts/lib/state-store/index.js (scripts/lib/state-store/index.js)
+- resolveStateStorePath (scripts/lib/state-store/index.js)
+- createStateStore (scripts/lib/state-store/index.js)
+- scripts/lib/state-store/migrations.js (scripts/lib/state-store/migrations.js)
+- getAppliedMigrations (scripts/lib/state-store/migrations.js)
+- applyMigrations (scripts/lib/state-store/migrations.js)
+- scripts/lib/state-store/queries.js (scripts/lib/state-store/queries.js)
+- createQueryApi (scripts/lib/state-store/queries.js)
+- scripts/lib/state-store/schema.js (scripts/lib/state-store/schema.js)
+- readSchema (scripts/lib/state-store/schema.js)
+- formatValidationErrors (scripts/lib/state-store/schema.js)
+- validateEntity (scripts/lib/state-store/schema.js)
+- assertValidEntity (scripts/lib/state-store/schema.js)
+- src/ast/ts/scanTypeScriptReality.ts (src/ast/ts/scanTypeScriptReality.ts)
+- scanTypeScriptReality (src/ast/ts/scanTypeScriptReality.ts)
+- ast/py/scan_python_reality.py (ast/py/scan_python_reality.py)
+- main (ast/py/scan_python_reality.py)
+- read_stdin_payload (ast/py/scan_python_reality.py)
+- load_excludes (ast/py/scan_python_reality.py)
+- scan_python_reality (ast/py/scan_python_reality.py)
+- iter_python_files (ast/py/scan_python_reality.py)
+- push_symbol (ast/py/scan_python_reality.py)
+- extract_import_target (ast/py/scan_python_reality.py)
+- is_excluded (ast/py/scan_python_reality.py)
+- join_path (ast/py/scan_python_reality.py)
+- normalize_path (ast/py/scan_python_reality.py)
+- argparse
+- ast
+- json
+- os
+- sys
+- typing
+- script/building-tools/extract_configs_wsl.py (script/building-tools/extract_configs_wsl.py)
+- load_jsonc (script/building-tools/extract_configs_wsl.py)
+- extract_references (script/building-tools/extract_configs_wsl.py)
+- deep_merge (script/building-tools/extract_configs_wsl.py)
+- serialize_jsonc (script/building-tools/extract_configs_wsl.py)
+- copy_to_archive (script/building-tools/extract_configs_wsl.py)
+- main (script/building-tools/extract_configs_wsl.py)
+- re
+- fnmatch
+- datetime
+- shutil
+- glob
+- pathlib
+- script/post-tools/compare_json.py (script/post-tools/compare_json.py)
+- normalize (script/post-tools/compare_json.py)
+- compare_files (script/post-tools/compare_json.py)
+- difflib
+- script/post-tools/merge_pdfs.py (script/post-tools/merge_pdfs.py)
+- merge_pdfs_and_create_map (script/post-tools/merge_pdfs.py)
+- pypdf
+- script/post-tools/prompt.py (script/post-tools/prompt.py)
+- getprompt (script/post-tools/prompt.py)
+- script/post-tools/scan_tasks.py (script/post-tools/scan_tasks.py)
+- scan_node (script/post-tools/scan_tasks.py)
+- script/post-tools/sync_skills.py (script/post-tools/sync_skills.py)
+- sync_directory (script/post-tools/sync_skills.py)
+- build_parser (script/post-tools/sync_skills.py)
+- main (script/post-tools/sync_skills.py)
+- scripts/hooks/insaits-security-monitor.py (scripts/hooks/insaits-security-monitor.py)
+- extract_content (scripts/hooks/insaits-security-monitor.py)
+- write_audit (scripts/hooks/insaits-security-monitor.py)
+- get_anomaly_attr (scripts/hooks/insaits-security-monitor.py)
+- format_feedback (scripts/hooks/insaits-security-monitor.py)
+- main (scripts/hooks/insaits-security-monitor.py)
+- hashlib
+- logging
+- time
+- skills/continuous-learning-v2/scripts/instinct-cli.py (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- detect_project (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- load_registry (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- parse_instinct_file (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- load_all_instincts (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- load_project_only_instincts (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_status (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_import (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_export (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_evolve (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_promote (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- cmd_projects (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- main (skills/continuous-learning-v2/scripts/instinct-cli.py)
+- subprocess
+- urllib.request
+- collections
+- skills/continuous-learning-v2/scripts/test_parse_instinct.py (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- project_tree (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- patch_globals (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_multiple_instincts_preserve_content (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_single_instinct_preserves_content (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_empty_content_no_error (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_parse_no_id_skipped (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_parse_confidence_is_float (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_parse_trigger_strips_quotes (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_parse_empty_string (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_parse_garbage_input (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_normal_path (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_rejects_etc (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_rejects_var_log (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_rejects_usr (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_rejects_proc (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_must_exist_fails (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_home_expansion (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_relative_path (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_detect_project_global_fallback (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_detect_project_from_env (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_detect_project_git_timeout (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_detect_project_creates_directories (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_from_empty_dir (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_from_nonexistent_dir (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_annotates_metadata (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_defaults_scope_from_label (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_preserves_explicit_scope (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_handles_corrupt_file (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_supports_yml_extension (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_supports_md_extension (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_instincts_from_dir_uses_utf8_encoding (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_all_project_and_global (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_all_project_overrides_global (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_all_global_only (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_project_only_excludes_global (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_project_only_global_fallback_loads_global (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_all_empty (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_cmd_status_no_instincts (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_cmd_status_with_instincts (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_cmd_status_returns_int (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_cmd_projects_empty_registry (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_cmd_projects_with_registry (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_specific_not_found (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_specific_rejects_invalid_id (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_specific_already_global (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_specific_success (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_auto_no_candidates (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_auto_dry_run (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_auto_writes_file (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_promote_auto_skips_invalid_id (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_find_cross_project_empty_registry (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_find_cross_project_single_project (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_find_cross_project_shared_instinct (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_registry_missing_file (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_registry_corrupt_json (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_registry_valid (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_load_registry_uses_utf8_encoding (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_validate_instinct_id (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- test_update_registry_atomic_replaces_file (skills/continuous-learning-v2/scripts/test_parse_instinct.py)
+- importlib.util
+- io
+- types
+- unittest
+- pytest
+- skills/videodb/scripts/ws_listener.py (skills/videodb/scripts/ws_listener.py)
+- default_output_dir (skills/videodb/scripts/ws_listener.py)
+- ensure_private_dir (skills/videodb/scripts/ws_listener.py)
+- parse_args (skills/videodb/scripts/ws_listener.py)
+- log (skills/videodb/scripts/ws_listener.py)
+- append_event (skills/videodb/scripts/ws_listener.py)
+- write_pid (skills/videodb/scripts/ws_listener.py)
+- cleanup_pid (skills/videodb/scripts/ws_listener.py)
+- is_fatal_error (skills/videodb/scripts/ws_listener.py)
+- listen_with_retry (skills/videodb/scripts/ws_listener.py)
+- main_async (skills/videodb/scripts/ws_listener.py)
+- main (skills/videodb/scripts/ws_listener.py)
+- signal
+- asyncio
+- contextlib
+- dotenv
+- videodb
+- videodb.exceptions
+
+## Orphaned Public Components
+
+- commitlint.config.js (commitlint.config.js)
+- eslint.config.js (eslint.config.js)
+- temp-script.js (temp-script.js)
+- media/workflowView.js (media/workflowView.js)
+- script/EA-jsscript/JSON-Parser.js (script/EA-jsscript/JSON-Parser.js)
+- scripts/hooks/auto-tmux-dev.js (scripts/hooks/auto-tmux-dev.js)
+- scripts/hooks/check-console-log.js (scripts/hooks/check-console-log.js)
+- scripts/hooks/check-hook-enabled.js (scripts/hooks/check-hook-enabled.js)
+- scripts/hooks/post-bash-build-complete.js (scripts/hooks/post-bash-build-complete.js)
+- scripts/hooks/post-bash-pr-created.js (scripts/hooks/post-bash-pr-created.js)
+- scripts/hooks/post-edit-console-warn.js (scripts/hooks/post-edit-console-warn.js)
+- scripts/hooks/post-edit-typecheck.js (scripts/hooks/post-edit-typecheck.js)
+- scripts/hooks/pre-bash-git-push-reminder.js (scripts/hooks/pre-bash-git-push-reminder.js)
+- scripts/hooks/pre-bash-tmux-reminder.js (scripts/hooks/pre-bash-tmux-reminder.js)
+- scripts/hooks/pre-write-doc-warn.js (scripts/hooks/pre-write-doc-warn.js)
+- scripts/lib/install-targets/antigravity-project.js (scripts/lib/install-targets/antigravity-project.js)
+- scripts/lib/install-targets/claude-home.js (scripts/lib/install-targets/claude-home.js)
+- scripts/lib/install-targets/codex-home.js (scripts/lib/install-targets/codex-home.js)
+- scripts/lib/install-targets/cursor-project.js (scripts/lib/install-targets/cursor-project.js)
+- scripts/lib/install-targets/opencode-home.js (scripts/lib/install-targets/opencode-home.js)
+- scripts/lib/skill-evolution/index.js (scripts/lib/skill-evolution/index.js)
+
+## Difference List
+
+- [WARNING] Orphaned public component detected: commitlint.config.js
+- [WARNING] Orphaned public component detected: eslint.config.js
+- [WARNING] Orphaned public component detected: temp-script.js
+- [WARNING] Public unmodeled API detected: temp-test.js
+- [INFO] Ignored private implementation detail: normalizeStreamContent
+- [WARNING] Orphaned public component detected: media/workflowView.js
+- [WARNING] Public unmodeled API detected: scripts/claw.js
+- [WARNING] Public unmodeled API detected: isValidSessionName
+- [WARNING] Public unmodeled API detected: getClawDir
+- [WARNING] Public unmodeled API detected: getSessionPath
+- [WARNING] Public unmodeled API detected: listSessions
+- [WARNING] Public unmodeled API detected: loadHistory
+- [WARNING] Public unmodeled API detected: appendTurn
+- [INFO] Ignored private implementation detail: normalizeSkillList
+- [WARNING] Public unmodeled API detected: loadECCContext
+- [WARNING] Public unmodeled API detected: buildPrompt
+- [WARNING] Public unmodeled API detected: askClaude
+- [WARNING] Public unmodeled API detected: parseTurns
+- [WARNING] Public unmodeled API detected: estimateTokenCount
+- [WARNING] Public unmodeled API detected: getSessionMetrics
+- [WARNING] Public unmodeled API detected: searchSessions
+- [WARNING] Public unmodeled API detected: compactSession
+- [WARNING] Public unmodeled API detected: exportSession
+- [WARNING] Public unmodeled API detected: branchSession
+- [INFO] Ignored private implementation detail: skillExists
+- [WARNING] Public unmodeled API detected: handleClear
+- [WARNING] Public unmodeled API detected: handleHistory
+- [WARNING] Public unmodeled API detected: handleSessions
+- [WARNING] Public unmodeled API detected: handleHelp
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/doctor.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: statusLabel
+- [INFO] Ignored private implementation detail: printHuman
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/ecc.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: resolveCommand
+- [INFO] Ignored private implementation detail: runCommand
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/harness-audit.js
+- [INFO] Ignored private implementation detail: normalizeScope
+- [WARNING] Public unmodeled API detected: parseArgs
+- [INFO] Ignored private implementation detail: fileExists
+- [INFO] Ignored private implementation detail: readText
+- [INFO] Ignored private implementation detail: countFiles
+- [INFO] Ignored private implementation detail: safeRead
+- [INFO] Ignored private implementation detail: getChecks
+- [INFO] Ignored private implementation detail: summarizeCategoryScores
+- [WARNING] Public unmodeled API detected: buildReport
+- [INFO] Ignored private implementation detail: printText
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/install-apply.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: printHumanPlan
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/install-plan.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: printProfiles
+- [INFO] Ignored private implementation detail: printModules
+- [INFO] Ignored private implementation detail: printComponents
+- [INFO] Ignored private implementation detail: printPlan
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/list-installed.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: printHuman
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/orchestrate-worktrees.js
+- [INFO] Ignored private implementation detail: usage
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: loadPlanConfig
+- [INFO] Ignored private implementation detail: printDryRun
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/orchestration-status.js
+- [INFO] Ignored private implementation detail: usage
+- [INFO] Ignored private implementation detail: parseArgs
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/repair.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: printHuman
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/session-inspect.js
+- [INFO] Ignored private implementation detail: usage
+- [WARNING] Public unmodeled API detected: parseArgs
+- [INFO] Ignored private implementation detail: inspectSkillLoopTarget
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/sessions-cli.js
+- [INFO] Ignored private implementation detail: showHelp
+- [WARNING] Public unmodeled API detected: parseArgs
+- [INFO] Ignored private implementation detail: printSessionList
+- [INFO] Ignored private implementation detail: printWorkers
+- [INFO] Ignored private implementation detail: printSkillRuns
+- [INFO] Ignored private implementation detail: printDecisions
+- [INFO] Ignored private implementation detail: printSessionDetail
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/setup-package-manager.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: detectAndShow
+- [INFO] Ignored private implementation detail: listAvailable
+- [INFO] Ignored private implementation detail: setGlobal
+- [INFO] Ignored private implementation detail: setProject
+- [WARNING] Public unmodeled API detected: scripts/skill-create-output.js
+- [WARNING] Public unmodeled API detected: SkillCreateOutput
+- [INFO] Ignored private implementation detail: box
+- [INFO] Ignored private implementation detail: stripAnsi
+- [INFO] Ignored private implementation detail: progressBar
+- [INFO] Ignored private implementation detail: sleep
+- [INFO] Ignored private implementation detail: animateProgress
+- [WARNING] Public unmodeled API detected: demo
+- [WARNING] Public unmodeled API detected: scripts/skills-health.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: requireValue
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/status.js
+- [INFO] Ignored private implementation detail: showHelp
+- [WARNING] Public unmodeled API detected: parseArgs
+- [INFO] Ignored private implementation detail: printActiveSessions
+- [INFO] Ignored private implementation detail: printSkillRuns
+- [INFO] Ignored private implementation detail: printInstallHealth
+- [INFO] Ignored private implementation detail: printGovernance
+- [INFO] Ignored private implementation detail: printHuman
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: scripts/uninstall.js
+- [INFO] Ignored private implementation detail: showHelp
+- [INFO] Ignored private implementation detail: parseArgs
+- [INFO] Ignored private implementation detail: printHuman
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: src/architectureRealityService.ts
+- [WARNING] Public unmodeled API detected: runArchitectureRealityAlignment
+- [INFO] Ignored private implementation detail: scanPythonReality
+- [INFO] Ignored private implementation detail: buildRealityModel
+- [INFO] Ignored private implementation detail: reconcileArchitectureModels
+- [INFO] Ignored private implementation detail: classifyOrphanedElement
+- [INFO] Ignored private implementation detail: renderGapMarkdown
+- [INFO] Ignored private implementation detail: readIntentArchitecture
+- [INFO] Ignored private implementation detail: resolvePythonCommand
+- [INFO] Ignored private implementation detail: buildNameIndex
+- [INFO] Ignored private implementation detail: normalizeRelationshipKey
+- [INFO] Ignored private implementation detail: normalizeName
+- [INFO] Ignored private implementation detail: normalizeFilePath
+- [INFO] Ignored private implementation detail: ratio
+- [INFO] Ignored private implementation detail: clamp01
+- [INFO] Ignored private implementation detail: roundMetric
+- [INFO] Ignored private implementation detail: formatMetric
+- [INFO] Ignored private implementation detail: uniqueStrings
+- [WARNING] Public unmodeled API detected: AlignmentLogger
+- [WARNING] Public unmodeled API detected: ArchitectureModelElement
+- [WARNING] Public unmodeled API detected: ArchitectureModelRelationship
+- [WARNING] Public unmodeled API detected: ArchitectureModelView
+- [WARNING] Public unmodeled API detected: ArchitectureRealityModel
+- [INFO] Ignored private implementation detail: OrphanClassification
+- [INFO] Ignored private implementation detail: DifferenceItem
+- [INFO] Ignored private implementation detail: ReconciliationReport
+- [WARNING] Public unmodeled API detected: AlignmentRunResult
+- [INFO] Ignored private implementation detail: AlignmentOptions
+- [INFO] Ignored private implementation detail: PythonScannerResponse
+- [INFO] Ignored private implementation detail: IntentArchitectureDocument
+- [WARNING] Public unmodeled API detected: src/extension.ts
+- [INFO] Ignored private implementation detail: PromptTemplateTool
+- [WARNING] Public unmodeled API detected: activate
+- [WARNING] Public unmodeled API detected: deactivate
+- [INFO] Ignored private implementation detail: registerPromptTools
+- [INFO] Ignored private implementation detail: sanitizeWorkflowViewState
+- [INFO] Ignored private implementation detail: normalizeSkillKey
+- [INFO] Ignored private implementation detail: inferSkillFromText
+- [INFO] Ignored private implementation detail: postWorkflowRuntimeMessage
+- [INFO] Ignored private implementation detail: createWorkflowStreamId
+- [INFO] Ignored private implementation detail: analyzeAutoSkillSuggestions
+- [INFO] Ignored private implementation detail: parseAutoSuggestionJson
+- [INFO] Ignored private implementation detail: safeParseJson
+- [INFO] Ignored private implementation detail: buildFallbackAutoSkillSuggestions
+- [INFO] Ignored private implementation detail: rankSkillsFromText
+- [INFO] Ignored private implementation detail: dedupeAutoSkillSuggestions
+- [INFO] Ignored private implementation detail: buildSkillSeedText
+- [INFO] Ignored private implementation detail: extractUserDirectiveFromSeedText
+- [INFO] Ignored private implementation detail: buildOpenCodePromptText
+- [INFO] Ignored private implementation detail: normalizeAgentExecutor
+- [INFO] Ignored private implementation detail: normalizeSkillRoutingKey
+- [INFO] Ignored private implementation detail: normalizeOpenCodeExecutionHost
+- [INFO] Ignored private implementation detail: normalizeOpenCodeTransport
+- [INFO] Ignored private implementation detail: isBareCommandName
+- [INFO] Ignored private implementation detail: toWslPath
+- [INFO] Ignored private implementation detail: normalizeOpenCodeServerPath
+- [INFO] Ignored private implementation detail: quotePosixShellArg
+- [INFO] Ignored private implementation detail: isCommandNotFoundFailure
+- [INFO] Ignored private implementation detail: stripKnownWslWarnings
+- [INFO] Ignored private implementation detail: decodeProcessChunk
+- [INFO] Ignored private implementation detail: normalizeOpenCodeBaseUrl
+- [INFO] Ignored private implementation detail: buildOpenCodeServerUrl
+- [INFO] Ignored private implementation detail: buildOpenCodeServerAuthHeader
+- [INFO] Ignored private implementation detail: summarizeHttpErrorBody
+- [INFO] Ignored private implementation detail: extractTextFromOpenCodeParts
+- [INFO] Ignored private implementation detail: createDeferred
+- [INFO] Ignored private implementation detail: asRecord
+- [INFO] Ignored private implementation detail: readString
+- [INFO] Ignored private implementation detail: readNestedString
+- [INFO] Ignored private implementation detail: appendUniquePartOrder
+- [INFO] Ignored private implementation detail: buildOrderedPartText
+- [INFO] Ignored private implementation detail: parseOpenCodeServerError
+- [INFO] Ignored private implementation detail: subscribeOpenCodeServerEvents
+- [INFO] Ignored private implementation detail: requestOpenCodeServer
+- [INFO] Ignored private implementation detail: requestOpenCodeServerJson
+- [INFO] Ignored private implementation detail: getEffectiveAgentRouterConfig
+- [INFO] Ignored private implementation detail: resolveAgentExecutorForSkill
+- [INFO] Ignored private implementation detail: getAgentDisplayLabel
+- [INFO] Ignored private implementation detail: buildSkillAgentDisplayMap
+- [INFO] Ignored private implementation detail: getSkillAgentDisplayMapForWorkspace
+- [INFO] Ignored private implementation detail: replaceOpenCodeTemplate
+- [INFO] Ignored private implementation detail: buildOpenCodeInvocation
+- [INFO] Ignored private implementation detail: runOpenCodeServerInvocation
+- [INFO] Ignored private implementation detail: executeOpenCodeSpawn
+- [INFO] Ignored private implementation detail: buildWslOpenCodeSpawn
+- [INFO] Ignored private implementation detail: runOpenCodeInvocation
+- [INFO] Ignored private implementation detail: getWorkspaceRoot
+- [INFO] Ignored private implementation detail: resolvePath
+- [INFO] Ignored private implementation detail: resolveExtensionPath
+- [INFO] Ignored private implementation detail: getBundledPromptPaths
+- [INFO] Ignored private implementation detail: getEffectiveGuidedOptions
+- [INFO] Ignored private implementation detail: describeMaintenanceScope
+- [INFO] Ignored private implementation detail: describeMaintenanceType
+- [INFO] Ignored private implementation detail: buildGuidedOptionSummary
+- [INFO] Ignored private implementation detail: buildGuidedAiConfig
+- [INFO] Ignored private implementation detail: ensureGuidedAiConfig
+- [INFO] Ignored private implementation detail: configureGuidedOptions
+- [INFO] Ignored private implementation detail: exists
+- [INFO] Ignored private implementation detail: splitMarkdownTableRow
+- [INFO] Ignored private implementation detail: isMarkdownTableDivider
+- [INFO] Ignored private implementation detail: parseTaskIssuesMarkdown
+- [INFO] Ignored private implementation detail: normalizeTaskTableCellForWrite
+- [INFO] Ignored private implementation detail: buildMarkdownTableRow
+- [INFO] Ignored private implementation detail: isTaskActiveStatus
+- [INFO] Ignored private implementation detail: formatFeedbackTimestamp
+- [INFO] Ignored private implementation detail: applyIssueFeedbackToTaskTable
+- [INFO] Ignored private implementation detail: escapeHtmlForWebview
+- [INFO] Ignored private implementation detail: buildIssueFeedbackWebviewHtml
+- [INFO] Ignored private implementation detail: readBundledSkillText
+- [INFO] Ignored private implementation detail: initializeAICodingAgentWorkspaceProjectConfig
+- [INFO] Ignored private implementation detail: initializeWorkspaceProjectConfigs
+- [INFO] Ignored private implementation detail: replaceDirectoryFromSource
+- [INFO] Ignored private implementation detail: copyFilesRecursivelyOverwrite
+- [INFO] Ignored private implementation detail: fileMtime
+- [INFO] Ignored private implementation detail: clearDirectoryContents
+- [INFO] Ignored private implementation detail: toIsoLocal
+- [INFO] Ignored private implementation detail: loadAiConfig
+- [INFO] Ignored private implementation detail: getAiConfigPath
+- [INFO] Ignored private implementation detail: getArchitectureJsonPath
+- [INFO] Ignored private implementation detail: openFileIfExists
+- [INFO] Ignored private implementation detail: refreshArchitectureContext
+- [INFO] Ignored private implementation detail: initializeFromTemplate
+- [INFO] Ignored private implementation detail: startIterationFromModel
+- [INFO] Ignored private implementation detail: runDesignCodeAlignment
+- [INFO] Ignored private implementation detail: generateWrapUpReport
+- [INFO] Ignored private implementation detail: openNextAction
+- [INFO] Ignored private implementation detail: getGuidedPrecheck
+- [INFO] Ignored private implementation detail: runGuidedWorkflow
+- [INFO] Ignored private implementation detail: openCopilotWithInitPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithDesignAuditPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithWrapUpPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithTaskListPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithTaskSupportPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithWeeklyReportPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithIterationIssuesPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithIterationSummaryPrompt
+- [INFO] Ignored private implementation detail: openCopilotWithPromptReference
+- [INFO] Ignored private implementation detail: openOpenCodeWithPrompt
+- [INFO] Ignored private implementation detail: openGitHubCopilotWithPromptReference
+- [INFO] Ignored private implementation detail: trySubmitCopilotChat
+- [INFO] Ignored private implementation detail: AgentExecutor
+- [INFO] Ignored private implementation detail: OpenCodeTransport
+- [INFO] Ignored private implementation detail: OpenCodeExecutionHost
+- [INFO] Ignored private implementation detail: OpenCodeServerConfig
+- [INFO] Ignored private implementation detail: OpenCodeCliConfig
+- [INFO] Ignored private implementation detail: AgentRouterConfig
+- [INFO] Ignored private implementation detail: AiConfig
+- [INFO] Ignored private implementation detail: MaintenanceScope
+- [INFO] Ignored private implementation detail: GuidedOptions
+- [INFO] Ignored private implementation detail: WorkspaceProjectConfigCopySpec
+- [INFO] Ignored private implementation detail: SkillKey
+- [INFO] Ignored private implementation detail: WorkflowFlowKey
+- [INFO] Ignored private implementation detail: WorkflowMenuKey
+- [INFO] Ignored private implementation detail: ChatBubbleRole
+- [INFO] Ignored private implementation detail: AutoSuggestionViewItem
+- [INFO] Ignored private implementation detail: WorkflowStreamBubbleState
+- [INFO] Ignored private implementation detail: WorkflowThreadEntry
+- [INFO] Ignored private implementation detail: WorkflowViewState
+- [INFO] Ignored private implementation detail: IssueFeedbackRow
+- [INFO] Ignored private implementation detail: ParsedTaskIssuesTable
+- [INFO] Ignored private implementation detail: PromptToolInput
+- [INFO] Ignored private implementation detail: AutoSkillSuggestion
+- [INFO] Ignored private implementation detail: EffectiveOpenCodeServerConfig
+- [INFO] Ignored private implementation detail: EffectiveOpenCodeConfig
+- [INFO] Ignored private implementation detail: EffectiveAgentRouterConfig
+- [INFO] Ignored private implementation detail: OpenCodeExecutionContext
+- [INFO] Ignored private implementation detail: OpenCodeInvocation
+- [INFO] Ignored private implementation detail: OpenCodeCommandResult
+- [INFO] Ignored private implementation detail: OpenCodeStreamHandlers
+- [INFO] Ignored private implementation detail: OpenCodeServerHealth
+- [INFO] Ignored private implementation detail: OpenCodeServerSession
+- [INFO] Ignored private implementation detail: OpenCodeServerPromptResponse
+- [INFO] Ignored private implementation detail: OpenCodeServerEvent
+- [INFO] Ignored private implementation detail: Deferred
+- [INFO] Ignored private implementation detail: OpenCodeServerEventStream
+- [INFO] Ignored private implementation detail: ParsedAutoSuggestion
+- [WARNING] Public unmodeled API detected: tests/codex-config.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/opencode-config.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/run-all.js
+- [INFO] Ignored private implementation detail: matchesTestGlob
+- [INFO] Ignored private implementation detail: walkFiles
+- [INFO] Ignored private implementation detail: discoverTestFiles
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/ea_to_stix.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: getAttributeValue
+- [INFO] Ignored private implementation detail: parseValue
+- [INFO] Ignored private implementation detail: saveFile
+- [INFO] Ignored private implementation detail: GenerateGUID
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/GetTasksAndIssuesForLLM-active_verified.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: runSearchXml
+- [INFO] Ignored private implementation detail: runModelSearch
+- [INFO] Ignored private implementation detail: runSqlFallbackSearch
+- [INFO] Ignored private implementation detail: parseDaysFromSearchTerm
+- [INFO] Ignored private implementation detail: getDefaultOutputPath
+- [INFO] Ignored private implementation detail: ensureFolderExists
+- [INFO] Ignored private implementation detail: xmlToJson
+- [INFO] Ignored private implementation detail: getNodeValue
+- [INFO] Ignored private implementation detail: getNodeValueByAliases
+- [INFO] Ignored private implementation detail: writeToFile
+- [INFO] Ignored private implementation detail: toMarkdownString
+- [INFO] Ignored private implementation detail: toMarkdownCell
+- [INFO] Ignored private implementation detail: toJsonString
+- [INFO] Ignored private implementation detail: escapeJsonString
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/GetTasksAndIssuesForLLM-active.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: runSearchXml
+- [INFO] Ignored private implementation detail: runModelSearch
+- [INFO] Ignored private implementation detail: runSqlFallbackSearch
+- [INFO] Ignored private implementation detail: parseDaysFromSearchTerm
+- [INFO] Ignored private implementation detail: getDefaultOutputPath
+- [INFO] Ignored private implementation detail: ensureFolderExists
+- [INFO] Ignored private implementation detail: xmlToJson
+- [INFO] Ignored private implementation detail: getNodeValue
+- [INFO] Ignored private implementation detail: getNodeValueByAliases
+- [INFO] Ignored private implementation detail: writeToFile
+- [INFO] Ignored private implementation detail: toMarkdownString
+- [INFO] Ignored private implementation detail: toMarkdownCell
+- [INFO] Ignored private implementation detail: toJsonString
+- [INFO] Ignored private implementation detail: escapeJsonString
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/GetTasksAndIssuesForLLM-ALL.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: runSearchXml
+- [INFO] Ignored private implementation detail: runModelSearch
+- [INFO] Ignored private implementation detail: runSqlFallbackSearch
+- [INFO] Ignored private implementation detail: parseDaysFromSearchTerm
+- [INFO] Ignored private implementation detail: getDefaultOutputPath
+- [INFO] Ignored private implementation detail: ensureFolderExists
+- [INFO] Ignored private implementation detail: xmlToJson
+- [INFO] Ignored private implementation detail: getNodeValue
+- [INFO] Ignored private implementation detail: getNodeValueByAliases
+- [INFO] Ignored private implementation detail: writeToFile
+- [INFO] Ignored private implementation detail: toMarkdownString
+- [INFO] Ignored private implementation detail: toMarkdownCell
+- [INFO] Ignored private implementation detail: toJsonString
+- [INFO] Ignored private implementation detail: escapeJsonString
+- [WARNING] Orphaned public component detected: script/EA-jsscript/JSON-Parser.js
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2-bootstrap.js
+- [INFO] Ignored private implementation detail: trimString
+- [INFO] Ignored private implementation detail: getConnectionProperty
+- [INFO] Ignored private implementation detail: stripWrappedQuotes
+- [INFO] Ignored private implementation detail: resolveModelFilePathFromConnectionString
+- [INFO] Ignored private implementation detail: resolveProjectPathFromCurrentModel
+- [INFO] Ignored private implementation detail: normalizeProjectPath
+- [INFO] Ignored private implementation detail: getProjectConfigPath
+- [INFO] Ignored private implementation detail: readTextFileUtf8
+- [INFO] Ignored private implementation detail: fileExists
+- [INFO] Ignored private implementation detail: appendUniquePath
+- [INFO] Ignored private implementation detail: getParentFolderPath
+- [INFO] Ignored private implementation detail: getVsCodeExtensionRootCandidates
+- [INFO] Ignored private implementation detail: extractVersionTextFromExtensionFolderName
+- [INFO] Ignored private implementation detail: parseVersionParts
+- [INFO] Ignored private implementation detail: compareVersionTextsDesc
+- [INFO] Ignored private implementation detail: getProjectManagedSharedScriptCandidates
+- [INFO] Ignored private implementation detail: getInstalledExtensionSharedScriptCandidates
+- [INFO] Ignored private implementation detail: getLocalSharedScriptCandidates
+- [INFO] Ignored private implementation detail: tryLoadSharedScriptFromLocalCandidates
+- [INFO] Ignored private implementation detail: readSharedScriptText
+- [INFO] Ignored private implementation detail: parseAiCodingConfig
+- [INFO] Ignored private implementation detail: applyExternalConfig
+- [INFO] Ignored private implementation detail: sanitizeForEval
+- [INFO] Ignored private implementation detail: mainBootstrap
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/project_auto_gen_suitable_for_LLM-V2.js
+- [INFO] Ignored private implementation detail: jsonEscape
+- [INFO] Ignored private implementation detail: getCode
+- [INFO] Ignored private implementation detail: getDate
+- [INFO] Ignored private implementation detail: getPackagePath
+- [INFO] Ignored private implementation detail: getElementChainPath
+- [INFO] Ignored private implementation detail: getElementBrowserPath
+- [INFO] Ignored private implementation detail: getDiagramBrowserPath
+- [INFO] Ignored private implementation detail: getProjectinfo
+- [INFO] Ignored private implementation detail: saveRtfAsPdf
+- [INFO] Ignored private implementation detail: extractFromDiagram
+- [INFO] Ignored private implementation detail: isRtfEmpty
+- [INFO] Ignored private implementation detail: logGlobalRuntimeConfig
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/project_auto_gen_suitable_for_LLM.js
+- [INFO] Ignored private implementation detail: jsonEscape
+- [INFO] Ignored private implementation detail: getCode
+- [INFO] Ignored private implementation detail: getDate
+- [INFO] Ignored private implementation detail: getProjectinfo
+- [INFO] Ignored private implementation detail: saveRtfAsPdf
+- [INFO] Ignored private implementation detail: extractFromDiagram
+- [INFO] Ignored private implementation detail: isRtfEmpty
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/project_auto_gen.js
+- [INFO] Ignored private implementation detail: jsonEscape
+- [INFO] Ignored private implementation detail: getCode
+- [INFO] Ignored private implementation detail: getDate
+- [INFO] Ignored private implementation detail: getProjectinfo
+- [INFO] Ignored private implementation detail: saveRtfAsPdf
+- [INFO] Ignored private implementation detail: extractFromDiagram
+- [INFO] Ignored private implementation detail: isRtfEmpty
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/PUT-all-elements-on-diagram.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: isArrayContains
+- [INFO] Ignored private implementation detail: collectFromPackageRecursive
+- [INFO] Ignored private implementation detail: collectElementAndChildrenRecursive
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/schema_diagram_to_json.js
+- [INFO] Ignored private implementation detail: jsonEscape
+- [INFO] Ignored private implementation detail: extractFromDiagram
+- [INFO] Ignored private implementation detail: getTag
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/schema_json_to_diagram.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: putTag
+- [WARNING] Public unmodeled API detected: script/EA-jsscript/stix_to_ea.js
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: readFile
+- [INFO] Ignored private implementation detail: addAttributes
+- [WARNING] Public unmodeled API detected: scripts/ci/catalog.js
+- [INFO] Ignored private implementation detail: normalizePathSegments
+- [INFO] Ignored private implementation detail: listMatchingFiles
+- [INFO] Ignored private implementation detail: buildCatalog
+- [INFO] Ignored private implementation detail: readFileOrThrow
+- [INFO] Ignored private implementation detail: parseReadmeExpectations
+- [INFO] Ignored private implementation detail: parseAgentsDocExpectations
+- [INFO] Ignored private implementation detail: evaluateExpectations
+- [INFO] Ignored private implementation detail: formatExpectation
+- [INFO] Ignored private implementation detail: renderText
+- [INFO] Ignored private implementation detail: renderMarkdown
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-agents.js
+- [INFO] Ignored private implementation detail: extractFrontmatter
+- [INFO] Ignored private implementation detail: validateAgents
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-commands.js
+- [INFO] Ignored private implementation detail: validateCommands
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-hooks.js
+- [INFO] Ignored private implementation detail: isNonEmptyString
+- [INFO] Ignored private implementation detail: isNonEmptyStringArray
+- [INFO] Ignored private implementation detail: validateHookEntry
+- [INFO] Ignored private implementation detail: validateHooks
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-install-manifests.js
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: normalizeRelativePath
+- [INFO] Ignored private implementation detail: validateSchema
+- [INFO] Ignored private implementation detail: validateInstallManifests
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-no-personal-paths.js
+- [INFO] Ignored private implementation detail: collectFiles
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-rules.js
+- [INFO] Ignored private implementation detail: collectRuleFiles
+- [INFO] Ignored private implementation detail: validateRules
+- [WARNING] Public unmodeled API detected: scripts/ci/validate-skills.js
+- [INFO] Ignored private implementation detail: validateSkills
+- [WARNING] Public unmodeled API detected: scripts/codemaps/generate.ts
+- [INFO] Ignored private implementation detail: walkDir
+- [INFO] Ignored private implementation detail: rel
+- [INFO] Ignored private implementation detail: classifyFiles
+- [INFO] Ignored private implementation detail: lineCount
+- [INFO] Ignored private implementation detail: buildTree
+- [INFO] Ignored private implementation detail: generateAreaDoc
+- [INFO] Ignored private implementation detail: generateIndex
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: AreaInfo
+- [WARNING] Orphaned public component detected: scripts/hooks/auto-tmux-dev.js
+- [WARNING] Orphaned public component detected: scripts/hooks/check-console-log.js
+- [WARNING] Orphaned public component detected: scripts/hooks/check-hook-enabled.js
+- [WARNING] Public unmodeled API detected: scripts/hooks/cost-tracker.js
+- [INFO] Ignored private implementation detail: toNumber
+- [INFO] Ignored private implementation detail: estimateCost
+- [WARNING] Public unmodeled API detected: scripts/hooks/doc-file-warning.js
+- [INFO] Ignored private implementation detail: isAllowedDocPath
+- [WARNING] Public unmodeled API detected: scripts/hooks/evaluate-session.js
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/hooks/insaits-security-wrapper.js
+- [INFO] Ignored private implementation detail: isEnabled
+- [WARNING] Orphaned public component detected: scripts/hooks/post-bash-build-complete.js
+- [WARNING] Orphaned public component detected: scripts/hooks/post-bash-pr-created.js
+- [WARNING] Orphaned public component detected: scripts/hooks/post-edit-console-warn.js
+- [WARNING] Public unmodeled API detected: scripts/hooks/post-edit-format.js
+- [WARNING] Public unmodeled API detected: run
+- [WARNING] Orphaned public component detected: scripts/hooks/post-edit-typecheck.js
+- [WARNING] Public unmodeled API detected: scripts/hooks/pre-bash-dev-server-block.js
+- [INFO] Ignored private implementation detail: readToken
+- [INFO] Ignored private implementation detail: shouldSkipOptionValue
+- [INFO] Ignored private implementation detail: isOptionToken
+- [INFO] Ignored private implementation detail: normalizeCommandWord
+- [INFO] Ignored private implementation detail: getLeadingCommandWord
+- [WARNING] Orphaned public component detected: scripts/hooks/pre-bash-git-push-reminder.js
+- [WARNING] Orphaned public component detected: scripts/hooks/pre-bash-tmux-reminder.js
+- [WARNING] Public unmodeled API detected: scripts/hooks/pre-compact.js
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Orphaned public component detected: scripts/hooks/pre-write-doc-warn.js
+- [WARNING] Public unmodeled API detected: scripts/hooks/quality-gate.js
+- [INFO] Ignored private implementation detail: exec
+- [INFO] Ignored private implementation detail: log
+- [INFO] Ignored private implementation detail: maybeRunQualityGate
+- [WARNING] Public unmodeled API detected: run
+- [WARNING] Public unmodeled API detected: scripts/hooks/run-with-flags.js
+- [INFO] Ignored private implementation detail: readStdinRaw
+- [INFO] Ignored private implementation detail: getPluginRoot
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/hooks/session-end-marker.js
+- [WARNING] Public unmodeled API detected: run
+- [WARNING] Public unmodeled API detected: scripts/hooks/session-end.js
+- [INFO] Ignored private implementation detail: extractSessionSummary
+- [INFO] Ignored private implementation detail: runMain
+- [INFO] Ignored private implementation detail: getSessionMetadata
+- [INFO] Ignored private implementation detail: extractHeaderField
+- [INFO] Ignored private implementation detail: buildSessionHeader
+- [INFO] Ignored private implementation detail: mergeSessionHeader
+- [INFO] Ignored private implementation detail: main
+- [INFO] Ignored private implementation detail: buildSummarySection
+- [INFO] Ignored private implementation detail: buildSummaryBlock
+- [INFO] Ignored private implementation detail: escapeRegExp
+- [WARNING] Public unmodeled API detected: scripts/hooks/session-start.js
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/hooks/suggest-compact.js
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: scripts/lib/hook-flags.js
+- [WARNING] Public unmodeled API detected: normalizeId
+- [WARNING] Public unmodeled API detected: getHookProfile
+- [WARNING] Public unmodeled API detected: getDisabledHookIds
+- [WARNING] Public unmodeled API detected: parseProfiles
+- [WARNING] Public unmodeled API detected: isHookEnabled
+- [WARNING] Public unmodeled API detected: scripts/lib/install-executor.js
+- [WARNING] Public unmodeled API detected: getSourceRoot
+- [INFO] Ignored private implementation detail: getPackageVersion
+- [INFO] Ignored private implementation detail: getManifestVersion
+- [INFO] Ignored private implementation detail: getRepoCommit
+- [INFO] Ignored private implementation detail: readDirectoryNames
+- [WARNING] Public unmodeled API detected: listAvailableLanguages
+- [INFO] Ignored private implementation detail: validateLegacyTarget
+- [INFO] Ignored private implementation detail: listFilesRecursive
+- [INFO] Ignored private implementation detail: isGeneratedRuntimeSourcePath
+- [INFO] Ignored private implementation detail: createStatePreview
+- [WARNING] Public unmodeled API detected: applyInstallPlan
+- [INFO] Ignored private implementation detail: buildCopyFileOperation
+- [INFO] Ignored private implementation detail: addRecursiveCopyOperations
+- [INFO] Ignored private implementation detail: addFileCopyOperation
+- [INFO] Ignored private implementation detail: addMatchingRuleOperations
+- [INFO] Ignored private implementation detail: isDirectoryNonEmpty
+- [INFO] Ignored private implementation detail: planClaudeLegacyInstall
+- [INFO] Ignored private implementation detail: planCursorLegacyInstall
+- [INFO] Ignored private implementation detail: planAntigravityLegacyInstall
+- [WARNING] Public unmodeled API detected: createLegacyInstallPlan
+- [WARNING] Public unmodeled API detected: createLegacyCompatInstallPlan
+- [INFO] Ignored private implementation detail: materializeScaffoldOperation
+- [WARNING] Public unmodeled API detected: createManifestInstallPlan
+- [WARNING] Public unmodeled API detected: scripts/lib/install-lifecycle.js
+- [INFO] Ignored private implementation detail: readPackageVersion
+- [WARNING] Public unmodeled API detected: normalizeTargets
+- [INFO] Ignored private implementation detail: compareStringArrays
+- [INFO] Ignored private implementation detail: getManagedOperations
+- [INFO] Ignored private implementation detail: resolveOperationSourcePath
+- [INFO] Ignored private implementation detail: areFilesEqual
+- [INFO] Ignored private implementation detail: readFileUtf8
+- [INFO] Ignored private implementation detail: isPlainObject
+- [INFO] Ignored private implementation detail: cloneJsonValue
+- [INFO] Ignored private implementation detail: parseJsonLikeValue
+- [INFO] Ignored private implementation detail: getOperationTextContent
+- [INFO] Ignored private implementation detail: getOperationJsonPayload
+- [INFO] Ignored private implementation detail: getOperationPreviousContent
+- [INFO] Ignored private implementation detail: getOperationPreviousJson
+- [INFO] Ignored private implementation detail: formatJson
+- [INFO] Ignored private implementation detail: readJsonFile
+- [INFO] Ignored private implementation detail: ensureParentDir
+- [INFO] Ignored private implementation detail: deepMergeJson
+- [INFO] Ignored private implementation detail: jsonContainsSubset
+- [INFO] Ignored private implementation detail: deepRemoveJsonSubset
+- [INFO] Ignored private implementation detail: hydrateRecordedOperations
+- [INFO] Ignored private implementation detail: buildRecordedStatePreview
+- [INFO] Ignored private implementation detail: shouldRepairFromRecordedOperations
+- [INFO] Ignored private implementation detail: executeRepairOperation
+- [INFO] Ignored private implementation detail: executeUninstallOperation
+- [INFO] Ignored private implementation detail: inspectManagedOperation
+- [INFO] Ignored private implementation detail: summarizeManagedOperationHealth
+- [INFO] Ignored private implementation detail: buildDiscoveryRecord
+- [WARNING] Public unmodeled API detected: discoverInstalledStates
+- [INFO] Ignored private implementation detail: buildIssue
+- [INFO] Ignored private implementation detail: determineStatus
+- [INFO] Ignored private implementation detail: analyzeRecord
+- [WARNING] Public unmodeled API detected: buildDoctorReport
+- [INFO] Ignored private implementation detail: createRepairPlanFromRecord
+- [WARNING] Public unmodeled API detected: repairInstalledStates
+- [INFO] Ignored private implementation detail: cleanupEmptyParentDirs
+- [WARNING] Public unmodeled API detected: uninstallInstalledStates
+- [WARNING] Public unmodeled API detected: scripts/lib/install-manifests.js
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: dedupeStrings
+- [INFO] Ignored private implementation detail: assertKnownModuleIds
+- [INFO] Ignored private implementation detail: intersectTargets
+- [WARNING] Public unmodeled API detected: getManifestPaths
+- [WARNING] Public unmodeled API detected: loadInstallManifests
+- [WARNING] Public unmodeled API detected: listInstallProfiles
+- [WARNING] Public unmodeled API detected: listInstallModules
+- [WARNING] Public unmodeled API detected: listLegacyCompatibilityLanguages
+- [WARNING] Public unmodeled API detected: validateInstallModuleIds
+- [WARNING] Public unmodeled API detected: listInstallComponents
+- [INFO] Ignored private implementation detail: expandComponentIdsToModuleIds
+- [WARNING] Public unmodeled API detected: resolveLegacyCompatibilitySelection
+- [WARNING] Public unmodeled API detected: resolveInstallPlan
+- [WARNING] Public unmodeled API detected: scripts/lib/install-state.js
+- [INFO] Ignored private implementation detail: cloneJsonValue
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: getValidator
+- [INFO] Ignored private implementation detail: createFallbackValidator
+- [INFO] Ignored private implementation detail: formatValidationErrors
+- [WARNING] Public unmodeled API detected: validateInstallState
+- [INFO] Ignored private implementation detail: assertValidInstallState
+- [WARNING] Public unmodeled API detected: createInstallState
+- [WARNING] Public unmodeled API detected: readInstallState
+- [WARNING] Public unmodeled API detected: writeInstallState
+- [WARNING] Public unmodeled API detected: scripts/lib/orchestration-session.js
+- [INFO] Ignored private implementation detail: stripCodeTicks
+- [INFO] Ignored private implementation detail: parseSection
+- [INFO] Ignored private implementation detail: parseBullets
+- [INFO] Ignored private implementation detail: parseWorkerStatus
+- [INFO] Ignored private implementation detail: parseWorkerTask
+- [INFO] Ignored private implementation detail: parseWorkerHandoff
+- [INFO] Ignored private implementation detail: readTextIfExists
+- [INFO] Ignored private implementation detail: listWorkerDirectories
+- [INFO] Ignored private implementation detail: loadWorkerSnapshots
+- [INFO] Ignored private implementation detail: listTmuxPanes
+- [INFO] Ignored private implementation detail: summarizeWorkerStates
+- [INFO] Ignored private implementation detail: buildSessionSnapshot
+- [INFO] Ignored private implementation detail: resolveSnapshotTarget
+- [INFO] Ignored private implementation detail: collectSessionSnapshot
+- [WARNING] Public unmodeled API detected: scripts/lib/package-manager.d.ts
+- [WARNING] Public unmodeled API detected: getPackageManager
+- [WARNING] Public unmodeled API detected: setPreferredPackageManager
+- [WARNING] Public unmodeled API detected: setProjectPackageManager
+- [WARNING] Public unmodeled API detected: getAvailablePackageManagers
+- [WARNING] Public unmodeled API detected: detectFromLockFile
+- [WARNING] Public unmodeled API detected: detectFromPackageJson
+- [WARNING] Public unmodeled API detected: getRunCommand
+- [WARNING] Public unmodeled API detected: getExecCommand
+- [WARNING] Public unmodeled API detected: getSelectionPrompt
+- [WARNING] Public unmodeled API detected: getCommandPattern
+- [WARNING] Public unmodeled API detected: PackageManagerConfig
+- [WARNING] Public unmodeled API detected: PackageManagerResult
+- [WARNING] Public unmodeled API detected: GetPackageManagerOptions
+- [WARNING] Public unmodeled API detected: PackageManagerName
+- [WARNING] Public unmodeled API detected: DetectionSource
+- [WARNING] Public unmodeled API detected: scripts/lib/package-manager.js
+- [INFO] Ignored private implementation detail: getConfigPath
+- [INFO] Ignored private implementation detail: loadConfig
+- [INFO] Ignored private implementation detail: saveConfig
+- [WARNING] Public unmodeled API detected: detectFromLockFile
+- [WARNING] Public unmodeled API detected: detectFromPackageJson
+- [WARNING] Public unmodeled API detected: getAvailablePackageManagers
+- [WARNING] Public unmodeled API detected: getPackageManager
+- [WARNING] Public unmodeled API detected: setPreferredPackageManager
+- [WARNING] Public unmodeled API detected: setProjectPackageManager
+- [WARNING] Public unmodeled API detected: getRunCommand
+- [WARNING] Public unmodeled API detected: getExecCommand
+- [WARNING] Public unmodeled API detected: getSelectionPrompt
+- [INFO] Ignored private implementation detail: escapeRegex
+- [WARNING] Public unmodeled API detected: getCommandPattern
+- [WARNING] Public unmodeled API detected: scripts/lib/project-detect.js
+- [INFO] Ignored private implementation detail: fileExists
+- [INFO] Ignored private implementation detail: hasFileWithExtension
+- [WARNING] Public unmodeled API detected: getPackageJsonDeps
+- [WARNING] Public unmodeled API detected: getPythonDeps
+- [WARNING] Public unmodeled API detected: getGoDeps
+- [WARNING] Public unmodeled API detected: getRustDeps
+- [WARNING] Public unmodeled API detected: getComposerDeps
+- [WARNING] Public unmodeled API detected: getElixirDeps
+- [WARNING] Public unmodeled API detected: detectProjectType
+- [WARNING] Public unmodeled API detected: scripts/lib/resolve-formatter.js
+- [WARNING] Public unmodeled API detected: findProjectRoot
+- [WARNING] Public unmodeled API detected: detectFormatter
+- [INFO] Ignored private implementation detail: getRunnerFromPackageManager
+- [WARNING] Public unmodeled API detected: resolveFormatterBin
+- [WARNING] Public unmodeled API detected: clearCaches
+- [WARNING] Public unmodeled API detected: scripts/lib/session-aliases.d.ts
+- [WARNING] Public unmodeled API detected: getAliasesPath
+- [WARNING] Public unmodeled API detected: loadAliases
+- [WARNING] Public unmodeled API detected: saveAliases
+- [WARNING] Public unmodeled API detected: resolveAlias
+- [WARNING] Public unmodeled API detected: setAlias
+- [WARNING] Public unmodeled API detected: listAliases
+- [WARNING] Public unmodeled API detected: deleteAlias
+- [WARNING] Public unmodeled API detected: renameAlias
+- [WARNING] Public unmodeled API detected: resolveSessionAlias
+- [WARNING] Public unmodeled API detected: updateAliasTitle
+- [WARNING] Public unmodeled API detected: getAliasesForSession
+- [WARNING] Public unmodeled API detected: cleanupAliases
+- [WARNING] Public unmodeled API detected: AliasEntry
+- [WARNING] Public unmodeled API detected: AliasStore
+- [WARNING] Public unmodeled API detected: ResolvedAlias
+- [WARNING] Public unmodeled API detected: AliasListItem
+- [WARNING] Public unmodeled API detected: AliasResult
+- [WARNING] Public unmodeled API detected: SetAliasResult
+- [WARNING] Public unmodeled API detected: DeleteAliasResult
+- [WARNING] Public unmodeled API detected: RenameAliasResult
+- [WARNING] Public unmodeled API detected: CleanupResult
+- [WARNING] Public unmodeled API detected: ListAliasesOptions
+- [WARNING] Public unmodeled API detected: scripts/lib/session-aliases.js
+- [WARNING] Public unmodeled API detected: getAliasesPath
+- [INFO] Ignored private implementation detail: getDefaultAliases
+- [WARNING] Public unmodeled API detected: loadAliases
+- [WARNING] Public unmodeled API detected: saveAliases
+- [WARNING] Public unmodeled API detected: resolveAlias
+- [WARNING] Public unmodeled API detected: setAlias
+- [WARNING] Public unmodeled API detected: listAliases
+- [WARNING] Public unmodeled API detected: deleteAlias
+- [WARNING] Public unmodeled API detected: renameAlias
+- [WARNING] Public unmodeled API detected: resolveSessionAlias
+- [WARNING] Public unmodeled API detected: updateAliasTitle
+- [WARNING] Public unmodeled API detected: getAliasesForSession
+- [WARNING] Public unmodeled API detected: cleanupAliases
+- [WARNING] Public unmodeled API detected: scripts/lib/session-manager.d.ts
+- [WARNING] Public unmodeled API detected: parseSessionFilename
+- [WARNING] Public unmodeled API detected: getSessionPath
+- [WARNING] Public unmodeled API detected: getSessionContent
+- [WARNING] Public unmodeled API detected: parseSessionMetadata
+- [WARNING] Public unmodeled API detected: getSessionStats
+- [WARNING] Public unmodeled API detected: getSessionTitle
+- [WARNING] Public unmodeled API detected: getSessionSize
+- [WARNING] Public unmodeled API detected: getAllSessions
+- [WARNING] Public unmodeled API detected: getSessionById
+- [WARNING] Public unmodeled API detected: writeSessionContent
+- [WARNING] Public unmodeled API detected: appendSessionContent
+- [WARNING] Public unmodeled API detected: deleteSession
+- [WARNING] Public unmodeled API detected: sessionExists
+- [WARNING] Public unmodeled API detected: SessionFilenameMeta
+- [WARNING] Public unmodeled API detected: SessionMetadata
+- [WARNING] Public unmodeled API detected: SessionStats
+- [WARNING] Public unmodeled API detected: Session
+- [WARNING] Public unmodeled API detected: SessionListResult
+- [WARNING] Public unmodeled API detected: GetAllSessionsOptions
+- [WARNING] Public unmodeled API detected: scripts/lib/session-manager.js
+- [WARNING] Public unmodeled API detected: parseSessionFilename
+- [WARNING] Public unmodeled API detected: getSessionPath
+- [WARNING] Public unmodeled API detected: getSessionContent
+- [WARNING] Public unmodeled API detected: parseSessionMetadata
+- [WARNING] Public unmodeled API detected: getSessionStats
+- [WARNING] Public unmodeled API detected: getAllSessions
+- [WARNING] Public unmodeled API detected: getSessionById
+- [WARNING] Public unmodeled API detected: getSessionTitle
+- [WARNING] Public unmodeled API detected: getSessionSize
+- [WARNING] Public unmodeled API detected: writeSessionContent
+- [WARNING] Public unmodeled API detected: appendSessionContent
+- [WARNING] Public unmodeled API detected: deleteSession
+- [WARNING] Public unmodeled API detected: sessionExists
+- [WARNING] Public unmodeled API detected: scripts/lib/shell-split.js
+- [WARNING] Public unmodeled API detected: splitShellSegments
+- [WARNING] Public unmodeled API detected: scripts/lib/tmux-worktree-orchestrator.js
+- [WARNING] Public unmodeled API detected: slugify
+- [WARNING] Public unmodeled API detected: renderTemplate
+- [INFO] Ignored private implementation detail: shellQuote
+- [INFO] Ignored private implementation detail: formatCommand
+- [INFO] Ignored private implementation detail: buildTemplateVariables
+- [INFO] Ignored private implementation detail: buildSessionBannerCommand
+- [WARNING] Public unmodeled API detected: normalizeSeedPaths
+- [WARNING] Public unmodeled API detected: overlaySeedPaths
+- [INFO] Ignored private implementation detail: buildWorkerArtifacts
+- [WARNING] Public unmodeled API detected: buildOrchestrationPlan
+- [WARNING] Public unmodeled API detected: materializePlan
+- [INFO] Ignored private implementation detail: runCommand
+- [INFO] Ignored private implementation detail: commandSucceeds
+- [INFO] Ignored private implementation detail: canonicalizePath
+- [INFO] Ignored private implementation detail: branchExists
+- [INFO] Ignored private implementation detail: listWorktrees
+- [INFO] Ignored private implementation detail: cleanupExisting
+- [WARNING] Public unmodeled API detected: rollbackCreatedResources
+- [WARNING] Public unmodeled API detected: executePlan
+- [WARNING] Public unmodeled API detected: scripts/lib/utils.d.ts
+- [WARNING] Public unmodeled API detected: getHomeDir
+- [WARNING] Public unmodeled API detected: getClaudeDir
+- [WARNING] Public unmodeled API detected: getSessionsDir
+- [WARNING] Public unmodeled API detected: getLearnedSkillsDir
+- [WARNING] Public unmodeled API detected: getTempDir
+- [WARNING] Public unmodeled API detected: ensureDir
+- [WARNING] Public unmodeled API detected: getDateString
+- [WARNING] Public unmodeled API detected: getTimeString
+- [WARNING] Public unmodeled API detected: getDateTimeString
+- [WARNING] Public unmodeled API detected: getSessionIdShort
+- [WARNING] Public unmodeled API detected: getGitRepoName
+- [WARNING] Public unmodeled API detected: getProjectName
+- [WARNING] Public unmodeled API detected: findFiles
+- [WARNING] Public unmodeled API detected: readFile
+- [WARNING] Public unmodeled API detected: writeFile
+- [WARNING] Public unmodeled API detected: appendFile
+- [WARNING] Public unmodeled API detected: replaceInFile
+- [WARNING] Public unmodeled API detected: countInFile
+- [WARNING] Public unmodeled API detected: grepFile
+- [WARNING] Public unmodeled API detected: readStdinJson
+- [WARNING] Public unmodeled API detected: log
+- [WARNING] Public unmodeled API detected: output
+- [WARNING] Public unmodeled API detected: commandExists
+- [WARNING] Public unmodeled API detected: runCommand
+- [WARNING] Public unmodeled API detected: isGitRepo
+- [WARNING] Public unmodeled API detected: getGitModifiedFiles
+- [WARNING] Public unmodeled API detected: FileMatch
+- [WARNING] Public unmodeled API detected: FindFilesOptions
+- [WARNING] Public unmodeled API detected: ReplaceInFileOptions
+- [WARNING] Public unmodeled API detected: GrepMatch
+- [WARNING] Public unmodeled API detected: ReadStdinJsonOptions
+- [WARNING] Public unmodeled API detected: CommandResult
+- [WARNING] Public unmodeled API detected: scripts/lib/utils.js
+- [WARNING] Public unmodeled API detected: getHomeDir
+- [WARNING] Public unmodeled API detected: getClaudeDir
+- [WARNING] Public unmodeled API detected: getSessionsDir
+- [WARNING] Public unmodeled API detected: getLearnedSkillsDir
+- [WARNING] Public unmodeled API detected: getTempDir
+- [WARNING] Public unmodeled API detected: ensureDir
+- [WARNING] Public unmodeled API detected: getDateString
+- [WARNING] Public unmodeled API detected: getTimeString
+- [WARNING] Public unmodeled API detected: getGitRepoName
+- [WARNING] Public unmodeled API detected: getProjectName
+- [WARNING] Public unmodeled API detected: getSessionIdShort
+- [WARNING] Public unmodeled API detected: getDateTimeString
+- [WARNING] Public unmodeled API detected: findFiles
+- [WARNING] Public unmodeled API detected: readStdinJson
+- [WARNING] Public unmodeled API detected: log
+- [WARNING] Public unmodeled API detected: output
+- [WARNING] Public unmodeled API detected: readFile
+- [WARNING] Public unmodeled API detected: writeFile
+- [WARNING] Public unmodeled API detected: appendFile
+- [WARNING] Public unmodeled API detected: commandExists
+- [WARNING] Public unmodeled API detected: runCommand
+- [WARNING] Public unmodeled API detected: isGitRepo
+- [WARNING] Public unmodeled API detected: getGitModifiedFiles
+- [WARNING] Public unmodeled API detected: replaceInFile
+- [WARNING] Public unmodeled API detected: countInFile
+- [WARNING] Public unmodeled API detected: grepFile
+- [WARNING] Public unmodeled API detected: tests/ci/validators.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: writeJson
+- [INFO] Ignored private implementation detail: writeInstallComponentsManifest
+- [INFO] Ignored private implementation detail: runValidatorWithDir
+- [INFO] Ignored private implementation detail: runValidatorWithDirs
+- [INFO] Ignored private implementation detail: runValidator
+- [INFO] Ignored private implementation detail: runCatalogValidator
+- [INFO] Ignored private implementation detail: writeCatalogFixture
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/auto-tmux-dev.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/check-hook-enabled.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/cost-tracker.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: makeTempDir
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/doc-file-warning.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/evaluate-session.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: createTranscript
+- [INFO] Ignored private implementation detail: runEvaluate
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/hook-flags.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: withEnv
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/hooks.test.js
+- [INFO] Ignored private implementation detail: toBashPath
+- [INFO] Ignored private implementation detail: sleepMs
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: asyncTest
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runShellScript
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: createCommandShim
+- [INFO] Ignored private implementation detail: readCommandLog
+- [INFO] Ignored private implementation detail: withPrependedPath
+- [INFO] Ignored private implementation detail: assertNoProjectDetectionSideEffects
+- [INFO] Ignored private implementation detail: assertObserveSkipBeforeProjectDetection
+- [INFO] Ignored private implementation detail: runPatchedRunAll
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/observer-memory.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanupDir
+- [WARNING] Public unmodeled API detected: tests/hooks/post-bash-hooks.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [WARNING] Public unmodeled API detected: tests/hooks/pre-bash-dev-server-block.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/pre-bash-reminders.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runScript
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/hooks/quality-gate.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/hooks/suggest-compact.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runCompact
+- [INFO] Ignored private implementation detail: getCounterFilePath
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/integration/hooks.test.js
+- [INFO] Ignored private implementation detail: _test
+- [INFO] Ignored private implementation detail: asyncTest
+- [INFO] Ignored private implementation detail: runHookWithInput
+- [INFO] Ignored private implementation detail: runHookCommand
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-config.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeJson
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-lifecycle.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeState
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-manifests.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTestRepo
+- [INFO] Ignored private implementation detail: cleanupTestRepo
+- [INFO] Ignored private implementation detail: writeJson
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-request.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-state.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/install-targets.test.js
+- [INFO] Ignored private implementation detail: normalizedRelativePath
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/orchestration-session.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/lib/package-manager.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTestDir
+- [INFO] Ignored private implementation detail: cleanupTestDir
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/project-detect.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanupDir
+- [INFO] Ignored private implementation detail: writeTestFile
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/resolve-formatter.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: makeTmpDir
+- [INFO] Ignored private implementation detail: cleanupTmpDirs
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/session-adapters.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: withHome
+- [WARNING] Public unmodeled API detected: tests/lib/session-aliases.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: resetAliases
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/session-manager.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempSessionDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/shell-split.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/lib/skill-dashboard.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanupTempDir
+- [INFO] Ignored private implementation detail: createSkill
+- [INFO] Ignored private implementation detail: appendJsonl
+- [INFO] Ignored private implementation detail: runCli
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/skill-evolution.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanupTempDir
+- [INFO] Ignored private implementation detail: createSkill
+- [INFO] Ignored private implementation detail: appendJsonl
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: runCli
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/skill-improvement.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: makeProjectRoot
+- [INFO] Ignored private implementation detail: cleanup
+- [WARNING] Public unmodeled API detected: tests/lib/state-store.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanupTempDir
+- [INFO] Ignored private implementation detail: runNode
+- [INFO] Ignored private implementation detail: parseJson
+- [INFO] Ignored private implementation detail: seedStore
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/lib/tmux-worktree-orchestrator.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/lib/utils.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/claw.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: makeTmpDir
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/doctor.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeState
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/ecc.test.js
+- [INFO] Ignored private implementation detail: runCli
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: parseJson
+- [INFO] Ignored private implementation detail: runTest
+- [INFO] Ignored private implementation detail: main
+- [WARNING] Public unmodeled API detected: tests/scripts/harness-audit.test.js
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/install-apply.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/install-plan.test.js
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/install-ps1.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: resolvePowerShellCommand
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/install-sh.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/list-installed.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeState
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/orchestrate-codex-worker.test.js
+- [INFO] Ignored private implementation detail: test
+- [WARNING] Public unmodeled API detected: tests/scripts/orchestration-status.test.js
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/repair.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeState
+- [INFO] Ignored private implementation detail: runNode
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/session-inspect.test.js
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/setup-package-manager.test.js
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/skill-create-output.test.js
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: stripAnsi
+- [INFO] Ignored private implementation detail: captureLog
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: tests/scripts/uninstall.test.js
+- [INFO] Ignored private implementation detail: createTempDir
+- [INFO] Ignored private implementation detail: cleanup
+- [INFO] Ignored private implementation detail: writeState
+- [INFO] Ignored private implementation detail: run
+- [INFO] Ignored private implementation detail: test
+- [INFO] Ignored private implementation detail: runTests
+- [WARNING] Public unmodeled API detected: scripts/lib/install/apply.js
+- [WARNING] Public unmodeled API detected: applyInstallPlan
+- [WARNING] Public unmodeled API detected: scripts/lib/install/config.js
+- [INFO] Ignored private implementation detail: readJson
+- [INFO] Ignored private implementation detail: getValidator
+- [INFO] Ignored private implementation detail: dedupeStrings
+- [INFO] Ignored private implementation detail: formatValidationErrors
+- [WARNING] Public unmodeled API detected: resolveInstallConfigPath
+- [WARNING] Public unmodeled API detected: loadInstallConfig
+- [WARNING] Public unmodeled API detected: scripts/lib/install/request.js
+- [INFO] Ignored private implementation detail: dedupeStrings
+- [WARNING] Public unmodeled API detected: parseInstallArgs
+- [WARNING] Public unmodeled API detected: normalizeInstallRequest
+- [WARNING] Public unmodeled API detected: scripts/lib/install/runtime.js
+- [WARNING] Public unmodeled API detected: createInstallPlanFromRequest
+- [WARNING] Orphaned public component detected: scripts/lib/install-targets/antigravity-project.js
+- [WARNING] Orphaned public component detected: scripts/lib/install-targets/claude-home.js
+- [WARNING] Orphaned public component detected: scripts/lib/install-targets/codex-home.js
+- [WARNING] Orphaned public component detected: scripts/lib/install-targets/cursor-project.js
+- [WARNING] Public unmodeled API detected: scripts/lib/install-targets/helpers.js
+- [INFO] Ignored private implementation detail: normalizeRelativePath
+- [INFO] Ignored private implementation detail: resolveBaseRoot
+- [INFO] Ignored private implementation detail: buildValidationIssue
+- [INFO] Ignored private implementation detail: listRelativeFiles
+- [INFO] Ignored private implementation detail: createManagedOperation
+- [INFO] Ignored private implementation detail: defaultValidateAdapterInput
+- [INFO] Ignored private implementation detail: createRemappedOperation
+- [INFO] Ignored private implementation detail: createNamespacedFlatRuleOperations
+- [INFO] Ignored private implementation detail: createFlatRuleOperations
+- [INFO] Ignored private implementation detail: createInstallTargetAdapter
+- [WARNING] Orphaned public component detected: scripts/lib/install-targets/opencode-home.js
+- [WARNING] Public unmodeled API detected: scripts/lib/install-targets/registry.js
+- [WARNING] Public unmodeled API detected: listInstallTargetAdapters
+- [WARNING] Public unmodeled API detected: getInstallTargetAdapter
+- [WARNING] Public unmodeled API detected: planInstallTargetScaffold
+- [WARNING] Public unmodeled API detected: scripts/lib/session-adapters/canonical-session.js
+- [INFO] Ignored private implementation detail: isObject
+- [INFO] Ignored private implementation detail: sanitizePathSegment
+- [INFO] Ignored private implementation detail: parseContextSeedPaths
+- [INFO] Ignored private implementation detail: ensureString
+- [INFO] Ignored private implementation detail: ensureOptionalString
+- [INFO] Ignored private implementation detail: ensureBoolean
+- [INFO] Ignored private implementation detail: ensureArrayOfStrings
+- [INFO] Ignored private implementation detail: ensureInteger
+- [WARNING] Public unmodeled API detected: buildAggregates
+- [INFO] Ignored private implementation detail: summarizeRawWorkerStates
+- [INFO] Ignored private implementation detail: deriveDmuxSessionState
+- [WARNING] Public unmodeled API detected: validateCanonicalSnapshot
+- [INFO] Ignored private implementation detail: resolveRecordingDir
+- [WARNING] Public unmodeled API detected: getFallbackSessionRecordingPath
+- [INFO] Ignored private implementation detail: readExistingRecording
+- [INFO] Ignored private implementation detail: writeFallbackSessionRecording
+- [INFO] Ignored private implementation detail: loadStateStore
+- [INFO] Ignored private implementation detail: resolveStateStoreWriter
+- [WARNING] Public unmodeled API detected: persistCanonicalSnapshot
+- [WARNING] Public unmodeled API detected: normalizeDmuxSnapshot
+- [INFO] Ignored private implementation detail: deriveClaudeWorkerId
+- [WARNING] Public unmodeled API detected: normalizeClaudeHistorySession
+- [WARNING] Public unmodeled API detected: scripts/lib/session-adapters/claude-history.js
+- [WARNING] Public unmodeled API detected: parseClaudeTarget
+- [WARNING] Public unmodeled API detected: isSessionFileTarget
+- [INFO] Ignored private implementation detail: hydrateSessionFromPath
+- [INFO] Ignored private implementation detail: resolveSessionRecord
+- [WARNING] Public unmodeled API detected: createClaudeHistoryAdapter
+- [WARNING] Public unmodeled API detected: scripts/lib/session-adapters/dmux-tmux.js
+- [WARNING] Public unmodeled API detected: isPlanFileTarget
+- [WARNING] Public unmodeled API detected: isSessionNameTarget
+- [INFO] Ignored private implementation detail: buildSourceTarget
+- [WARNING] Public unmodeled API detected: createDmuxTmuxAdapter
+- [WARNING] Public unmodeled API detected: scripts/lib/session-adapters/registry.js
+- [INFO] Ignored private implementation detail: buildDefaultAdapterOptions
+- [WARNING] Public unmodeled API detected: createDefaultAdapters
+- [INFO] Ignored private implementation detail: coerceTargetValue
+- [WARNING] Public unmodeled API detected: normalizeStructuredTarget
+- [WARNING] Public unmodeled API detected: createAdapterRegistry
+- [WARNING] Public unmodeled API detected: inspectSessionTarget
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-evolution/dashboard.js
+- [WARNING] Public unmodeled API detected: sparkline
+- [WARNING] Public unmodeled API detected: horizontalBar
+- [WARNING] Public unmodeled API detected: panelBox
+- [WARNING] Public unmodeled API detected: bucketByDay
+- [INFO] Ignored private implementation detail: getTrendArrow
+- [INFO] Ignored private implementation detail: formatPercent
+- [INFO] Ignored private implementation detail: groupRecordsBySkill
+- [WARNING] Public unmodeled API detected: renderSuccessRatePanel
+- [WARNING] Public unmodeled API detected: renderFailureClusterPanel
+- [WARNING] Public unmodeled API detected: renderAmendmentPanel
+- [WARNING] Public unmodeled API detected: renderVersionTimelinePanel
+- [WARNING] Public unmodeled API detected: renderDashboard
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-evolution/health.js
+- [INFO] Ignored private implementation detail: roundRate
+- [INFO] Ignored private implementation detail: formatRate
+- [WARNING] Public unmodeled API detected: summarizeHealthReport
+- [INFO] Ignored private implementation detail: listSkillsInRoot
+- [WARNING] Public unmodeled API detected: discoverSkills
+- [WARNING] Public unmodeled API detected: calculateSuccessRate
+- [WARNING] Public unmodeled API detected: filterRecordsWithinDays
+- [INFO] Ignored private implementation detail: getFailureTrend
+- [INFO] Ignored private implementation detail: countPendingAmendments
+- [INFO] Ignored private implementation detail: getLastRun
+- [WARNING] Public unmodeled API detected: collectSkillHealth
+- [WARNING] Public unmodeled API detected: formatHealthReport
+- [WARNING] Orphaned public component detected: scripts/lib/skill-evolution/index.js
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-evolution/provenance.js
+- [INFO] Ignored private implementation detail: resolveRepoRoot
+- [INFO] Ignored private implementation detail: resolveHomeDir
+- [INFO] Ignored private implementation detail: normalizeSkillDir
+- [INFO] Ignored private implementation detail: isWithinRoot
+- [WARNING] Public unmodeled API detected: getSkillRoots
+- [WARNING] Public unmodeled API detected: classifySkillPath
+- [WARNING] Public unmodeled API detected: requiresProvenance
+- [WARNING] Public unmodeled API detected: getProvenancePath
+- [INFO] Ignored private implementation detail: isIsoTimestamp
+- [WARNING] Public unmodeled API detected: validateProvenance
+- [INFO] Ignored private implementation detail: assertValidProvenance
+- [WARNING] Public unmodeled API detected: readProvenance
+- [WARNING] Public unmodeled API detected: writeProvenance
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-evolution/tracker.js
+- [INFO] Ignored private implementation detail: resolveHomeDir
+- [WARNING] Public unmodeled API detected: getRunsFilePath
+- [INFO] Ignored private implementation detail: toNullableNumber
+- [WARNING] Public unmodeled API detected: normalizeExecutionRecord
+- [INFO] Ignored private implementation detail: readJsonl
+- [WARNING] Public unmodeled API detected: recordSkillExecution
+- [WARNING] Public unmodeled API detected: readSkillExecutionRecords
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-evolution/versioning.js
+- [INFO] Ignored private implementation detail: normalizeSkillDir
+- [INFO] Ignored private implementation detail: getSkillFilePath
+- [INFO] Ignored private implementation detail: ensureSkillExists
+- [WARNING] Public unmodeled API detected: getVersionsDir
+- [WARNING] Public unmodeled API detected: getEvolutionDir
+- [WARNING] Public unmodeled API detected: getEvolutionLogPath
+- [WARNING] Public unmodeled API detected: ensureSkillVersioning
+- [INFO] Ignored private implementation detail: parseVersionNumber
+- [WARNING] Public unmodeled API detected: listVersions
+- [WARNING] Public unmodeled API detected: getCurrentVersion
+- [WARNING] Public unmodeled API detected: appendEvolutionRecord
+- [INFO] Ignored private implementation detail: readJsonl
+- [WARNING] Public unmodeled API detected: getEvolutionLog
+- [WARNING] Public unmodeled API detected: createVersion
+- [WARNING] Public unmodeled API detected: rollbackTo
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-improvement/amendify.js
+- [INFO] Ignored private implementation detail: createProposalId
+- [INFO] Ignored private implementation detail: summarizePatchPreview
+- [WARNING] Public unmodeled API detected: proposeSkillAmendment
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-improvement/evaluate.js
+- [INFO] Ignored private implementation detail: roundRate
+- [INFO] Ignored private implementation detail: summarize
+- [WARNING] Public unmodeled API detected: buildSkillEvaluationScaffold
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-improvement/health.js
+- [INFO] Ignored private implementation detail: roundRate
+- [INFO] Ignored private implementation detail: rankCounts
+- [INFO] Ignored private implementation detail: summarizeVariantRuns
+- [INFO] Ignored private implementation detail: deriveSkillStatus
+- [WARNING] Public unmodeled API detected: buildSkillHealthReport
+- [WARNING] Public unmodeled API detected: scripts/lib/skill-improvement/observations.js
+- [WARNING] Public unmodeled API detected: resolveProjectRoot
+- [WARNING] Public unmodeled API detected: getSkillTelemetryRoot
+- [WARNING] Public unmodeled API detected: getSkillObservationsPath
+- [INFO] Ignored private implementation detail: ensureString
+- [INFO] Ignored private implementation detail: createObservationId
+- [WARNING] Public unmodeled API detected: createSkillObservation
+- [WARNING] Public unmodeled API detected: appendSkillObservation
+- [WARNING] Public unmodeled API detected: readSkillObservations
+- [WARNING] Public unmodeled API detected: scripts/lib/state-store/index.js
+- [WARNING] Public unmodeled API detected: resolveStateStorePath
+- [INFO] Ignored private implementation detail: wrapSqlJsDatabase
+- [INFO] Ignored private implementation detail: openDatabase
+- [WARNING] Public unmodeled API detected: createStateStore
+- [WARNING] Public unmodeled API detected: scripts/lib/state-store/migrations.js
+- [INFO] Ignored private implementation detail: ensureMigrationTable
+- [WARNING] Public unmodeled API detected: getAppliedMigrations
+- [WARNING] Public unmodeled API detected: applyMigrations
+- [WARNING] Public unmodeled API detected: scripts/lib/state-store/queries.js
+- [INFO] Ignored private implementation detail: normalizeLimit
+- [INFO] Ignored private implementation detail: parseJsonColumn
+- [INFO] Ignored private implementation detail: stringifyJson
+- [INFO] Ignored private implementation detail: mapSessionRow
+- [INFO] Ignored private implementation detail: mapSkillRunRow
+- [INFO] Ignored private implementation detail: mapSkillVersionRow
+- [INFO] Ignored private implementation detail: mapDecisionRow
+- [INFO] Ignored private implementation detail: mapInstallStateRow
+- [INFO] Ignored private implementation detail: mapGovernanceEventRow
+- [INFO] Ignored private implementation detail: classifyOutcome
+- [INFO] Ignored private implementation detail: toPercent
+- [INFO] Ignored private implementation detail: summarizeSkillRuns
+- [INFO] Ignored private implementation detail: summarizeInstallHealth
+- [INFO] Ignored private implementation detail: normalizeSessionInput
+- [INFO] Ignored private implementation detail: normalizeSkillRunInput
+- [INFO] Ignored private implementation detail: normalizeSkillVersionInput
+- [INFO] Ignored private implementation detail: normalizeDecisionInput
+- [INFO] Ignored private implementation detail: normalizeInstallStateInput
+- [INFO] Ignored private implementation detail: normalizeGovernanceEventInput
+- [WARNING] Public unmodeled API detected: createQueryApi
+- [WARNING] Public unmodeled API detected: scripts/lib/state-store/schema.js
+- [WARNING] Public unmodeled API detected: readSchema
+- [INFO] Ignored private implementation detail: getAjv
+- [INFO] Ignored private implementation detail: getEntityValidator
+- [WARNING] Public unmodeled API detected: formatValidationErrors
+- [WARNING] Public unmodeled API detected: validateEntity
+- [WARNING] Public unmodeled API detected: assertValidEntity
+- [WARNING] Public unmodeled API detected: src/ast/ts/scanTypeScriptReality.ts
+- [WARNING] Public unmodeled API detected: scanTypeScriptReality
+- [INFO] Ignored private implementation detail: pushDeclarationElement
+- [INFO] Ignored private implementation detail: normalizePath
+- [INFO] Ignored private implementation detail: isExcluded
+- [WARNING] Public unmodeled API detected: ast/py/scan_python_reality.py
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: read_stdin_payload
+- [WARNING] Public unmodeled API detected: load_excludes
+- [WARNING] Public unmodeled API detected: scan_python_reality
+- [WARNING] Public unmodeled API detected: iter_python_files
+- [WARNING] Public unmodeled API detected: push_symbol
+- [WARNING] Public unmodeled API detected: extract_import_target
+- [WARNING] Public unmodeled API detected: is_excluded
+- [WARNING] Public unmodeled API detected: join_path
+- [WARNING] Public unmodeled API detected: normalize_path
+- [WARNING] Public unmodeled API detected: argparse
+- [WARNING] Public unmodeled API detected: ast
+- [WARNING] Public unmodeled API detected: json
+- [WARNING] Public unmodeled API detected: os
+- [WARNING] Public unmodeled API detected: sys
+- [WARNING] Public unmodeled API detected: typing
+- [WARNING] Public unmodeled API detected: script/building-tools/extract_configs_wsl.py
+- [WARNING] Public unmodeled API detected: load_jsonc
+- [WARNING] Public unmodeled API detected: extract_references
+- [WARNING] Public unmodeled API detected: deep_merge
+- [WARNING] Public unmodeled API detected: serialize_jsonc
+- [WARNING] Public unmodeled API detected: copy_to_archive
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: re
+- [WARNING] Public unmodeled API detected: fnmatch
+- [WARNING] Public unmodeled API detected: datetime
+- [WARNING] Public unmodeled API detected: shutil
+- [WARNING] Public unmodeled API detected: glob
+- [WARNING] Public unmodeled API detected: pathlib
+- [WARNING] Public unmodeled API detected: script/post-tools/compare_json.py
+- [WARNING] Public unmodeled API detected: normalize
+- [WARNING] Public unmodeled API detected: compare_files
+- [WARNING] Public unmodeled API detected: difflib
+- [WARNING] Public unmodeled API detected: script/post-tools/merge_pdfs.py
+- [WARNING] Public unmodeled API detected: merge_pdfs_and_create_map
+- [WARNING] Public unmodeled API detected: pypdf
+- [WARNING] Public unmodeled API detected: script/post-tools/prompt.py
+- [WARNING] Public unmodeled API detected: getprompt
+- [WARNING] Public unmodeled API detected: script/post-tools/scan_tasks.py
+- [WARNING] Public unmodeled API detected: scan_node
+- [WARNING] Public unmodeled API detected: script/post-tools/sync_skills.py
+- [WARNING] Public unmodeled API detected: sync_directory
+- [WARNING] Public unmodeled API detected: build_parser
+- [WARNING] Public unmodeled API detected: main
+- [INFO] Ignored private implementation detail: __future__
+- [WARNING] Public unmodeled API detected: scripts/hooks/insaits-security-monitor.py
+- [WARNING] Public unmodeled API detected: extract_content
+- [WARNING] Public unmodeled API detected: write_audit
+- [WARNING] Public unmodeled API detected: get_anomaly_attr
+- [WARNING] Public unmodeled API detected: format_feedback
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: hashlib
+- [WARNING] Public unmodeled API detected: logging
+- [WARNING] Public unmodeled API detected: time
+- [WARNING] Public unmodeled API detected: skills/continuous-learning-v2/scripts/instinct-cli.py
+- [INFO] Ignored private implementation detail: _ensure_global_dirs
+- [INFO] Ignored private implementation detail: _validate_file_path
+- [INFO] Ignored private implementation detail: _validate_instinct_id
+- [WARNING] Public unmodeled API detected: detect_project
+- [INFO] Ignored private implementation detail: _update_registry
+- [WARNING] Public unmodeled API detected: load_registry
+- [WARNING] Public unmodeled API detected: parse_instinct_file
+- [INFO] Ignored private implementation detail: _load_instincts_from_dir
+- [WARNING] Public unmodeled API detected: load_all_instincts
+- [WARNING] Public unmodeled API detected: load_project_only_instincts
+- [WARNING] Public unmodeled API detected: cmd_status
+- [INFO] Ignored private implementation detail: _print_instincts_by_domain
+- [WARNING] Public unmodeled API detected: cmd_import
+- [WARNING] Public unmodeled API detected: cmd_export
+- [WARNING] Public unmodeled API detected: cmd_evolve
+- [INFO] Ignored private implementation detail: _find_cross_project_instincts
+- [INFO] Ignored private implementation detail: _show_promotion_candidates
+- [WARNING] Public unmodeled API detected: cmd_promote
+- [INFO] Ignored private implementation detail: _promote_specific
+- [INFO] Ignored private implementation detail: _promote_auto
+- [WARNING] Public unmodeled API detected: cmd_projects
+- [INFO] Ignored private implementation detail: _generate_evolved
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: subprocess
+- [WARNING] Public unmodeled API detected: urllib.request
+- [WARNING] Public unmodeled API detected: collections
+- [WARNING] Public unmodeled API detected: skills/continuous-learning-v2/scripts/test_parse_instinct.py
+- [WARNING] Public unmodeled API detected: project_tree
+- [WARNING] Public unmodeled API detected: patch_globals
+- [INFO] Ignored private implementation detail: _make_project
+- [WARNING] Public unmodeled API detected: test_multiple_instincts_preserve_content
+- [WARNING] Public unmodeled API detected: test_single_instinct_preserves_content
+- [WARNING] Public unmodeled API detected: test_empty_content_no_error
+- [WARNING] Public unmodeled API detected: test_parse_no_id_skipped
+- [WARNING] Public unmodeled API detected: test_parse_confidence_is_float
+- [WARNING] Public unmodeled API detected: test_parse_trigger_strips_quotes
+- [WARNING] Public unmodeled API detected: test_parse_empty_string
+- [WARNING] Public unmodeled API detected: test_parse_garbage_input
+- [WARNING] Public unmodeled API detected: test_validate_normal_path
+- [WARNING] Public unmodeled API detected: test_validate_rejects_etc
+- [WARNING] Public unmodeled API detected: test_validate_rejects_var_log
+- [WARNING] Public unmodeled API detected: test_validate_rejects_usr
+- [WARNING] Public unmodeled API detected: test_validate_rejects_proc
+- [WARNING] Public unmodeled API detected: test_validate_must_exist_fails
+- [WARNING] Public unmodeled API detected: test_validate_home_expansion
+- [WARNING] Public unmodeled API detected: test_validate_relative_path
+- [WARNING] Public unmodeled API detected: test_detect_project_global_fallback
+- [WARNING] Public unmodeled API detected: test_detect_project_from_env
+- [WARNING] Public unmodeled API detected: test_detect_project_git_timeout
+- [WARNING] Public unmodeled API detected: test_detect_project_creates_directories
+- [WARNING] Public unmodeled API detected: test_load_from_empty_dir
+- [WARNING] Public unmodeled API detected: test_load_from_nonexistent_dir
+- [WARNING] Public unmodeled API detected: test_load_annotates_metadata
+- [WARNING] Public unmodeled API detected: test_load_defaults_scope_from_label
+- [WARNING] Public unmodeled API detected: test_load_preserves_explicit_scope
+- [WARNING] Public unmodeled API detected: test_load_handles_corrupt_file
+- [WARNING] Public unmodeled API detected: test_load_supports_yml_extension
+- [WARNING] Public unmodeled API detected: test_load_supports_md_extension
+- [WARNING] Public unmodeled API detected: test_load_instincts_from_dir_uses_utf8_encoding
+- [WARNING] Public unmodeled API detected: test_load_all_project_and_global
+- [WARNING] Public unmodeled API detected: test_load_all_project_overrides_global
+- [WARNING] Public unmodeled API detected: test_load_all_global_only
+- [WARNING] Public unmodeled API detected: test_load_project_only_excludes_global
+- [WARNING] Public unmodeled API detected: test_load_project_only_global_fallback_loads_global
+- [WARNING] Public unmodeled API detected: test_load_all_empty
+- [WARNING] Public unmodeled API detected: test_cmd_status_no_instincts
+- [WARNING] Public unmodeled API detected: test_cmd_status_with_instincts
+- [WARNING] Public unmodeled API detected: test_cmd_status_returns_int
+- [WARNING] Public unmodeled API detected: test_cmd_projects_empty_registry
+- [WARNING] Public unmodeled API detected: test_cmd_projects_with_registry
+- [WARNING] Public unmodeled API detected: test_promote_specific_not_found
+- [WARNING] Public unmodeled API detected: test_promote_specific_rejects_invalid_id
+- [WARNING] Public unmodeled API detected: test_promote_specific_already_global
+- [WARNING] Public unmodeled API detected: test_promote_specific_success
+- [WARNING] Public unmodeled API detected: test_promote_auto_no_candidates
+- [WARNING] Public unmodeled API detected: test_promote_auto_dry_run
+- [WARNING] Public unmodeled API detected: test_promote_auto_writes_file
+- [WARNING] Public unmodeled API detected: test_promote_auto_skips_invalid_id
+- [WARNING] Public unmodeled API detected: test_find_cross_project_empty_registry
+- [WARNING] Public unmodeled API detected: test_find_cross_project_single_project
+- [WARNING] Public unmodeled API detected: test_find_cross_project_shared_instinct
+- [WARNING] Public unmodeled API detected: test_load_registry_missing_file
+- [WARNING] Public unmodeled API detected: test_load_registry_corrupt_json
+- [WARNING] Public unmodeled API detected: test_load_registry_valid
+- [WARNING] Public unmodeled API detected: test_load_registry_uses_utf8_encoding
+- [WARNING] Public unmodeled API detected: test_validate_instinct_id
+- [WARNING] Public unmodeled API detected: test_update_registry_atomic_replaces_file
+- [WARNING] Public unmodeled API detected: importlib.util
+- [WARNING] Public unmodeled API detected: io
+- [WARNING] Public unmodeled API detected: types
+- [WARNING] Public unmodeled API detected: unittest
+- [WARNING] Public unmodeled API detected: pytest
+- [WARNING] Public unmodeled API detected: skills/videodb/scripts/ws_listener.py
+- [WARNING] Public unmodeled API detected: default_output_dir
+- [WARNING] Public unmodeled API detected: ensure_private_dir
+- [WARNING] Public unmodeled API detected: parse_args
+- [WARNING] Public unmodeled API detected: log
+- [WARNING] Public unmodeled API detected: append_event
+- [WARNING] Public unmodeled API detected: write_pid
+- [WARNING] Public unmodeled API detected: cleanup_pid
+- [WARNING] Public unmodeled API detected: is_fatal_error
+- [WARNING] Public unmodeled API detected: listen_with_retry
+- [WARNING] Public unmodeled API detected: main_async
+- [WARNING] Public unmodeled API detected: main
+- [WARNING] Public unmodeled API detected: signal
+- [WARNING] Public unmodeled API detected: asyncio
+- [WARNING] Public unmodeled API detected: contextlib
+- [WARNING] Public unmodeled API detected: dotenv
+- [WARNING] Public unmodeled API detected: videodb
+- [WARNING] Public unmodeled API detected: videodb.exceptions
+- [ERROR] Intent element missing in reality scan: Business
+- [ERROR] Intent element missing in reality scan: Application
+- [ERROR] Intent element missing in reality scan: Technology
+- [ERROR] Intent element missing in reality scan: StrategyAndMotivation
+- [ERROR] Intent element missing in reality scan: Raw Requirement
+- [ERROR] Intent element missing in reality scan: Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent element missing in reality scan: System Requirement
+- [ERROR] Intent element missing in reality scan: Core Architecture Gap
+- [ERROR] Intent element missing in reality scan: Target Core Architecture
+- [ERROR] Intent element missing in reality scan: Business Target Architecture
+- [ERROR] Intent element missing in reality scan: Application Target Architecture
+- [ERROR] Intent element missing in reality scan: Technology Target Architecture
+- [ERROR] Intent element missing in reality scan: System Architecture Description
+- [ERROR] Intent element missing in reality scan: Value Stream
+- [ERROR] Intent element missing in reality scan: Capability
+- [ERROR] Intent element missing in reality scan: CouseOfAction
+- [ERROR] Intent element missing in reality scan: StrategyBehavior
+- [ERROR] Intent element missing in reality scan: OutCome
+- [ERROR] Intent element missing in reality scan: Resource
+- [ERROR] Intent element missing in reality scan: Implementation
+- [ERROR] Intent element missing in reality scan: Target System
+- [ERROR] Intent element missing in reality scan: TestAndVerification
+- [ERROR] Intent element missing in reality scan: Final Target System
+- [ERROR] Intent element missing in reality scan: BugOrIssue
+- [ERROR] Intent element missing in reality scan: Issue
+- [ERROR] Intent element missing in reality scan: AI Copilot
+- [ERROR] Intent element missing in reality scan: TestEngineer
+- [ERROR] Intent element missing in reality scan: SystemEngineer
+- [ERROR] Intent element missing in reality scan: AI Copilot
+- [ERROR] Intent element missing in reality scan: VS Code
+- [ERROR] Intent element missing in reality scan: Github Copilot
+- [ERROR] Intent element missing in reality scan: ai4pb-wrapup
+- [ERROR] Intent element missing in reality scan: ai4pb-init
+- [ERROR] Intent element missing in reality scan: ai4pb-audit
+- [ERROR] Intent element missing in reality scan: Sparx EA
+- [ERROR] Intent element missing in reality scan: JSON Format of Archimate Model
+- [ERROR] Intent element missing in reality scan: AI for Business
+- [ERROR] Intent element missing in reality scan: Model Driven AI for Business
+- [ERROR] Intent element missing in reality scan: Model Driven AI for  Project Building
+- [ERROR] Intent element missing in reality scan: Developer
+- [ERROR] Intent element missing in reality scan: Goal
+- [ERROR] Intent element missing in reality scan: Driver
+- [ERROR] Intent element missing in reality scan: Assessment
+- [ERROR] Intent element missing in reality scan: Stakeholder
+- [ERROR] Intent element missing in reality scan: Constrain
+- [ERROR] Intent element missing in reality scan: Principle
+- [ERROR] Intent element missing in reality scan: Value
+- [ERROR] Intent element missing in reality scan: AI4PB VS插件
+- [ERROR] Intent element missing in reality scan: JSON格式模型提取JS脚本
+- [ERROR] Intent element missing in reality scan: ai4pb-task-support
+- [ERROR] Intent element missing in reality scan: Release VSIX Toolchain
+- [ERROR] Intent element missing in reality scan: EA Script Utility Suite
+- [ERROR] Intent element missing in reality scan: Prompt Tool Registry
+- [ERROR] Intent element missing in reality scan: Post-Tools Utilities
+- [ERROR] Intent element missing in reality scan: EA SQL Audit Queries
+- [ERROR] Intent element missing in reality scan: ai4pb-iteration-issues
+- [ERROR] Intent element missing in reality scan: ai4pb-iteration-summary
+- [ERROR] Intent element missing in reality scan: AUTO Skill Router
+- [ERROR] Intent element missing in reality scan: TestReport
+- [ERROR] Intent element missing in reality scan: Executor_Router
+- [ERROR] Intent element missing in reality scan: Open Code AI Coding Agent
+- [ERROR] Intent element missing in reality scan: Task Help Infomation
+- [ERROR] Intent element missing in reality scan: AI Coding Agent
+- [ERROR] Intent element missing in reality scan: .aicodingconfig
+- [ERROR] Intent element missing in reality scan: OpenCode CLI 适配器
+- [ERROR] Intent element missing in reality scan: Strategy
+- [ERROR] Intent element missing in reality scan: AgentApplication
+- [ERROR] Intent element missing in reality scan: OpencodeAgentApplication
+- [ERROR] Intent element missing in reality scan: AgentFrameworkWithOpencode
+- [ERROR] Intent element missing in reality scan: OverallAgentFrameworkArchitecture
+- [ERROR] Intent element missing in reality scan: AgentFrameworkWithOpenclaw
+- [ERROR] Intent element missing in reality scan: AgentFrameworkWithClaudecode
+- [ERROR] Intent element missing in reality scan: Memory
+- [ERROR] Intent element missing in reality scan: Custom Prompts
+- [ERROR] Intent element missing in reality scan: GithubCopilot
+- [ERROR] Intent element missing in reality scan: AgentFrameworkWithGithubCopilot
+- [ERROR] Intent element missing in reality scan: AgentOrientedSystemArchitecture
+- [ERROR] Intent element missing in reality scan: AgentFramework
+- [ERROR] Intent element missing in reality scan: Opencode
+- [ERROR] Intent element missing in reality scan: Openclaw
+- [ERROR] Intent element missing in reality scan: Claude code
+- [ERROR] Intent element missing in reality scan: BusinessApplication
+- [ERROR] Intent element missing in reality scan: Business
+- [ERROR] Intent element missing in reality scan: LLM
+- [ERROR] Intent element missing in reality scan: MCP
+- [ERROR] Intent element missing in reality scan: Tool
+- [ERROR] Intent element missing in reality scan: Skill
+- [ERROR] Intent element missing in reality scan: Agent
+- [ERROR] Intent element missing in reality scan: KnowledgeGraph
+- [ERROR] Intent element missing in reality scan: Ontology(Schema)
+- [ERROR] Intent element missing in reality scan: GraphRag MCP
+- [ERROR] Intent element missing in reality scan: AI4PBAgentApplicationBundle
+- [ERROR] Intent element missing in reality scan: SKILL
+- [ERROR] Intent element missing in reality scan: Maintenance
+- [ERROR] Intent element missing in reality scan: Agent
+- [ERROR] Intent element missing in reality scan: MCP_config
+- [ERROR] Intent element missing in reality scan: Tool_config
+- [ERROR] Intent element missing in reality scan: ai4pb-task-list
+- [ERROR] Intent element missing in reality scan: ai4pb-weekly-report
+- [ERROR] Intent element missing in reality scan: ai4pb-workflows
+- [ERROR] Intent element missing in reality scan: SCRUM
+- [ERROR] Intent element missing in reality scan: 架构描述或者模型，相当于“意图”，而代码最终实现相当于“实现”，他们像拼图块，我们的AI辅助项目构建的目标，就是提供一套工具让AI和人类协作，最终要让这些拼图严丝合缝地拼接在一起。
+- [ERROR] Intent element missing in reality scan: ECC Hooks Plugin
+- [ERROR] Intent element missing in reality scan: ECC Tool Pack
+- [ERROR] Intent element missing in reality scan: Reality Scanner Orchestrator
+- [ERROR] Intent element missing in reality scan: TypeScript Scanner Adapter
+- [ERROR] Intent element missing in reality scan: Python Scanner Adapter
+- [ERROR] Intent element missing in reality scan: Language-Specific Scanner Scripts
+- [ERROR] Intent element missing in reality scan: reality.json
+- [ERROR] Intent element missing in reality scan: Architecture Reconciliation Service
+- [ERROR] Intent element missing in reality scan: ARCH_IMPL_GAP
+- [ERROR] Intent element missing in reality scan: 架构设计必须考虑遵守SOLID原则
+- [ERROR] Intent relationship missing in reality scan: Core Architecture Gap --(ArchiMate_Association)--> System Requirement
+- [ERROR] Intent relationship missing in reality scan: Target Core Architecture --(ArchiMate_Association)--> Core Architecture Gap
+- [ERROR] Intent relationship missing in reality scan: Business Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- [ERROR] Intent relationship missing in reality scan: Application Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- [ERROR] Intent relationship missing in reality scan: Technology Target Architecture --(ArchiMate_Specialization)--> Target Core Architecture
+- [ERROR] Intent relationship missing in reality scan: Value Stream --(ArchiMate_Specialization)--> StrategyBehavior
+- [ERROR] Intent relationship missing in reality scan: Capability --(ArchiMate_Specialization)--> StrategyBehavior
+- [ERROR] Intent relationship missing in reality scan: StrategyBehavior --(realize or serve)--> CouseOfAction
+- [ERROR] Intent relationship missing in reality scan: Target Core Architecture --(ArchiMate_Realization)--> StrategyBehavior
+- [ERROR] Intent relationship missing in reality scan: CouseOfAction --(ArchiMate_Realization)--> OutCome
+- [ERROR] Intent relationship missing in reality scan: Resource --(ArchiMate_Assignment)--> StrategyBehavior
+- [ERROR] Intent relationship missing in reality scan: Target Core Architecture --(ArchiMate_Realization)--> Resource
+- [ERROR] Intent relationship missing in reality scan: CouseOfAction --(ArchiMate_Realization)--> System Requirement
+- [ERROR] Intent relationship missing in reality scan: AI Copilot --(ArchiMate_Assignment)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: TestEngineer --(ArchiMate_Assignment)--> TestAndVerification
+- [ERROR] Intent relationship missing in reality scan: AI Copilot --(ArchiMate_Assignment)--> TestAndVerification
+- [ERROR] Intent relationship missing in reality scan: SystemEngineer --(ArchiMate_Assignment)--> Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent relationship missing in reality scan: AI Copilot --(ArchiMate_Assignment)--> Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent relationship missing in reality scan: VS Code --(ArchiMate_Composition)--> Github Copilot
+- [ERROR] Intent relationship missing in reality scan: Sparx EA --(ArchiMate_Flow)--> JSON Format of Archimate Model
+- [ERROR] Intent relationship missing in reality scan: Raw Requirement --(ArchiMate_Flow)--> Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent relationship missing in reality scan: Requirement Analysis And System Architecture Analysis --(ArchiMate_Flow)--> System Architecture Description
+- [ERROR] Intent relationship missing in reality scan: Issue --(ArchiMate_Flow)--> Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent relationship missing in reality scan: Implementation --(ArchiMate_Flow)--> Issue
+- [ERROR] Intent relationship missing in reality scan: System Requirement --(ArchiMate_Flow)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: BugOrIssue --(ArchiMate_Flow)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: Implementation --(ArchiMate_Flow)--> Target System
+- [ERROR] Intent relationship missing in reality scan: Target System --(ArchiMate_Flow)--> TestAndVerification
+- [ERROR] Intent relationship missing in reality scan: TestAndVerification --(ArchiMate_Flow)--> Final Target System
+- [ERROR] Intent relationship missing in reality scan: TestAndVerification --(ArchiMate_Flow)--> BugOrIssue
+- [ERROR] Intent relationship missing in reality scan: System Architecture Description --(ArchiMate_Flow)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: Model Driven AI for Business --(Generalization)--> AI for Business
+- [ERROR] Intent relationship missing in reality scan: Model Driven AI for  Project Building --(Generalization)--> Model Driven AI for Business
+- [ERROR] Intent relationship missing in reality scan: Developer --(ArchiMate_Assignment)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: OutCome --(realize)--> Goal
+- [ERROR] Intent relationship missing in reality scan: Driver --(drive)--> Goal
+- [ERROR] Intent relationship missing in reality scan: Driver --(ArchiMate_Association)--> Assessment
+- [ERROR] Intent relationship missing in reality scan: Assessment --(drive)--> Goal
+- [ERROR] Intent relationship missing in reality scan: Stakeholder --(has)--> Driver
+- [ERROR] Intent relationship missing in reality scan: Constrain --(ArchiMate_Specialization)--> System Requirement
+- [ERROR] Intent relationship missing in reality scan: Principle --(ArchiMate_Specialization)--> System Requirement
+- [ERROR] Intent relationship missing in reality scan: Value --(ArchiMate_Association)--> OutCome
+- [ERROR] Intent relationship missing in reality scan: Stakeholder --(ArchiMate_Association)--> Value
+- [ERROR] Intent relationship missing in reality scan: VS Code --(ArchiMate_Composition)--> AI4PB VS插件
+- [ERROR] Intent relationship missing in reality scan: Requirement Analysis And System Architecture Analysis --(ArchiMate_Triggering)--> Implementation
+- [ERROR] Intent relationship missing in reality scan: Implementation --(ArchiMate_Triggering)--> TestAndVerification
+- [ERROR] Intent relationship missing in reality scan: TestAndVerification --(ArchiMate_Triggering)--> Requirement Analysis And System Architecture Analysis
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Composition)--> WorkflowViewProvider
+- [ERROR] Intent relationship missing in reality scan: Executor_Router --(dispatch tasks)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Composition)--> JSON格式模型提取JS脚本
+- [ERROR] Intent relationship missing in reality scan: Github Copilot --(ArchiMate_Access)--> Prompt Tool Registry
+- [ERROR] Intent relationship missing in reality scan: Sparx EA --(ArchiMate_Access)--> EA SQL Audit Queries
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Realization)--> AUTO Skill Router
+- [ERROR] Intent relationship missing in reality scan: WorkflowViewProvider --(ArchiMate_Triggering)--> AUTO Skill Router
+- [ERROR] Intent relationship missing in reality scan: AUTO Skill Router --(ArchiMate_Triggering)--> Github Copilot
+- [ERROR] Intent relationship missing in reality scan: TestAndVerification --(ArchiMate_Flow)--> TestReport
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Composition)--> Executor_Router
+- [ERROR] Intent relationship missing in reality scan: Sparx EA --(ArchiMate_Flow)--> Task Help Infomation
+- [ERROR] Intent relationship missing in reality scan: Open Code AI Coding Agent --(ArchiMate_Specialization)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: Github Copilot --(ArchiMate_Specialization)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Access)--> .aicodingconfig
+- [ERROR] Intent relationship missing in reality scan: Open Code AI Coding Agent --(ArchiMate_Composition)--> OpenCode CLI 适配器
+- [ERROR] Intent relationship missing in reality scan: AgentFramework --(Association)--> Tool
+- [ERROR] Intent relationship missing in reality scan: AgentFramework --(Association)--> MCP
+- [ERROR] Intent relationship missing in reality scan: AgentFramework --(Association)--> Skill
+- [ERROR] Intent relationship missing in reality scan: AgentFramework --(Association)--> LLM
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> AgentApplication
+- [ERROR] Intent relationship missing in reality scan: AgentFrameworkWithGithubCopilot --(Generalization)--> OverallAgentFrameworkArchitecture
+- [ERROR] Intent relationship missing in reality scan: BusinessApplication --(uses)--> Claude code
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> Claude code
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> OpencodeAgentApplication
+- [ERROR] Intent relationship missing in reality scan: AgentFrameworkWithOpencode --(Generalization)--> OverallAgentFrameworkArchitecture
+- [ERROR] Intent relationship missing in reality scan: AgentFrameworkWithOpenclaw --(Generalization)--> OverallAgentFrameworkArchitecture
+- [ERROR] Intent relationship missing in reality scan: AgentFrameworkWithClaudecode --(Generalization)--> OverallAgentFrameworkArchitecture
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> Memory
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> Custom Prompts
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Generalization)--> AgentFramework
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Association)--> LLM
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Association)--> Tool
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Association)--> Agent
+- [ERROR] Intent relationship missing in reality scan: BusinessApplication --(uses)--> GithubCopilot
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> GithubCopilot
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Association)--> Skill
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Association)--> Agent
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Association)--> MCP
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Association)--> Tool
+- [ERROR] Intent relationship missing in reality scan: GithubCopilot --(Association)--> LLM
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> Openclaw
+- [ERROR] Intent relationship missing in reality scan: BusinessApplication --(uses)--> Openclaw
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Association)--> Skill
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Association)--> Agent
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Association)--> MCP
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Association)--> Tool
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Association)--> LLM
+- [ERROR] Intent relationship missing in reality scan: AgentFramework --(Association)--> Agent
+- [ERROR] Intent relationship missing in reality scan: Business --(uses)--> BusinessApplication
+- [ERROR] Intent relationship missing in reality scan: AgentApplication --(uses)--> AgentFramework
+- [ERROR] Intent relationship missing in reality scan: BusinessApplication --(uses)--> AgentApplication
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> Skill
+- [ERROR] Intent relationship missing in reality scan: Strategy --(uses)--> Business
+- [ERROR] Intent relationship missing in reality scan: Opencode --(Generalization)--> AgentFramework
+- [ERROR] Intent relationship missing in reality scan: Openclaw --(Generalization)--> AgentFramework
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Generalization)--> AgentFramework
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> Agent
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Association)--> MCP
+- [ERROR] Intent relationship missing in reality scan: Claude code --(Association)--> Skill
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> MCP
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> LLM
+- [ERROR] Intent relationship missing in reality scan: Opencode --(uses)--> Tool
+- [ERROR] Intent relationship missing in reality scan: BusinessApplication --(uses)--> OpencodeAgentApplication
+- [ERROR] Intent relationship missing in reality scan: OpencodeAgentApplication --(uses)--> Opencode
+- [ERROR] Intent relationship missing in reality scan: Ontology(Schema) --(defines)--> KnowledgeGraph
+- [ERROR] Intent relationship missing in reality scan: Business --(extracts ontology from business)--> Ontology(Schema)
+- [ERROR] Intent relationship missing in reality scan: GraphRag MCP --(reads/writes)--> KnowledgeGraph
+- [ERROR] Intent relationship missing in reality scan: KnowledgeGraph --(be used to train)--> LLM
+- [ERROR] Intent relationship missing in reality scan: GraphRag MCP --(Generalization)--> MCP
+- [ERROR] Intent relationship missing in reality scan: JSON Format of Archimate Model --(ArchiMate_Flow)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: Task Help Infomation --(ArchiMate_Flow)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: AI4PBAgentApplicationBundle --(ArchiMate_Flow)--> AI Coding Agent
+- [ERROR] Intent relationship missing in reality scan: JSON格式模型提取JS脚本 --(ArchiMate_Flow)--> Sparx EA
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-workflows
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-task-support
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-weekly-report
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-wrapup
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-iteration-summary
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-iteration-issues
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-init
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-task-list
+- [ERROR] Intent relationship missing in reality scan: SCRUM --(ArchiMate_Composition)--> ai4pb-audit
+- [ERROR] Intent relationship missing in reality scan: WorkflowViewProvider --(ArchiMate_Triggering)--> Executor_Router
+- [ERROR] Intent relationship missing in reality scan: AI4PB VS插件 --(ArchiMate_Access)--> AI4PBAgentApplicationBundle
+- [ERROR] Intent relationship missing in reality scan: Prompt Tool Registry --(ArchiMate_Access)--> AI4PBAgentApplicationBundle
+- [ERROR] Intent relationship missing in reality scan: Open Code AI Coding Agent --(ArchiMate_Composition)--> ECC Hooks Plugin
+- [ERROR] Intent relationship missing in reality scan: Open Code AI Coding Agent --(ArchiMate_Composition)--> ECC Tool Pack
+- [ERROR] Intent relationship missing in reality scan: Reality Scanner Orchestrator --(ArchiMate_Composition)--> TypeScript Scanner Adapter
+- [ERROR] Intent relationship missing in reality scan: Reality Scanner Orchestrator --(ArchiMate_Composition)--> Python Scanner Adapter
+- [ERROR] Intent relationship missing in reality scan: Python Scanner Adapter --(ArchiMate_Triggering)--> Language-Specific Scanner Scripts
+- [ERROR] Intent relationship missing in reality scan: TypeScript Scanner Adapter --(ArchiMate_Access)--> Target System
+- [ERROR] Intent relationship missing in reality scan: Python Scanner Adapter --(ArchiMate_Access)--> Target System
+- [ERROR] Intent relationship missing in reality scan: Reality Scanner Orchestrator --(ArchiMate_Flow)--> reality.json
+- [ERROR] Intent relationship missing in reality scan: Architecture Reconciliation Service --(ArchiMate_Access)--> reality.json
+- [ERROR] Intent relationship missing in reality scan: Architecture Reconciliation Service --(ArchiMate_Access)--> JSON Format of Archimate Model
+- [ERROR] Intent relationship missing in reality scan: Architecture Reconciliation Service --(ArchiMate_Flow)--> ARCH_IMPL_GAP
+- [ERROR] Intent relationship missing in reality scan: Final Target System --(ArchiMate_Flow)--> Reality Scanner Orchestrator
+- [ERROR] Intent relationship missing in reality scan: JSON Format of Archimate Model --(ArchiMate_Realization)--> System Architecture Description
+- [ERROR] Intent relationship missing in reality scan: ARCH_IMPL_GAP --(ArchiMate_Flow)--> Implementation

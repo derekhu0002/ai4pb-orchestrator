@@ -70,9 +70,6 @@ logs/
 __pycache__/
 *.pyc
 
-# Task files (Claude Code teams)
-tasks/
-
 # Personal configs (if any)
 personal/
 private/
