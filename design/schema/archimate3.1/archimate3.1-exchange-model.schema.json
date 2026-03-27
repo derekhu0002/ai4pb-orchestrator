@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "./design/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
   "title": "ArchiMate 3.1 Exchange Model JSON Schema",
-  "description": "A JSON Schema derived from the Open Group ArchiMate 3.1 HTML model at https://www.opengroup.org/xsd/archimate/3.1/html-model/. This is a JSON projection of the XML exchange model: XML wildcard extension points are represented as optional JSON 'extensions' objects.",
+  "description": "A JSON Schema derived from the Open Group ArchiMate 3.1 HTML model at https://www.opengroup.org/xsd/archimate/3.1/html-model/. This is a JSON projection of the XML exchange model, extended to support Multi-Agent System (MAS) workflow modeling.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -193,7 +193,32 @@
           "$ref": "#/$defs/properties"
         },
         "extensions": {
-          "$ref": "#/$defs/extensions"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/masProjectExtension"
+            },
+            {
+              "$ref": "#/$defs/masTaskExtension"
+            },
+            {
+              "$ref": "#/$defs/masIssueExtension"
+            },
+            {
+              "$ref": "#/$defs/masFileExtension"
+            },
+            {
+              "$ref": "#/$defs/masCodeConstructExtension"
+            },
+            {
+              "$ref": "#/$defs/masDependencyExtension"
+            },
+            {
+              "$ref": "#/$defs/masReleaseLogExtension"
+            },
+            {
+              "$ref": "#/$defs/extensions"
+            }
+          ]
         }
       }
     },
@@ -583,6 +608,202 @@
         "Specialization",
         "Association"
       ]
+    },
+    "//": "--- START OF MAS (MULTI-AGENT SYSTEM) SCHEMA EXTENSIONS ---",
+    "masProjectExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "WorkPackage"
+          },
+          "stereotype": {
+            "const": "<<Project>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rawRequirement": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "InProgress",
+              "Completed",
+              "Failed"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "masTaskExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "WorkPackage"
+          },
+          "stereotype": {
+            "const": "<<Task>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ToDo",
+              "InProgress",
+              "InReview",
+              "Done",
+              "Blocked"
+            ]
+          },
+          "priority": {
+            "type": "string"
+          },
+          "assignee": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "masIssueExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "BusinessObject"
+          },
+          "stereotype": {
+            "const": "<<Issue>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "issueType": {
+            "enum": [
+              "BugReport",
+              "ArchGap",
+              "Query"
+            ]
+          },
+          "status": {
+            "enum": [
+              "Open",
+              "Resolved"
+            ]
+          },
+          "reporter": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "issueType",
+          "status"
+        ]
+      }
+    },
+    "masFileExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "Artifact"
+          },
+          "stereotype": {
+            "const": "<<File>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "contentHash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    "masCodeConstructExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "Artifact"
+          },
+          "stereotype": {
+            "const": "<<CodeConstruct>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "constructType": {
+            "enum": [
+              "Class",
+              "Function"
+            ]
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "masDependencyExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "Artifact"
+          },
+          "stereotype": {
+            "const": "<<Dependency>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "masReleaseLogExtension": {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "Artifact"
+          },
+          "stereotype": {
+            "const": "<<ReleaseLog>>"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
     }
   }
 }
