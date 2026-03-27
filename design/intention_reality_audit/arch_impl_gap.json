@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-26T03:22:42.016Z",
-  "intentModelPath": "design/KG/SystemArchitecture.json",
-  "realityModelPath": "D:\\projects\\AICodingAgent\\ai4pb-orchestrator\\design\\intention_reality_audit\\reality.json",
+  "generatedAt": "2026-03-26T05:19:02.004Z",
+  "intentModelPath": "d:\\projects\\AICodingAgent\\ai4pb-orchestrator\\design\\KG\\SystemArchitecture.json",
+  "realityModelPath": "d:\\projects\\AICodingAgent\\ai4pb-orchestrator\\design\\intention_reality_audit\\reality.json",
   "metrics": {
     "coverage": 0.0088,
     "accuracy": 0,

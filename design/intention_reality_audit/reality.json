@@ -42558,7 +42558,7 @@
         "py:import:py:file:skills/videodb/scripts/ws_listener.py->py:import:videodb.exceptions"
       ],
       "extensions": {
-        "workspaceRoot": "D:\\projects\\AICodingAgent\\ai4pb-orchestrator",
+        "workspaceRoot": "d:\\projects\\AICodingAgent\\ai4pb-orchestrator",
         "fragmentCount": 2
       }
     }
@@ -42578,6 +42578,6 @@
       "design/intention_reality_audit",
       "ast/py/__pycache__"
     ],
-    "generatedAt": "2026-03-26T03:22:41.878Z"
+    "generatedAt": "2026-03-26T05:19:01.966Z"
   }
 }

@@ -1,8 +1,8 @@
 # ARCH_IMPL_GAP
 
-- Generated At: 2026-03-26T03:22:42.016Z
-- Intent Model: design/KG/SystemArchitecture.json
-- Reality Model: D:\projects\AICodingAgent\ai4pb-orchestrator\design\intention_reality_audit\reality.json
+- Generated At: 2026-03-26T05:19:02.004Z
+- Intent Model: d:\projects\AICodingAgent\ai4pb-orchestrator\design\KG\SystemArchitecture.json
+- Reality Model: d:\projects\AICodingAgent\ai4pb-orchestrator\design\intention_reality_audit\reality.json
 
 ## Raw Metrics
 
