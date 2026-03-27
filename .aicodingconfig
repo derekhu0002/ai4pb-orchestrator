@@ -1,7 +1,7 @@
 {
   "EA_AUTOGEN_CONFIG": {
-    "needallmaintenace": "All",
-    "needbrowserlocation": true,
+    "needallmaintenace": "onlyActive",
+    "needbrowserlocation": false,
     "maintenacetype": "forproject"
   },
   "AGENT_ROUTER_CONFIG": {
