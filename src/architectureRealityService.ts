@@ -118,7 +118,7 @@ const DEFAULT_SCANNER_EXCLUDES = [
   'coverage',
   'TEMP',
   'design/intention_reality_audit',
-  'ast/py/__pycache__'
+  'src/ast/py/__pycache__'
 ];
 
 // @ArchitectureID: 1156
@@ -165,7 +165,7 @@ async function scanPythonReality(
   explicitExcludes: string[],
   logger: AlignmentLogger
 ): Promise<ArchitectureRealityModel> {
-  const scriptPath = path.join(workspaceRoot, 'ast', 'py', 'scan_python_reality.py');
+  const scriptPath = path.join(workspaceRoot, 'src', 'ast', 'py', 'scan_python_reality.py');
   if (!fs.existsSync(scriptPath)) {
     throw new Error(`Python scanner script not found: ${scriptPath}`);
   }
