@@ -1,6 +1,6 @@
 ---
 name: audit-compliance-check
-description: Performs an architecture-to-code compliance audit.
+description: Performs an architecture-to-code compliance audit using the Shared Knowledge Graph as the intent baseline, with read-only graph access.
 ---
 
 # ARCHITECTURAL COMPLIANCE AUDIT
@@ -9,6 +9,13 @@ As the `@Audit` agent, you will now perform an architecture-to-code compliance c
 
 ## INPUT DATA
 - An **invocation** from `@ProjectOrchestrator` to audit the latest commit.
+
+## SHARED KNOWLEDGE GRAPH SCOPE
+- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- Access Level: `Read Only`.
+- Read scope: full intent model in `metadata`, `elements`, `relationships`, `organizations`, `propertyDefinitions`, and `extensions`.
+- Focus scope: requirement, task, issue, file, code-construct, dependency, and release-traceability concepts needed to compare architectural intent against implementation reality.
+- This agent MUST NOT mutate the Shared Knowledge Graph directly; all detected gaps are reported to `@SystemArchitect` for graph changes or rework decisions.
 
 ## BEHAVIORAL RULES
 

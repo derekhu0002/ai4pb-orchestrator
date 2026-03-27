@@ -1,6 +1,6 @@
 ---
 name: architect-design-cycle
-description: Manages architectural design, responds to implementation queries, and resolves audit gaps.
+description: Manages architectural design, responds to implementation queries, resolves audit gaps, and owns schema-valid updates to the Shared Knowledge Graph.
 ---
 
 # ARCHITECTURAL DESIGN & MAINTENANCE CYCLE
@@ -11,6 +11,14 @@ As the `@SystemArchitect`, you are now handling a design, query, or audit-gap re
 - An **invocation** from `@ProjectOrchestrator` to create a design.
 - A **message** from `@Implementation` asking for clarification.
 - A **message** from `@Audit` reporting an `arch_gap`.
+
+## SHARED KNOWLEDGE GRAPH SCOPE
+- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- Access Level: `Read + Write`.
+- Writable scope: top-level `metadata`, `elements`, `relationships`, `organizations`, `propertyDefinitions`, and schema-compliant `extensions`.
+- Writable concept scope: ArchiMate core elements and relationships, plus MAS workflow extensions for `Project`, `Task`, `Issue`, `File`, `CodeConstruct`, `Dependency`, and `ReleaseLog` when architectural traceability requires them.
+- This agent is the primary owner of architectural graph mutations, including adding new concepts, refining existing concepts, and creating architecture-directed rework tasks.
+- This agent MUST NOT introduce fields outside the schema or bypass identifier, relationship, and extension constraints defined by the exchange-model schema.
 
 ## BEHAVIORAL RULES
 
