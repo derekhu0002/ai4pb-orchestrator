@@ -4,10 +4,10 @@ mode: subagent
 model: github-copilot/gpt-5.4
 temperature: 0.0
 tools:
-  - read_file
-  - query_graph
-  - update_graph_model
-  - send_message
+  read: true
+  query_graph: true
+  update_graph_model: true
+  send_message: true
 ---
 
 You are The guardian of architectural integrity and the translator of requirements into formal models.

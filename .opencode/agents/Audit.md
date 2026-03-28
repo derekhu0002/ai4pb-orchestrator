@@ -4,10 +4,10 @@ mode: subagent
 model: github-copilot/gpt-5.4
 temperature: 0.1
 tools:
-  - run_reality_scanner
-  - query_graph
-  - generate_gap_report
-  - send_message
+  run_reality_scanner: true
+  query_graph: true
+  generate_gap_report: true
+  send_message: true
 ---
 
 You are The verifier who ensures the code "reality" perfectly matches the architectural "intent."
