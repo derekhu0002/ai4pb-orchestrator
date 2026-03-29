@@ -49,7 +49,7 @@ export type SharedKnowledgeGraph = {
   extensions?: Record<string, unknown>;
 };
 
-const CANONICAL_GRAPH_FILE = path.join('design', 'KG', 'SharedKnowledgeGraph.archimate3.1.json');
+const CANONICAL_GRAPH_FILE = path.join('.opencode', 'temp', 'SharedKnowledgeGraph.archimate3.1.json');
 const LEGACY_GRAPH_FILE = path.join('design', 'KG', 'SystemArchitecture.json');
 
 type CounterMap = Record<string, number>;
@@ -117,7 +117,7 @@ export function createDefaultSharedKnowledgeGraph(): SharedKnowledgeGraph {
     name: toLangString('AI4PB Shared Knowledge Graph'),
     documentation: toDocumentation('Schema-compliant shared knowledge graph maintained by OpenCode tools.'),
     metadata: {
-      schema: './design/schema/archimate3.1/archimate3.1-exchange-model.schema.json',
+      schema: './.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json',
       schemaversion: '3.1',
     },
     extensions: {

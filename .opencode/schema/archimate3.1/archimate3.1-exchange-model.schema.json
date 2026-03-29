@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "./design/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
+  "$id": "./.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
   "title": "ArchiMate 3.1 Exchange Model JSON Schema",
   "description": "A JSON Schema derived from the Open Group ArchiMate 3.1 HTML model at https://www.opengroup.org/xsd/archimate/3.1/html-model/. This is a JSON projection of the XML exchange model, extended to support Multi-Agent System (MAS) workflow modeling.",
   "type": "object",

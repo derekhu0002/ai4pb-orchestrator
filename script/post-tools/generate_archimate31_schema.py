@@ -18,7 +18,7 @@ DEFAULT_URL = "https://www.opengroup.org/xsd/archimate/3.1/html-model/"
 DEFAULT_TIMEOUT_SECONDS = 20.0
 DEFAULT_OUTPUT = (
     Path(__file__).resolve().parents[2]
-    / "design"
+    / ".opencode"
     / "schema"
     / "archimate3.1"
     / "archimate3.1-exchange-model.schema.json"
@@ -171,7 +171,7 @@ def build_schema(
 ) -> dict:
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "./design/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
+        "$id": "./.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
         "title": "ArchiMate 3.1 Exchange Model JSON Schema",
         "description": (
             "A JSON Schema derived from the Open Group ArchiMate 3.1 HTML model at "

@@ -11,7 +11,7 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
 - A Task invocation from `ProjectOrchestrator` to audit the latest implementation batch.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only`.
 - Read scope: full intent model in `metadata`, `elements`, `relationships`, `organizations`, `propertyDefinitions`, and `extensions`.
 - Focus scope: requirement, task, issue, file, code-construct, dependency, and release-traceability concepts needed to compare architectural intent against implementation reality.

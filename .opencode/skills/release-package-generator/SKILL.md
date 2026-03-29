@@ -11,7 +11,7 @@ As the `@ReleaseAgent`, compile the sprint artifacts into a final release log an
 - A Task invocation from `ProjectOrchestrator` after successful implementation, QA, and audit.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only`.
 - Read scope: completed tasks, resolved issues, release-relevant files and dependencies, and any graph-backed traceability needed to assemble an accurate sprint release log.
 - This agent uses `query_graph` to determine completed scope and `update_graph_model` to record final release metadata.

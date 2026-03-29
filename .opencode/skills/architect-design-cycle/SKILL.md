@@ -13,7 +13,7 @@ As the `@SystemArchitect`, you are handling a design request, implementation cla
 - A Task invocation from `ProjectOrchestrator` carrying an audit-gap summary.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read + Write`.
 - Use `query_graph` to inspect the architecture JSON and runtime state.
 - Use `update_graph_model` to record design summary, design decisions, and task definitions in the repo-local runtime state and graph-update log.

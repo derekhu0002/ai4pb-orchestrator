@@ -12,7 +12,7 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
 - A Task invocation from `ProjectOrchestrator` carrying a QA or audit rework summary.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only` by default.
 - Read scope: assigned `Task` work packages, linked requirements, related ArchiMate elements and relationships, and any traceable `File`, `CodeConstruct`, or `Dependency` concepts needed to implement the task correctly.
 - This agent uses `query_graph` as the implementation source of truth for scope, dependencies, and traceability.

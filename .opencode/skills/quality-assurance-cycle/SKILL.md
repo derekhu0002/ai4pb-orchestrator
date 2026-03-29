@@ -11,7 +11,7 @@ As the `@QualityAssurance` agent, generate the best available test plan, run the
 - A Task invocation from `ProjectOrchestrator` to validate the latest implementation batch.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only`.
 - Read scope: requirement and task definitions, acceptance criteria encoded in properties or documentation, and traceability links to relevant files, code constructs, and dependencies.
 - This agent uses `query_graph` to derive coverage expectations and `generate_test_cases` to create a concrete plan.

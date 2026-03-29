@@ -12,7 +12,7 @@
     }
   ],
   "metadata": {
-    "schema": "./design/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
+    "schema": "./.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json",
     "schemaversion": "3.1"
   },
   "extensions": {

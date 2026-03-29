@@ -12,7 +12,7 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
 - **Runtime Inputs**: Structured child results returned by the `SystemArchitect`, `Implementation`, `QualityAssurance`, `Audit`, and `ReleaseAgent` subagents.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
-- The Shared Knowledge Graph MUST conform to `design/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
+- The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only`.
 - Read scope: project-level context, task backlogs, issue state, release readiness, and high-level traceability across `metadata`, `elements`, `relationships`, `organizations`, and `extensions`.
 - This agent may use `query_graph` and `read_project_status` to inspect architecture and runtime execution state.
