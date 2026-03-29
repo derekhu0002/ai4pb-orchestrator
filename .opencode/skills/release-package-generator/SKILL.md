@@ -20,12 +20,12 @@ As the `@ReleaseAgent`, compile the sprint artifacts into a final release log an
 
 1.  **Aggregate Artifacts**:
     - Use `find` to locate relevant test reports, audit summaries, and commit logs.
-    - Use `query_graph` to get the list of completed tasks.
+    - Use `query_graph(mode="tasks_by_status", status="done")` and `query_graph(mode="validations")` to get the completed task list and validation status.
 
 2.  **Generate Report**:
     - Use `read` to gather content from all artifacts.
     - Use `write` to create the final, structured `SprintRleaseLog.md`.
 
 3.  **Report Finalization**:
-    - Use `update_graph_model` to record release completion.
+    - Use `update_graph_model(action="record_release", status="completed", title="SprintRleaseLog.md", content="...")` to record release completion.
     - Return JSON-like prose with `status`, `release_log_path`, and `summary`.

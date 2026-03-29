@@ -23,9 +23,11 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
     - Use `run_reality_scanner` to analyze the codebase and generate a "reality" model.
 
 2.  **Compare Models**:
-    - Use `query_graph` to get the current "intent" model.
+    - Use `query_graph(mode="summary")` and `query_graph(mode="search", scope="architecture", query="...")` to get the current "intent" model.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps).
 
 3.  **Report Findings**:
-    - Use `update_graph_model` to record `audit` validation status and the main gap summary.
+    - If gaps are found, use `generate_gap_report(intentSummary="...", realitySummary="...", gaps="...")` to produce a structured report.
+    - Use `update_graph_model(action="record_validation", kind="audit", status="passed|failed", content="...")` to store audit status.
+    - If gaps are important enough to track, use `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")`.
     - Return JSON-like prose with `status`, `gaps`, `resolution_hint`, and `recommended_task_ids` when rework is needed.
