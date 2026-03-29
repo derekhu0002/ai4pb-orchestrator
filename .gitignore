@@ -83,7 +83,6 @@ marketing/
 
 # Temporary files
 tmp/
-temp/
 *.tmp
 *.bak
 *.backup
