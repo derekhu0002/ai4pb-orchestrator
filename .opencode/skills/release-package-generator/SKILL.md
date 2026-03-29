@@ -19,8 +19,8 @@ As the `@ReleaseAgent`, compile the sprint artifacts into a final release log an
 ## BEHAVIORAL RULES
 
 1.  **Aggregate Artifacts**:
-    - Use `find` to locate relevant test reports, audit summaries, and commit logs.
     - Use `query_graph(mode="tasks_by_status", status="done")` and `query_graph(mode="validations")` to get the completed task list and validation status.
+    - Use `read` on known release-relevant files or paths provided by the caller instead of relying on a file-discovery tool.
 
 2.  **Generate Report**:
     - Use `read` to gather content from all artifacts.
