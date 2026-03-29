@@ -9,6 +9,16 @@ import {
   normalizeTaskTitle,
   saveRuntimeState,
 } from '../lib/runtimeState';
+import {
+  getCanonicalKnowledgeGraphPath,
+  loadCanonicalKnowledgeGraph,
+  normalizeElementType,
+  normalizeRelationshipType,
+  saveCanonicalKnowledgeGraph,
+  syncRuntimeStateToSharedKnowledgeGraph,
+  upsertElement,
+  upsertRelationship,
+} from '../lib/sharedKnowledgeGraph';
 
 function normalizeAction(action?: string, args?: Record<string, unknown>): string {
   const value = (action ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -48,6 +58,14 @@ function normalizeAction(action?: string, args?: Record<string, unknown>): strin
     finalize_release: 'record_release',
     reset_runtime: 'reset_runtime',
     reset_project_state: 'reset_runtime',
+    add_element: 'add_element',
+    create_element: 'add_element',
+    upsert_element: 'upsert_element',
+    update_element: 'upsert_element',
+    add_relationship: 'add_relationship',
+    create_relationship: 'add_relationship',
+    upsert_relationship: 'upsert_relationship',
+    update_relationship: 'upsert_relationship',
   };
 
   if (aliases[value]) {
@@ -83,7 +101,7 @@ export default tool({
   args: {
     action: tool.schema
       .string()
-      .describe('Update operation. Supported: set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime. Common aliases and generic update_graph_model are accepted.'),
+      .describe('Update operation. Supported: set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship. Common aliases and generic update_graph_model are accepted.'),
     taskId: tool.schema.string().optional().describe('Task ID for task-related updates.'),
     title: tool.schema.string().optional().describe('Title for a new task or release log.'),
     content: tool.schema.string().optional().describe('Summary or detailed content for the update.'),
@@ -92,17 +110,31 @@ export default tool({
     kind: tool.schema.string().optional().describe('Validation or issue kind, such as qa, audit, or ArchitectureGap.'),
     issueId: tool.schema.string().optional().describe('Issue ID for resolve_issue operations.'),
     tasksJson: tool.schema.string().optional().describe('Optional JSON array of task objects for bulk_add_tasks or upsert_task.'),
+    elementId: tool.schema.string().optional().describe('Element identifier for add_element or upsert_element.'),
+    elementType: tool.schema.string().optional().describe('Schema element type, such as ApplicationComponent, BusinessProcess, WorkPackage, or Artifact.'),
+    relationshipId: tool.schema.string().optional().describe('Relationship identifier for add_relationship or upsert_relationship.'),
+    relationshipType: tool.schema.string().optional().describe('Schema relationship type, such as Composition, Aggregation, Realization, Serving, Triggering, or Association.'),
+    sourceId: tool.schema.string().optional().describe('Source element identifier for relationship actions.'),
+    targetId: tool.schema.string().optional().describe('Target element identifier for relationship actions.'),
+    extensionsJson: tool.schema.string().optional().describe('Optional JSON object merged into the concept extensions field.'),
   },
   async execute(args, context) {
     const state = loadRuntimeState(context.worktree);
+    const sharedGraph = loadCanonicalKnowledgeGraph(context.worktree);
     const now = new Date().toISOString();
     const normalizedAction = normalizeAction(args.action, args as unknown as Record<string, unknown>);
-    let result: Record<string, unknown> = { action: normalizedAction, requestedAction: args.action };
+    let result: Record<string, unknown> = {
+      action: normalizedAction,
+      requestedAction: args.action,
+      sharedKnowledgeGraphPath: getCanonicalKnowledgeGraphPath(context.worktree),
+    };
+    const parsedExtensions = args.extensionsJson ? (JSON.parse(args.extensionsJson) as Record<string, unknown>) : undefined;
 
     switch (normalizedAction) {
       case 'set_design_summary': {
         state.designSummary = args.content ?? '';
-        result = { action: normalizedAction, designSummary: state.designSummary };
+        sharedGraph.documentation = args.content ? [{ value: args.content }] : sharedGraph.documentation;
+        result = { ...result, designSummary: state.designSummary };
         break;
       }
       case 'record_decision': {
@@ -111,7 +143,7 @@ export default tool({
           throw new Error('record_decision requires content.');
         }
         state.designDecisions.push(decision);
-        result = { action: normalizedAction, decisions: state.designDecisions };
+        result = { ...result, decisions: state.designDecisions };
         break;
       }
       case 'add_task': {
@@ -127,7 +159,7 @@ export default tool({
           updatedAt: now,
         };
         state.tasks.push(task);
-        result = { action: normalizedAction, task };
+        result = { ...result, task };
         break;
       }
       case 'bulk_add_tasks': {
@@ -150,7 +182,7 @@ export default tool({
           };
         });
         state.tasks.push(...createdTasks);
-        result = { action: normalizedAction, tasks: createdTasks };
+        result = { ...result, tasks: createdTasks };
         break;
       }
       case 'upsert_task': {
@@ -170,7 +202,7 @@ export default tool({
             existing.details = args.content;
           }
           existing.updatedAt = now;
-          result = { action: normalizedAction, task: existing, operation: 'updated' };
+          result = { ...result, task: existing, operation: 'updated' };
           break;
         }
 
@@ -185,7 +217,7 @@ export default tool({
           updatedAt: now,
         };
         state.tasks.push(task);
-        result = { action: normalizedAction, task, operation: 'created' };
+        result = { ...result, task, operation: 'created' };
         break;
       }
       case 'set_task_status': {
@@ -204,7 +236,7 @@ export default tool({
           task.details = args.content;
         }
         task.updatedAt = now;
-        result = { action: normalizedAction, task };
+        result = { ...result, task };
         break;
       }
       case 'record_validation': {
@@ -224,7 +256,7 @@ export default tool({
           details: args.content ?? '',
           updatedAt: now,
         };
-        result = { action: normalizedAction, validation: { kind, ...state.validations[kind] } };
+        result = { ...result, validation: { kind, ...state.validations[kind] } };
         break;
       }
       case 'log_issue': {
@@ -236,7 +268,7 @@ export default tool({
           createdAt: now,
         };
         state.issues.push(issue);
-        result = { action: normalizedAction, issue };
+        result = { ...result, issue };
         break;
       }
       case 'resolve_issue': {
@@ -252,7 +284,7 @@ export default tool({
         if (args.content) {
           issue.details = args.content;
         }
-        result = { action: normalizedAction, issue };
+        result = { ...result, issue };
         break;
       }
       case 'record_release': {
@@ -262,7 +294,7 @@ export default tool({
           releaseLogPath: args.title,
           updatedAt: now,
         };
-        result = { action: normalizedAction, release: state.release };
+        result = { ...result, release: state.release };
         break;
       }
       case 'reset_runtime': {
@@ -286,14 +318,45 @@ export default tool({
           summary: 'Release has not been prepared yet.',
           updatedAt: now,
         };
-        result = { action: normalizedAction, status: 'reset' };
+        result = { ...result, status: 'reset' };
+        break;
+      }
+      case 'add_element':
+      case 'upsert_element': {
+        const element = upsertElement(sharedGraph, {
+          identifier: args.elementId,
+          type: normalizeElementType(args.elementType),
+          name: args.title ?? args.content ?? 'Unnamed Element',
+          documentation: args.content,
+          extensions: parsedExtensions,
+        });
+        result = { ...result, element };
+        break;
+      }
+      case 'add_relationship':
+      case 'upsert_relationship': {
+        if (!args.sourceId || !args.targetId) {
+          throw new Error(`${normalizedAction} requires sourceId and targetId.`);
+        }
+        const relationship = upsertRelationship(sharedGraph, {
+          identifier: args.relationshipId,
+          type: normalizeRelationshipType(args.relationshipType),
+          name: args.title ?? `${args.sourceId} to ${args.targetId}`,
+          source: args.sourceId,
+          target: args.targetId,
+          documentation: args.content,
+          extensions: parsedExtensions,
+        });
+        result = { ...result, relationship };
         break;
       }
       default:
-        throw new Error(`Unsupported action: ${args.action}. Supported actions include set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime.`);
+        throw new Error(`Unsupported action: ${args.action}. Supported actions include set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship.`);
     }
 
+    syncRuntimeStateToSharedKnowledgeGraph(sharedGraph, state);
     saveRuntimeState(context.worktree, state);
+    saveCanonicalKnowledgeGraph(context.worktree, sharedGraph);
     appendGraphUpdateLog(context.worktree, { action: normalizedAction, requestedAction: args.action, args, result });
     return asJson(result);
   },

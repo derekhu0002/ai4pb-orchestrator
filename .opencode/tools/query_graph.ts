@@ -1,6 +1,7 @@
 import { tool } from '@opencode-ai/plugin';
 
 import { asJson, loadKnowledgeGraph, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
+import { getCanonicalKnowledgeGraphPath, loadCanonicalKnowledgeGraph, loadLegacyKnowledgeGraph } from '../lib/sharedKnowledgeGraph';
 
 type SearchMatch = {
   scope: 'runtime' | 'architecture';
@@ -36,12 +37,14 @@ export default tool({
   async execute(args, context) {
     const mode = args.mode ?? 'search';
     const runtimeState = loadRuntimeState(context.worktree);
-    const graph = loadKnowledgeGraph(context.worktree) as
+    const canonicalGraph = loadCanonicalKnowledgeGraph(context.worktree);
+    const legacyGraph = (loadLegacyKnowledgeGraph(context.worktree) ?? loadKnowledgeGraph(context.worktree)) as
       | { elements?: unknown[]; relationships?: unknown[] }
       | null;
 
     if (mode === 'summary') {
       return asJson({
+        sharedKnowledgeGraphPath: getCanonicalKnowledgeGraphPath(context.worktree),
         activeGoal: runtimeState.activeGoal,
         designSummary: runtimeState.designSummary,
         decisions: runtimeState.designDecisions,
@@ -49,6 +52,10 @@ export default tool({
         issues: runtimeState.issues,
         validations: runtimeState.validations,
         release: runtimeState.release,
+        canonicalCounts: {
+          elements: canonicalGraph.elements?.element.length ?? 0,
+          relationships: canonicalGraph.relationships?.relationship.length ?? 0,
+        },
       });
     }
 
@@ -75,15 +82,36 @@ export default tool({
     }
 
     if (mode === 'architecture_element') {
-      const elements = Array.isArray(graph?.elements) ? (graph?.elements as Array<Record<string, unknown>>) : [];
-      const element = elements.find((item) => String(item.id ?? '') === (args.id ?? args.query) || String(item.name ?? '') === (args.query ?? ''));
-      return asJson({ mode, element: element ?? null });
+      const element = (canonicalGraph.elements?.element ?? []).find(
+        (item) => item.identifier === (args.id ?? args.query) || item.name.some((entry) => entry.value === (args.query ?? ''))
+      );
+      if (element) {
+        return asJson({ mode, source: 'canonical', element });
+      }
+      const legacyElements = Array.isArray(legacyGraph?.elements) ? (legacyGraph?.elements as Array<Record<string, unknown>>) : [];
+      const legacyElement = legacyElements.find((item) => String(item.id ?? '') === (args.id ?? args.query) || String(item.name ?? '') === (args.query ?? ''));
+      return asJson({ mode, source: legacyElement ? 'legacy' : 'none', element: legacyElement ?? null });
     }
 
     if (mode === 'architecture_relationship') {
-      const relationships = Array.isArray(graph?.relationships) ? (graph?.relationships as Array<Record<string, unknown>>) : [];
-      const relationship = relationships.find((item) => String(item.id ?? '') === (args.id ?? args.query) || String(item.name ?? '') === (args.query ?? ''));
-      return asJson({ mode, relationship: relationship ?? null });
+      const relationship = (canonicalGraph.relationships?.relationship ?? []).find(
+        (item) => item.identifier === (args.id ?? args.query) || item.name.some((entry) => entry.value === (args.query ?? ''))
+      );
+      if (relationship) {
+        return asJson({ mode, source: 'canonical', relationship });
+      }
+      const legacyRelationships = Array.isArray(legacyGraph?.relationships) ? (legacyGraph?.relationships as Array<Record<string, unknown>>) : [];
+      const legacyRelationship = legacyRelationships.find((item) => String(item.id ?? '') === (args.id ?? args.query) || String(item.name ?? '') === (args.query ?? ''));
+      return asJson({ mode, source: legacyRelationship ? 'legacy' : 'none', relationship: legacyRelationship ?? null });
+    }
+
+    if (mode === 'architecture_elements_by_type') {
+      const type = (args.status ?? args.query ?? '').trim();
+      return asJson({
+        mode,
+        type,
+        elements: (canonicalGraph.elements?.element ?? []).filter((item) => item.type === type),
+      });
     }
 
     const scope = args.scope ?? 'all';
@@ -120,18 +148,18 @@ export default tool({
     }
 
     if ((scope === 'all' || scope === 'architecture') && matches.length < limit) {
-      const elements = Array.isArray(graph?.elements) ? graph?.elements : [];
-      const relationships = Array.isArray(graph?.relationships) ? graph?.relationships : [];
+      const elements = canonicalGraph.elements?.element ?? [];
+      const relationships = canonicalGraph.relationships?.relationship ?? [];
 
-      for (const element of elements as Array<Record<string, unknown>>) {
-        const text = `${String(element.id ?? '')} ${String(element.name ?? '')} ${String(element.type ?? '')} ${String(element.description ?? '')}`;
+      for (const element of elements) {
+        const text = `${element.identifier} ${element.name.map((item) => item.value).join(' ')} ${element.type} ${element.documentation?.map((item) => item.value).join(' ') ?? ''}`;
         if (includesAllTerms(text, args.query ?? '')) {
           matches.push({
             scope: 'architecture',
             kind: 'element',
-            id: String(element.id ?? ''),
-            name: String(element.name ?? ''),
-            type: String(element.type ?? ''),
+            id: element.identifier,
+            name: element.name.map((item) => item.value).join(' '),
+            type: element.type,
             snippet: safeSnippet(text),
           });
         }
@@ -141,14 +169,55 @@ export default tool({
       }
 
       if (matches.length < limit) {
-        for (const relationship of relationships as Array<Record<string, unknown>>) {
-          const text = `${String(relationship.id ?? '')} ${String(relationship.statement ?? '')} ${String(relationship.name ?? '')} ${String(relationship.description ?? '')}`;
+        for (const relationship of relationships) {
+          const text = `${relationship.identifier} ${relationship.name.map((item) => item.value).join(' ')} ${relationship.type} ${relationship.source} ${relationship.target} ${relationship.documentation?.map((item) => item.value).join(' ') ?? ''}`;
           if (includesAllTerms(text, args.query ?? '')) {
             matches.push({
               scope: 'architecture',
               kind: 'relationship',
-              id: String(relationship.id ?? ''),
-              name: String(relationship.name ?? ''),
+              id: relationship.identifier,
+              name: relationship.name.map((item) => item.value).join(' '),
+              snippet: safeSnippet(text),
+            });
+          }
+          if (matches.length >= limit) {
+            break;
+          }
+        }
+      }
+
+      if (matches.length < limit) {
+        const legacyElements = Array.isArray(legacyGraph?.elements) ? (legacyGraph.elements as Array<Record<string, unknown>>) : [];
+        for (const legacyElement of legacyElements) {
+          const text = `${String(legacyElement.id ?? '')} ${String(legacyElement.name ?? '')} ${String(legacyElement.type ?? '')} ${String(legacyElement.description ?? '')}`;
+          if (includesAllTerms(text, args.query ?? '')) {
+            matches.push({
+              scope: 'architecture',
+              kind: 'legacy_element',
+              id: String(legacyElement.id ?? ''),
+              name: String(legacyElement.name ?? ''),
+              type: String(legacyElement.type ?? ''),
+              snippet: safeSnippet(text),
+            });
+          }
+          if (matches.length >= limit) {
+            break;
+          }
+        }
+      }
+
+      if (matches.length < limit) {
+        const legacyRelationships = Array.isArray(legacyGraph?.relationships)
+          ? (legacyGraph.relationships as Array<Record<string, unknown>>)
+          : [];
+        for (const legacyRelationship of legacyRelationships) {
+          const text = `${String(legacyRelationship.id ?? '')} ${String(legacyRelationship.statement ?? '')} ${String(legacyRelationship.name ?? '')} ${String(legacyRelationship.description ?? '')}`;
+          if (includesAllTerms(text, args.query ?? '')) {
+            matches.push({
+              scope: 'architecture',
+              kind: 'legacy_relationship',
+              id: String(legacyRelationship.id ?? ''),
+              name: String(legacyRelationship.name ?? ''),
               snippet: safeSnippet(text),
             });
           }

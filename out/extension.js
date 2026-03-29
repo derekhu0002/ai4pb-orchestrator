@@ -53,7 +53,6 @@ const BUNDLED_PATHS = {
     eaTemplate: 'EA-model-template/EA-model-template.feap',
     bundledGitHubRoot: '.github',
     bundledOpenCodeRoot: '.opencode',
-    rootOpenCodeConfig: 'opencode.json',
     initialPrompt: 'skills/ai4pb-init/SKILL.md',
     wrapPrompt: 'skills/ai4pb-wrapup/SKILL.md',
     reversePrompt: 'skills/ai4pb-audit/SKILL.md',
@@ -4552,12 +4551,6 @@ async function initializeAICodingAgentWorkspaceProjectConfig() {
             label: 'rules'
         }
     ], 'AICodingAgent');
-    await initializeWorkspaceProjectFiles([
-        {
-            sourceRelativeFile: BUNDLED_PATHS.rootOpenCodeConfig,
-            label: 'opencode.json'
-        }
-    ], 'AICodingAgent');
 }
 async function initializeWorkspaceProjectConfigs(specs, label) {
     const root = getWorkspaceRoot();
@@ -4599,52 +4592,11 @@ async function initializeWorkspaceProjectConfigs(specs, label) {
         await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(root));
     }
 }
-// @ArchitectureID: 1409
-async function initializeWorkspaceProjectFiles(specs, label) {
-    const root = getWorkspaceRoot();
-    const resolvedSpecs = specs.map((spec) => {
-        const targetRelativeFile = spec.targetRelativeFile ?? spec.sourceRelativeFile;
-        return {
-            sourceFile: resolveExtensionPath(spec.sourceRelativeFile),
-            targetFile: resolvePath(root, targetRelativeFile),
-            targetRelativeFile,
-            label: spec.label ?? targetRelativeFile
-        };
-    });
-    for (const spec of resolvedSpecs) {
-        if (!exists(spec.sourceFile)) {
-            throw new Error(`扩展内未找到初始化文件 ${spec.label}: ${spec.sourceFile}`);
-        }
-    }
-    const existingSpecs = resolvedSpecs.filter((spec) => exists(spec.targetFile));
-    if (existingSpecs.length > 0) {
-        const allTargets = resolvedSpecs.map((spec) => spec.targetRelativeFile).join(', ');
-        const existingTargets = existingSpecs.map((spec) => spec.targetRelativeFile).join(', ');
-        const choice = await vscode.window.showWarningMessage(`初始化${label}配置文件将复制: ${allTargets}。已存在: ${existingTargets}`, { modal: true }, '覆盖', '打开已有文件');
-        if (choice === '打开已有文件') {
-            await openFileIfExists(existingSpecs[0].targetFile);
-            return;
-        }
-        if (choice !== '覆盖') {
-            return;
-        }
-    }
-    for (const spec of resolvedSpecs) {
-        replaceFileFromSource(spec.sourceFile, spec.targetFile);
-        output.appendLine(`[AI4PB] 已初始化${label}配置文件: ${spec.targetFile}`);
-    }
-    output.show(true);
-}
 function replaceDirectoryFromSource(sourceDir, targetDir) {
     if (exists(targetDir)) {
         fs.rmSync(targetDir, { recursive: true, force: true });
     }
     copyFilesRecursivelyOverwrite(sourceDir, targetDir);
-}
-function replaceFileFromSource(sourceFile, targetFile) {
-    const targetDir = path.dirname(targetFile);
-    fs.mkdirSync(targetDir, { recursive: true });
-    fs.copyFileSync(sourceFile, targetFile);
 }
 // @ArchitectureID: 1220
 function copyFilesRecursivelyOverwrite(sourceDir, targetDir) {
