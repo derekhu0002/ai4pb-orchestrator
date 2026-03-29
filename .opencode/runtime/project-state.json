@@ -1,40 +1,30 @@
 {
   "version": 1,
-  "activeGoal": "Develop a website about cybersecurity news, including core pages, content model, user experience, and an implementation ",
+  "activeGoal": "",
   "designSummary": "",
   "designDecisions": [],
-  "tasks": [
-    {
-      "id": "TASK-001",
-      "title": "Develop a website about cybersecurity news, including core pages, content model, user experience, and an implementation ",
-      "status": "todo",
-      "owner": "Implementation",
-      "summary": "Created by decompose_goal.",
-      "createdAt": "2026-03-29T07:27:23.381Z",
-      "updatedAt": "2026-03-29T07:27:23.381Z"
-    }
-  ],
+  "tasks": [],
   "issues": [],
   "validations": {
     "qa": {
       "status": "not_run",
-      "summary": "QA not run for the current goal.",
-      "updatedAt": "2026-03-29T07:27:23.381Z"
+      "summary": "No validation has been recorded yet.",
+      "updatedAt": "1970-01-01T00:00:00.000Z"
     },
     "audit": {
       "status": "not_run",
-      "summary": "Audit not run for the current goal.",
-      "updatedAt": "2026-03-29T07:27:23.381Z"
+      "summary": "No validation has been recorded yet.",
+      "updatedAt": "1970-01-01T00:00:00.000Z"
     }
   },
   "release": {
     "status": "not_started",
-    "summary": "Release not prepared for the current goal.",
-    "updatedAt": "2026-03-29T07:27:23.381Z"
+    "summary": "Release has not been prepared yet.",
+    "updatedAt": "1970-01-01T00:00:00.000Z"
   },
   "counters": {
-    "task": 1,
+    "task": 0,
     "issue": 0
   },
-  "updatedAt": "2026-03-29T07:27:23.381Z"
+  "updatedAt": "1970-01-01T00:00:00.000Z"
 }
