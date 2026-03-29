@@ -17,6 +17,7 @@ import {
   normalizeRelationshipType,
   saveCanonicalKnowledgeGraph,
   summarizeArchitectureCoverage,
+  summarizeIntentionModel,
   syncRuntimeStateToSharedKnowledgeGraph,
   upsertElement,
   upsertRelationship,
@@ -363,6 +364,7 @@ export default tool({
           ...result,
           baseline,
           architectureCoverage: summarizeArchitectureCoverage(sharedGraph),
+          intentionModel: summarizeIntentionModel(sharedGraph),
         };
         break;
       }

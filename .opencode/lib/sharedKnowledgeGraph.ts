@@ -30,6 +30,19 @@ export type GraphRelationship = GraphElement & {
   isDirected?: boolean;
 };
 
+export type GraphOrganization = {
+  identifier?: string;
+  label?: LangString[];
+  documentation?: LangString[];
+  item?: GraphOrganization[];
+  elementRef?: string;
+  relationshipRef?: string;
+  conceptRef?: string;
+  propertyDefinitionRef?: string;
+  stereotypeRef?: string;
+  extensions?: Record<string, unknown>;
+};
+
 export type SharedKnowledgeGraph = {
   identifier: string;
   version?: string;
@@ -42,7 +55,7 @@ export type SharedKnowledgeGraph = {
   relationships?: {
     relationship: GraphRelationship[];
   };
-  organizations?: Array<Record<string, unknown>>;
+  organizations?: GraphOrganization[];
   propertyDefinitions?: {
     propertyDefinition: Array<Record<string, unknown>>;
   };
@@ -58,6 +71,14 @@ export type ArchitectureCoverageSummary = {
   missingCoreLayers: Array<'strategy' | 'business' | 'application' | 'technology'>;
 };
 
+export type IntentionModelStatus = {
+  architecturalElementCount: number;
+  architecturalRelationshipCount: number;
+  crossLayerRelationshipCount: number;
+  baselineEstablished: boolean;
+  isIntentModelSufficient: boolean;
+};
+
 const CANONICAL_GRAPH_FILE = path.join('.opencode', 'temp', 'SharedKnowledgeGraph.archimate3.1.json');
 const LEGACY_GRAPH_FILE = path.join('design', 'KG', 'SystemArchitecture.json');
 
@@ -68,6 +89,13 @@ function toLangString(value: string): LangString[] {
 }
 
 function toDocumentation(value?: string): LangString[] | undefined {
+  if (!value || !value.trim()) {
+    return undefined;
+  }
+  return [{ value: value.trim() }];
+}
+
+function toOptionalLabel(value?: string): LangString[] | undefined {
   if (!value || !value.trim()) {
     return undefined;
   }
@@ -94,6 +122,11 @@ function ensureElementArray(graph: SharedKnowledgeGraph): GraphElement[] {
 function ensureRelationshipArray(graph: SharedKnowledgeGraph): GraphRelationship[] {
   graph.relationships ??= { relationship: [] };
   return graph.relationships.relationship;
+}
+
+function ensureOrganizationArray(graph: SharedKnowledgeGraph): GraphOrganization[] {
+  graph.organizations ??= [];
+  return graph.organizations;
 }
 
 function cleanupEmptySections(graph: SharedKnowledgeGraph): void {
@@ -288,7 +321,10 @@ export function summarizeArchitectureCoverage(graph: SharedKnowledgeGraph): Arch
     other: 0,
   };
 
-  for (const element of graph.elements?.element ?? []) {
+  const architecturalElements = listArchitecturalElements(graph);
+  const architecturalRelationships = listArchitecturalRelationships(graph);
+
+  for (const element of architecturalElements) {
     const explicitLayer = (element.extensions?.ai4pb as Record<string, unknown> | undefined)?.layer;
     const layer =
       explicitLayer === 'strategy' ||
@@ -306,10 +342,34 @@ export function summarizeArchitectureCoverage(graph: SharedKnowledgeGraph): Arch
   );
 
   return {
-    totalElements: graph.elements?.element.length ?? 0,
-    totalRelationships: graph.relationships?.relationship.length ?? 0,
+    totalElements: architecturalElements.length,
+    totalRelationships: architecturalRelationships.length,
     byLayer,
     missingCoreLayers: [...missingCoreLayers],
+  };
+}
+
+export function summarizeIntentionModel(graph: SharedKnowledgeGraph): IntentionModelStatus {
+  const architecturalElements = listArchitecturalElements(graph);
+  const architecturalRelationships = listArchitecturalRelationships(graph);
+  const elementById = new Map(architecturalElements.map((element) => [element.identifier, element]));
+  const crossLayerRelationshipCount = architecturalRelationships.filter((relationship) => {
+    const source = elementById.get(relationship.source);
+    const target = elementById.get(relationship.target);
+    if (!source || !target) {
+      return false;
+    }
+    return getArchitectureLayerForElementType(source.type) !== getArchitectureLayerForElementType(target.type);
+  }).length;
+  const coverage = summarizeArchitectureCoverage(graph);
+  const baselineEstablished = coverage.missingCoreLayers.length === 0;
+
+  return {
+    architecturalElementCount: architecturalElements.length,
+    architecturalRelationshipCount: architecturalRelationships.length,
+    crossLayerRelationshipCount,
+    baselineEstablished,
+    isIntentModelSufficient: baselineEstablished && architecturalElements.length >= 8 && crossLayerRelationshipCount >= 3,
   };
 }
 
@@ -322,16 +382,18 @@ export function ensureCoreArchitectureBaseline(
 ): {
   elements: GraphElement[];
   relationships: GraphRelationship[];
+  organizations: GraphOrganization[];
   coverage: ArchitectureCoverageSummary;
+  intentionModel: IntentionModelStatus;
 } {
   const goalLabel = input.projectGoal?.trim() || 'Current Product Goal';
   const summary = input.designSummary?.trim() || input.projectGoal?.trim() || 'Core architecture baseline maintained by SystemArchitect.';
 
-  const strategy = upsertElement(graph, {
-    identifier: 'ELM-STRATEGY-CORE',
-    type: 'Capability',
-    name: 'Core Product Strategy',
-    documentation: `Strategic capability baseline for: ${goalLabel}. ${summary}`,
+  const strategyGoal = upsertElement(graph, {
+    identifier: 'ELM-STRATEGY-GOAL',
+    type: 'Goal',
+    name: 'Product Delivery Goal',
+    documentation: `Primary strategic outcome for: ${goalLabel}. ${summary}`,
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -341,8 +403,50 @@ export function ensureCoreArchitectureBaseline(
     },
   });
 
+  const strategyCapability = upsertElement(graph, {
+    identifier: 'ELM-STRATEGY-CAPABILITY',
+    type: 'Capability',
+    name: 'Core Product Capability',
+    documentation: `Core capability required to achieve: ${goalLabel}.`,
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'strategy',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const strategyCourse = upsertElement(graph, {
+    identifier: 'ELM-STRATEGY-COURSE',
+    type: 'CourseOfAction',
+    name: 'MVP Delivery Course Of Action',
+    documentation: 'Delivery approach that favors a runnable local MVP with explicit architecture-to-implementation traceability.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'strategy',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const businessActor = upsertElement(graph, {
+    identifier: 'ELM-BUSINESS-ACTOR',
+    type: 'BusinessActor',
+    name: 'Primary User',
+    documentation: 'Primary business actor interacting with the product.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'business',
+        baseline: 'core',
+      },
+    },
+  });
+
   const business = upsertElement(graph, {
-    identifier: 'ELM-BUSINESS-CORE',
+    identifier: 'ELM-BUSINESS-PROCESS',
     type: 'BusinessProcess',
     name: 'Core Business Flow',
     documentation: `Business process baseline that operationalizes the product strategy for: ${goalLabel}.`,
@@ -355,8 +459,22 @@ export function ensureCoreArchitectureBaseline(
     },
   });
 
+  const businessService = upsertElement(graph, {
+    identifier: 'ELM-BUSINESS-SERVICE',
+    type: 'BusinessService',
+    name: 'Core User Service',
+    documentation: 'Business-facing service exposed to the primary user through the core business flow.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'business',
+        baseline: 'core',
+      },
+    },
+  });
+
   const application = upsertElement(graph, {
-    identifier: 'ELM-APPLICATION-CORE',
+    identifier: 'ELM-APPLICATION-COMPONENT',
     type: 'ApplicationComponent',
     name: 'Core Application System',
     documentation: `Application layer baseline that supports the core business flow for: ${goalLabel}.`,
@@ -369,8 +487,36 @@ export function ensureCoreArchitectureBaseline(
     },
   });
 
+  const applicationService = upsertElement(graph, {
+    identifier: 'ELM-APPLICATION-SERVICE',
+    type: 'ApplicationService',
+    name: 'Core Application Service',
+    documentation: 'Application service boundary implementing the core business service.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'application',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const applicationData = upsertElement(graph, {
+    identifier: 'ELM-APPLICATION-DATA',
+    type: 'DataObject',
+    name: 'Core Domain Data',
+    documentation: 'Primary domain or state data managed by the application layer.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'application',
+        baseline: 'core',
+      },
+    },
+  });
+
   const technology = upsertElement(graph, {
-    identifier: 'ELM-TECHNOLOGY-CORE',
+    identifier: 'ELM-TECHNOLOGY-NODE',
     type: 'Node',
     name: 'Core Technology Runtime',
     documentation: `Technology/runtime baseline hosting the core application system for: ${goalLabel}.`,
@@ -383,13 +529,27 @@ export function ensureCoreArchitectureBaseline(
     },
   });
 
+  const technologyArtifact = upsertElement(graph, {
+    identifier: 'ELM-TECHNOLOGY-ARTIFACT',
+    type: 'Artifact',
+    name: 'Deployable Solution Artifact',
+    documentation: 'Deployable build artifact produced from the core application system.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'technology',
+        baseline: 'core',
+      },
+    },
+  });
+
   const rel1 = upsertRelationship(graph, {
-    identifier: 'REL-BUSINESS-REALIZES-STRATEGY',
+    identifier: 'REL-CAPABILITY-REALIZES-GOAL',
     type: 'Realization',
-    name: 'Business realizes strategy',
-    source: business.identifier,
-    target: strategy.identifier,
-    documentation: 'Core business flow realizes the core product strategy.',
+    name: 'Capability realizes goal',
+    source: strategyCapability.identifier,
+    target: strategyGoal.identifier,
+    documentation: 'Core product capability realizes the product delivery goal.',
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -399,12 +559,12 @@ export function ensureCoreArchitectureBaseline(
   });
 
   const rel2 = upsertRelationship(graph, {
-    identifier: 'REL-APPLICATION-SERVES-BUSINESS',
-    type: 'Serving',
-    name: 'Application serves business',
-    source: application.identifier,
-    target: business.identifier,
-    documentation: 'Core application system serves the core business flow.',
+    identifier: 'REL-COURSE-REALIZES-CAPABILITY',
+    type: 'Realization',
+    name: 'Course realizes capability',
+    source: strategyCourse.identifier,
+    target: strategyCapability.identifier,
+    documentation: 'The MVP delivery course of action realizes the core product capability.',
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -414,12 +574,12 @@ export function ensureCoreArchitectureBaseline(
   });
 
   const rel3 = upsertRelationship(graph, {
-    identifier: 'REL-TECHNOLOGY-SUPPORTS-APPLICATION',
-    type: 'Association',
-    name: 'Technology supports application',
-    source: technology.identifier,
-    target: application.identifier,
-    documentation: 'Core technology runtime supports the core application system.',
+    identifier: 'REL-BUSINESS-REALIZES-STRATEGY',
+    type: 'Realization',
+    name: 'Business realizes strategy',
+    source: business.identifier,
+    target: strategyCapability.identifier,
+    documentation: 'Core business flow realizes the strategic capability.',
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -428,10 +588,216 @@ export function ensureCoreArchitectureBaseline(
     },
   });
 
+  const rel4 = upsertRelationship(graph, {
+    identifier: 'REL-ACTOR-ASSIGNED-BUSINESS',
+    type: 'Assignment',
+    name: 'Actor participates in business flow',
+    source: businessActor.identifier,
+    target: business.identifier,
+    documentation: 'Primary user participates in the core business flow.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel5 = upsertRelationship(graph, {
+    identifier: 'REL-BUSINESS-PROCESS-REALIZES-SERVICE',
+    type: 'Realization',
+    name: 'Business process realizes service',
+    source: business.identifier,
+    target: businessService.identifier,
+    documentation: 'Core business flow realizes the core user service.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel6 = upsertRelationship(graph, {
+    identifier: 'REL-BUSINESS-SERVICE-SERVES-ACTOR',
+    type: 'Serving',
+    name: 'Business service serves actor',
+    source: businessService.identifier,
+    target: businessActor.identifier,
+    documentation: 'Core user service serves the primary user.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel7 = upsertRelationship(graph, {
+    identifier: 'REL-APPLICATION-SERVICE-SERVES-BUSINESS',
+    type: 'Serving',
+    name: 'Application service serves business service',
+    source: applicationService.identifier,
+    target: businessService.identifier,
+    documentation: 'Application service serves the business-facing core user service.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel8 = upsertRelationship(graph, {
+    identifier: 'REL-APPLICATION-REALIZES-SERVICE',
+    type: 'Realization',
+    name: 'Application component realizes application service',
+    source: application.identifier,
+    target: applicationService.identifier,
+    documentation: 'Core application system realizes the application service boundary.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel9 = upsertRelationship(graph, {
+    identifier: 'REL-APPLICATION-ACCESSES-DATA',
+    type: 'Access',
+    name: 'Application accesses domain data',
+    source: application.identifier,
+    target: applicationData.identifier,
+    documentation: 'Core application system accesses and manages the core domain data.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel10 = upsertRelationship(graph, {
+    identifier: 'REL-TECHNOLOGY-SUPPORTS-APPLICATION',
+    type: 'Association',
+    name: 'Technology supports application',
+    source: technology.identifier,
+    target: application.identifier,
+    documentation: 'Core technology runtime supports the application execution environment.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel11 = upsertRelationship(graph, {
+    identifier: 'REL-TECHNOLOGY-HOSTS-APPLICATION-SERVICE',
+    type: 'Serving',
+    name: 'Technology hosts application service',
+    source: technology.identifier,
+    target: applicationService.identifier,
+    documentation: 'Core technology runtime hosts the application service boundary.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel12 = upsertRelationship(graph, {
+    identifier: 'REL-ARTIFACT-REALIZES-APPLICATION',
+    type: 'Realization',
+    name: 'Artifact realizes application deliverable',
+    source: technologyArtifact.identifier,
+    target: application.identifier,
+    documentation: 'Deployable artifact realizes the application system in deployable form.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const organizations: GraphOrganization[] = [
+    createOrganizationRef({
+      identifier: 'ORG-INTENTION-ROOT',
+      label: 'Intention Architecture',
+      documentation: 'Core layered intention model maintained by SystemArchitect.',
+      item: [
+        createOrganizationRef({
+          identifier: 'ORG-INTENTION-STRATEGY',
+          label: 'Strategy Layer',
+          item: [
+            createOrganizationRef({ identifier: 'ORG-REF-STRATEGY-GOAL', label: 'Goal', elementRef: strategyGoal.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-STRATEGY-CAPABILITY', label: 'Capability', elementRef: strategyCapability.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-STRATEGY-COURSE', label: 'Course Of Action', elementRef: strategyCourse.identifier }),
+          ],
+          extensions: { ai4pb: { managedBy: 'system-architect', baseline: 'core' } },
+        }),
+        createOrganizationRef({
+          identifier: 'ORG-INTENTION-BUSINESS',
+          label: 'Business Layer',
+          item: [
+            createOrganizationRef({ identifier: 'ORG-REF-BUSINESS-ACTOR', label: 'Business Actor', elementRef: businessActor.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-BUSINESS-PROCESS', label: 'Business Process', elementRef: business.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-BUSINESS-SERVICE', label: 'Business Service', elementRef: businessService.identifier }),
+          ],
+          extensions: { ai4pb: { managedBy: 'system-architect', baseline: 'core' } },
+        }),
+        createOrganizationRef({
+          identifier: 'ORG-INTENTION-APPLICATION',
+          label: 'Application Layer',
+          item: [
+            createOrganizationRef({ identifier: 'ORG-REF-APPLICATION-COMPONENT', label: 'Application Component', elementRef: application.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-APPLICATION-SERVICE', label: 'Application Service', elementRef: applicationService.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-APPLICATION-DATA', label: 'Data Object', elementRef: applicationData.identifier }),
+          ],
+          extensions: { ai4pb: { managedBy: 'system-architect', baseline: 'core' } },
+        }),
+        createOrganizationRef({
+          identifier: 'ORG-INTENTION-TECHNOLOGY',
+          label: 'Technology Layer',
+          item: [
+            createOrganizationRef({ identifier: 'ORG-REF-TECHNOLOGY-NODE', label: 'Node', elementRef: technology.identifier }),
+            createOrganizationRef({ identifier: 'ORG-REF-TECHNOLOGY-ARTIFACT', label: 'Artifact', elementRef: technologyArtifact.identifier }),
+          ],
+          extensions: { ai4pb: { managedBy: 'system-architect', baseline: 'core' } },
+        }),
+      ],
+      extensions: { ai4pb: { managedBy: 'system-architect', baseline: 'core' } },
+    }),
+  ];
+
+  for (const organization of organizations) {
+    upsertOrganization(graph, organization);
+  }
+
+  const coverage = summarizeArchitectureCoverage(graph);
+  const intentionModel = summarizeIntentionModel(graph);
+
   return {
-    elements: [strategy, business, application, technology],
-    relationships: [rel1, rel2, rel3],
-    coverage: summarizeArchitectureCoverage(graph),
+    elements: [
+      strategyGoal,
+      strategyCapability,
+      strategyCourse,
+      businessActor,
+      business,
+      businessService,
+      application,
+      applicationService,
+      applicationData,
+      technology,
+      technologyArtifact,
+    ],
+    relationships: [rel1, rel2, rel3, rel4, rel5, rel6, rel7, rel8, rel9, rel10, rel11, rel12],
+    organizations,
+    coverage,
+    intentionModel,
   };
 }
 
@@ -465,6 +831,61 @@ export function findRelationship(graph: SharedKnowledgeGraph, identifierOrName: 
   return ensureRelationshipArray(graph).find(
     (relationship) => relationship.identifier === needle || relationship.name.some((item) => item.value === needle)
   );
+}
+
+function isRuntimeManaged(concept: { extensions?: Record<string, unknown> }): boolean {
+  const ai4pb = (concept.extensions?.ai4pb ?? {}) as Record<string, unknown>;
+  return ai4pb.managedBy === 'opencode-runtime';
+}
+
+function listArchitecturalElements(graph: SharedKnowledgeGraph): GraphElement[] {
+  return (graph.elements?.element ?? []).filter((element) => !isRuntimeManaged(element));
+}
+
+function listArchitecturalRelationships(graph: SharedKnowledgeGraph): GraphRelationship[] {
+  return (graph.relationships?.relationship ?? []).filter((relationship) => !isRuntimeManaged(relationship));
+}
+
+function upsertOrganization(graph: SharedKnowledgeGraph, organization: GraphOrganization): GraphOrganization {
+  const organizations = ensureOrganizationArray(graph);
+  const identifier = organization.identifier?.trim();
+  if (identifier) {
+    const existing = organizations.find((item) => item.identifier === identifier);
+    if (existing) {
+      existing.label = organization.label;
+      existing.documentation = organization.documentation;
+      existing.item = organization.item;
+      existing.elementRef = organization.elementRef;
+      existing.relationshipRef = organization.relationshipRef;
+      existing.conceptRef = organization.conceptRef;
+      existing.propertyDefinitionRef = organization.propertyDefinitionRef;
+      existing.stereotypeRef = organization.stereotypeRef;
+      existing.extensions = organization.extensions;
+      return existing;
+    }
+  }
+  organizations.push(organization);
+  return organization;
+}
+
+function createOrganizationRef(params: {
+  identifier: string;
+  label: string;
+  elementRef?: string;
+  relationshipRef?: string;
+  documentation?: string;
+  item?: GraphOrganization[];
+  extensions?: Record<string, unknown>;
+}): GraphOrganization {
+  return {
+    identifier: params.identifier,
+    label: toOptionalLabel(params.label),
+    documentation: toDocumentation(params.documentation),
+    elementRef: params.elementRef,
+    relationshipRef: params.relationshipRef,
+    item: params.item,
+    extensions: params.extensions,
+  };
 }
 
 export function upsertElement(

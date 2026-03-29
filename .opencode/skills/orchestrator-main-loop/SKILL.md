@@ -34,6 +34,7 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - After `SystemArchitect` returns successfully, use `read_project_status` or `query_graph` to determine the active task IDs.
     - Before invoking `Implementation`, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
     - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
+    - Also inspect `intentionModel.isIntentModelSufficient`. If it is `false`, treat the design as underspecified even if the four layers nominally exist.
     - If the architect result does not reference concrete task IDs and persisted runtime state still has no active tasks, stop and report that the architect handoff is incomplete.
     - Invoke `Implementation` through the native Task tool with those task IDs and the architect's summary.
     - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, and work performed against the established intention baseline.
@@ -42,6 +43,7 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
 
 3.  **Phase 3: Parallel Validation**
     - Invoke `QualityAssurance` and `Audit` only if persisted runtime state shows at least one active task and at least one task with status `done`.
+    - Re-check `intentionModel.isIntentModelSufficient` before starting `Audit`. If the intention model is still weak, route back to `SystemArchitect` instead of auditing.
     - If runtime state is empty, unchanged, or contains no `done` task, do not start validation. Re-read state once, then route back to `Implementation` or `SystemArchitect` based on what is missing.
     - You must evaluate both child results before deciding the next step.
 

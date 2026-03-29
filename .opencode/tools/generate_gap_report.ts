@@ -6,6 +6,7 @@ export default tool({
     intentSummary: tool.schema.string().describe('Summary of intended architecture or behavior.'),
     realitySummary: tool.schema.string().describe('Summary of observed implementation reality.'),
     gaps: tool.schema.string().describe('Gap list or discrepancy notes.'),
+    recommendedActions: tool.schema.string().optional().describe('Optional recommended follow-up actions for architect or implementation.'),
   },
   async execute(args) {
     return [
@@ -19,6 +20,13 @@ export default tool({
       '',
       '## Gaps',
       args.gaps,
+      ...(args.recommendedActions
+        ? [
+            '',
+            '## Recommended Actions',
+            args.recommendedActions,
+          ]
+        : []),
     ].join('\n');
   },
 });

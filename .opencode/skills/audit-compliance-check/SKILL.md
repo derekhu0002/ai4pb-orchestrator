@@ -26,10 +26,12 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
     - Use `query_graph(mode="summary")` and `query_graph(mode="search", scope="architecture", query="...")` to get the current "intent" model.
     - Inspect `architectureCoverage.missingCoreLayers` from the summary before auditing code details.
     - If any of `strategy`, `business`, `application`, or `technology` is missing, fail the audit as an intention-model gap and route back to `SystemArchitect`.
+    - Inspect `intentionModel.isIntentModelSufficient`, `intentionModel.architecturalElementCount`, and `intentionModel.crossLayerRelationshipCount`.
+    - If the graph contains only runtime-synchronized concepts, lacks architect-managed cross-layer relationships, or is otherwise too thin to act as a real intention contract, fail the audit as an intention-model gap before comparing code details.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps).
 
 3.  **Report Findings**:
-    - If gaps are found, use `generate_gap_report(intentSummary="...", realitySummary="...", gaps="...")` to produce a structured report.
+    - If gaps are found, use `generate_gap_report(intentSummary="...", realitySummary="...", gaps="...", recommendedActions="...")` to produce a structured report.
     - Use `update_graph_model(action="record_validation", kind="audit", status="passed|failed", content="...")` to store audit status.
     - If gaps are important enough to track, use `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")`.
     - Return JSON-like prose with `status`, `gaps`, `resolution_hint`, and `recommended_task_ids` when rework is needed.

@@ -23,6 +23,7 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
 0.  **Runtime Bootstrap**:
     - Before reading any specific task, call `query_graph(mode="summary")` once so runtime state and the shared graph are initialized in projects that were created from this template.
     - Treat `architectureCoverage.missingCoreLayers` in that summary as a hard blocker for implementation. If any core layer is missing, ask `SystemArchitect` to complete the intention baseline before coding.
+    - Also treat `intentionModel.isIntentModelSufficient === false` as a blocker. A graph that only contains runtime-synced tasks or thin placeholders is not enough implementation guidance.
 
 1.  **Task Execution Loop**:
     - For each assigned task ID, use `query_graph(mode="task_by_id", id="TASK-...")` to read its full specification.

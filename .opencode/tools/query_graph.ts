@@ -6,6 +6,7 @@ import {
   loadCanonicalKnowledgeGraph,
   loadLegacyKnowledgeGraph,
   summarizeArchitectureCoverage,
+  summarizeIntentionModel,
 } from '../lib/sharedKnowledgeGraph';
 
 type SearchMatch = {
@@ -49,6 +50,7 @@ export default tool({
 
     if (mode === 'summary') {
       const architectureCoverage = summarizeArchitectureCoverage(canonicalGraph);
+      const intentionModel = summarizeIntentionModel(canonicalGraph);
       return asJson({
         sharedKnowledgeGraphPath: getCanonicalKnowledgeGraphPath(context.worktree),
         activeGoal: runtimeState.activeGoal,
@@ -63,6 +65,7 @@ export default tool({
           relationships: canonicalGraph.relationships?.relationship.length ?? 0,
         },
         architectureCoverage,
+        intentionModel,
       });
     }
 
