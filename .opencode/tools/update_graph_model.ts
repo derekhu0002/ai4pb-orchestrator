@@ -10,11 +10,13 @@ import {
   saveRuntimeState,
 } from '../lib/runtimeState';
 import {
+  ensureCoreArchitectureBaseline,
   getCanonicalKnowledgeGraphPath,
   loadCanonicalKnowledgeGraph,
   normalizeElementType,
   normalizeRelationshipType,
   saveCanonicalKnowledgeGraph,
+  summarizeArchitectureCoverage,
   syncRuntimeStateToSharedKnowledgeGraph,
   upsertElement,
   upsertRelationship,
@@ -66,6 +68,8 @@ function normalizeAction(action?: string, args?: Record<string, unknown>): strin
     create_relationship: 'add_relationship',
     upsert_relationship: 'upsert_relationship',
     update_relationship: 'upsert_relationship',
+    ensure_architecture_baseline: 'ensure_architecture_baseline',
+    bootstrap_architecture_baseline: 'ensure_architecture_baseline',
   };
 
   if (aliases[value]) {
@@ -101,7 +105,7 @@ export default tool({
   args: {
     action: tool.schema
       .string()
-      .describe('Update operation. Supported: set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship. Common aliases and generic update_graph_model are accepted.'),
+      .describe('Update operation. Supported: set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship, ensure_architecture_baseline. Common aliases and generic update_graph_model are accepted.'),
     taskId: tool.schema.string().optional().describe('Task ID for task-related updates.'),
     title: tool.schema.string().optional().describe('Title for a new task or release log.'),
     content: tool.schema.string().optional().describe('Summary or detailed content for the update.'),
@@ -350,8 +354,20 @@ export default tool({
         result = { ...result, relationship };
         break;
       }
+      case 'ensure_architecture_baseline': {
+        const baseline = ensureCoreArchitectureBaseline(sharedGraph, {
+          projectGoal: state.activeGoal,
+          designSummary: args.content ?? state.designSummary,
+        });
+        result = {
+          ...result,
+          baseline,
+          architectureCoverage: summarizeArchitectureCoverage(sharedGraph),
+        };
+        break;
+      }
       default:
-        throw new Error(`Unsupported action: ${args.action}. Supported actions include set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship.`);
+        throw new Error(`Unsupported action: ${args.action}. Supported actions include set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship, ensure_architecture_baseline.`);
     }
 
     syncRuntimeStateToSharedKnowledgeGraph(sharedGraph, state);

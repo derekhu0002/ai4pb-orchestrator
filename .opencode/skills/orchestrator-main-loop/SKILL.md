@@ -32,9 +32,11 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
 
 2.  **Phase 2: Implementation Delegation**
     - After `SystemArchitect` returns successfully, use `read_project_status` or `query_graph` to determine the active task IDs.
+    - Before invoking `Implementation`, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
+    - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
     - If the architect result does not reference concrete task IDs and persisted runtime state still has no active tasks, stop and report that the architect handoff is incomplete.
     - Invoke `Implementation` through the native Task tool with those task IDs and the architect's summary.
-    - Expect a direct result that includes completed tasks, blocked tasks, and any clarification dependency that was resolved.
+    - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, and work performed against the established intention baseline.
     - After `Implementation` returns, immediately re-read persisted runtime state with `read_project_status(section="tasks")` or `query_graph(mode="tasks_by_status", status="done")` before advancing.
     - Treat persisted runtime state as the source of truth. A conversational child result is not sufficient by itself to prove implementation completion.
 

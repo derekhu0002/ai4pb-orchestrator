@@ -24,6 +24,8 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
 
 2.  **Compare Models**:
     - Use `query_graph(mode="summary")` and `query_graph(mode="search", scope="architecture", query="...")` to get the current "intent" model.
+    - Inspect `architectureCoverage.missingCoreLayers` from the summary before auditing code details.
+    - If any of `strategy`, `business`, `application`, or `technology` is missing, fail the audit as an intention-model gap and route back to `SystemArchitect`.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps).
 
 3.  **Report Findings**:

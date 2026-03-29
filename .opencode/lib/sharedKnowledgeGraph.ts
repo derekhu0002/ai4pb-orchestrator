@@ -49,6 +49,15 @@ export type SharedKnowledgeGraph = {
   extensions?: Record<string, unknown>;
 };
 
+export type ArchitectureLayer = 'strategy' | 'business' | 'application' | 'technology' | 'other';
+
+export type ArchitectureCoverageSummary = {
+  totalElements: number;
+  totalRelationships: number;
+  byLayer: Record<ArchitectureLayer, number>;
+  missingCoreLayers: Array<'strategy' | 'business' | 'application' | 'technology'>;
+};
+
 const CANONICAL_GRAPH_FILE = path.join('.opencode', 'temp', 'SharedKnowledgeGraph.archimate3.1.json');
 const LEGACY_GRAPH_FILE = path.join('design', 'KG', 'SystemArchitecture.json');
 
@@ -189,11 +198,241 @@ export function normalizeElementType(value?: string): string {
     ArchiMate_Node: 'Node',
     ArchiMate_Artifact: 'Artifact',
     ArchiMate_Goal: 'Goal',
+    ArchiMate_Outcome: 'Outcome',
+    ArchiMate_Resource: 'Resource',
+    ArchiMate_Capability: 'Capability',
+    ArchiMate_CourseOfAction: 'CourseOfAction',
+    ArchiMate_ValueStream: 'ValueStream',
     ArchiMate_Requirement: 'Requirement',
     ArchiMate_WorkPackage: 'WorkPackage',
     ArchiMate_Gap: 'Gap',
   };
   return aliases[raw] ?? raw;
+}
+
+export function getArchitectureLayerForElementType(type?: string): ArchitectureLayer {
+  const normalized = normalizeElementType(type);
+
+  if (['Resource', 'Capability', 'CourseOfAction', 'ValueStream', 'Goal', 'Outcome'].includes(normalized)) {
+    return 'strategy';
+  }
+
+  if (
+    [
+      'BusinessActor',
+      'BusinessRole',
+      'BusinessCollaboration',
+      'BusinessInterface',
+      'BusinessProcess',
+      'BusinessFunction',
+      'BusinessInteraction',
+      'BusinessEvent',
+      'BusinessService',
+      'BusinessObject',
+      'Contract',
+      'Representation',
+      'Product',
+    ].includes(normalized)
+  ) {
+    return 'business';
+  }
+
+  if (
+    [
+      'ApplicationComponent',
+      'ApplicationCollaboration',
+      'ApplicationInterface',
+      'ApplicationFunction',
+      'ApplicationInteraction',
+      'ApplicationProcess',
+      'ApplicationEvent',
+      'ApplicationService',
+      'DataObject',
+    ].includes(normalized)
+  ) {
+    return 'application';
+  }
+
+  if (
+    [
+      'Node',
+      'Device',
+      'SystemSoftware',
+      'TechnologyCollaboration',
+      'TechnologyInterface',
+      'Path',
+      'CommunicationNetwork',
+      'TechnologyFunction',
+      'TechnologyProcess',
+      'TechnologyInteraction',
+      'TechnologyEvent',
+      'TechnologyService',
+      'Artifact',
+      'Equipment',
+      'Facility',
+      'DistributionNetwork',
+    ].includes(normalized)
+  ) {
+    return 'technology';
+  }
+
+  return 'other';
+}
+
+export function summarizeArchitectureCoverage(graph: SharedKnowledgeGraph): ArchitectureCoverageSummary {
+  const byLayer: Record<ArchitectureLayer, number> = {
+    strategy: 0,
+    business: 0,
+    application: 0,
+    technology: 0,
+    other: 0,
+  };
+
+  for (const element of graph.elements?.element ?? []) {
+    const explicitLayer = (element.extensions?.ai4pb as Record<string, unknown> | undefined)?.layer;
+    const layer =
+      explicitLayer === 'strategy' ||
+      explicitLayer === 'business' ||
+      explicitLayer === 'application' ||
+      explicitLayer === 'technology' ||
+      explicitLayer === 'other'
+        ? explicitLayer
+        : getArchitectureLayerForElementType(element.type);
+    byLayer[layer] += 1;
+  }
+
+  const missingCoreLayers = (['strategy', 'business', 'application', 'technology'] as const).filter(
+    (layer) => byLayer[layer] === 0
+  );
+
+  return {
+    totalElements: graph.elements?.element.length ?? 0,
+    totalRelationships: graph.relationships?.relationship.length ?? 0,
+    byLayer,
+    missingCoreLayers: [...missingCoreLayers],
+  };
+}
+
+export function ensureCoreArchitectureBaseline(
+  graph: SharedKnowledgeGraph,
+  input: {
+    projectGoal?: string;
+    designSummary?: string;
+  }
+): {
+  elements: GraphElement[];
+  relationships: GraphRelationship[];
+  coverage: ArchitectureCoverageSummary;
+} {
+  const goalLabel = input.projectGoal?.trim() || 'Current Product Goal';
+  const summary = input.designSummary?.trim() || input.projectGoal?.trim() || 'Core architecture baseline maintained by SystemArchitect.';
+
+  const strategy = upsertElement(graph, {
+    identifier: 'ELM-STRATEGY-CORE',
+    type: 'Capability',
+    name: 'Core Product Strategy',
+    documentation: `Strategic capability baseline for: ${goalLabel}. ${summary}`,
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'strategy',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const business = upsertElement(graph, {
+    identifier: 'ELM-BUSINESS-CORE',
+    type: 'BusinessProcess',
+    name: 'Core Business Flow',
+    documentation: `Business process baseline that operationalizes the product strategy for: ${goalLabel}.`,
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'business',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const application = upsertElement(graph, {
+    identifier: 'ELM-APPLICATION-CORE',
+    type: 'ApplicationComponent',
+    name: 'Core Application System',
+    documentation: `Application layer baseline that supports the core business flow for: ${goalLabel}.`,
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'application',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const technology = upsertElement(graph, {
+    identifier: 'ELM-TECHNOLOGY-CORE',
+    type: 'Node',
+    name: 'Core Technology Runtime',
+    documentation: `Technology/runtime baseline hosting the core application system for: ${goalLabel}.`,
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        layer: 'technology',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel1 = upsertRelationship(graph, {
+    identifier: 'REL-BUSINESS-REALIZES-STRATEGY',
+    type: 'Realization',
+    name: 'Business realizes strategy',
+    source: business.identifier,
+    target: strategy.identifier,
+    documentation: 'Core business flow realizes the core product strategy.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel2 = upsertRelationship(graph, {
+    identifier: 'REL-APPLICATION-SERVES-BUSINESS',
+    type: 'Serving',
+    name: 'Application serves business',
+    source: application.identifier,
+    target: business.identifier,
+    documentation: 'Core application system serves the core business flow.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  const rel3 = upsertRelationship(graph, {
+    identifier: 'REL-TECHNOLOGY-SUPPORTS-APPLICATION',
+    type: 'Association',
+    name: 'Technology supports application',
+    source: technology.identifier,
+    target: application.identifier,
+    documentation: 'Core technology runtime supports the core application system.',
+    extensions: {
+      ai4pb: {
+        managedBy: 'system-architect',
+        baseline: 'core',
+      },
+    },
+  });
+
+  return {
+    elements: [strategy, business, application, technology],
+    relationships: [rel1, rel2, rel3],
+    coverage: summarizeArchitectureCoverage(graph),
+  };
 }
 
 export function normalizeRelationshipType(value?: string): string {

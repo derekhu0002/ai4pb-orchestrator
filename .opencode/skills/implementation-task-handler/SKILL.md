@@ -22,10 +22,12 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
 
 0.  **Runtime Bootstrap**:
     - Before reading any specific task, call `query_graph(mode="summary")` once so runtime state and the shared graph are initialized in projects that were created from this template.
+    - Treat `architectureCoverage.missingCoreLayers` in that summary as a hard blocker for implementation. If any core layer is missing, ask `SystemArchitect` to complete the intention baseline before coding.
 
 1.  **Task Execution Loop**:
     - For each assigned task ID, use `query_graph(mode="task_by_id", id="TASK-...")` to read its full specification.
-    - If a specification is ambiguous, invoke `SystemArchitect` through the native Task tool, then resume the task with the returned clarification.
+    - Use the intention model, not only the free-text task summary, as the implementation contract.
+    - If a specification is ambiguous, or the required architecture baseline is incomplete, invoke `SystemArchitect` through the native Task tool, then resume the task with the returned clarification.
     - Use `write` and `bash` as needed to implement the code.
     - Use `update_graph_model(action="set_task_status", taskId="TASK-...", status="in_progress|done|blocked", content="...")` to mark progress.
 

@@ -1,7 +1,12 @@
 import { tool } from '@opencode-ai/plugin';
 
 import { asJson, loadKnowledgeGraph, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
-import { getCanonicalKnowledgeGraphPath, loadCanonicalKnowledgeGraph, loadLegacyKnowledgeGraph } from '../lib/sharedKnowledgeGraph';
+import {
+  getCanonicalKnowledgeGraphPath,
+  loadCanonicalKnowledgeGraph,
+  loadLegacyKnowledgeGraph,
+  summarizeArchitectureCoverage,
+} from '../lib/sharedKnowledgeGraph';
 
 type SearchMatch = {
   scope: 'runtime' | 'architecture';
@@ -43,6 +48,7 @@ export default tool({
       | null;
 
     if (mode === 'summary') {
+      const architectureCoverage = summarizeArchitectureCoverage(canonicalGraph);
       return asJson({
         sharedKnowledgeGraphPath: getCanonicalKnowledgeGraphPath(context.worktree),
         activeGoal: runtimeState.activeGoal,
@@ -56,6 +62,7 @@ export default tool({
           elements: canonicalGraph.elements?.element.length ?? 0,
           relationships: canonicalGraph.relationships?.relationship.length ?? 0,
         },
+        architectureCoverage,
       });
     }
 
