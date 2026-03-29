@@ -20,6 +20,9 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
 
 ## BEHAVIORAL RULES
 
+0.  **Runtime Bootstrap**:
+    - Before reading any specific task, call `query_graph(mode="summary")` once so runtime state and the shared graph are initialized in projects that were created from this template.
+
 1.  **Task Execution Loop**:
     - For each assigned task ID, use `query_graph(mode="task_by_id", id="TASK-...")` to read its full specification.
     - If a specification is ambiguous, invoke `SystemArchitect` through the native Task tool, then resume the task with the returned clarification.

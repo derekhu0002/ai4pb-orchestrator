@@ -22,6 +22,7 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
 
 1.  **Phase 1: Initial Goal Processing & Design Delegation**
     - Upon activation, parse the **Initial Invocation Goal**.
+    - If runtime state is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
     - Use `decompose_goal` first to create an execution-ready task list in runtime state.
     - Then use the native Task tool to invoke `SystemArchitect` with the goal and current runtime task list.
     - Expect a direct result that includes a design summary and created or updated task IDs.
