@@ -56,8 +56,8 @@ export type RuntimeState = {
 
 const RUNTIME_DIR = path.join('.opencode', 'runtime');
 const RUNTIME_FILE = path.join(RUNTIME_DIR, 'project-state.json');
-const GRAPH_UPDATE_LOG = path.join('design', 'temp', 'opencode-graph-updates.jsonl');
-const KG_FILE = path.join('design', 'KG', 'SystemArchitecture.json');
+const GRAPH_UPDATE_LOG = path.join('.opencode', 'temp', 'opencode-graph-updates.jsonl');
+const KG_FILE = path.join('.opencode', 'temp', 'SystemArchitecture.json');
 
 export function getRuntimeFilePath(worktree: string): string {
   return path.join(worktree, RUNTIME_FILE);

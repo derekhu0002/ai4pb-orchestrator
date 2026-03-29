@@ -24,16 +24,23 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - Upon activation, parse the **Initial Invocation Goal**.
     - If runtime state is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
     - Use `decompose_goal` first to create an execution-ready task list in runtime state.
-    - Then use the native Task tool to invoke `SystemArchitect` with the goal and current runtime task list.
+    - Immediately verify persistence with `read_project_status(section="tasks")`.
+    - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered tasks.
+    - Then use the native Task tool to invoke `SystemArchitect` with the goal and the exact persisted task list.
+    - Pass the architect a concrete payload that includes `goal`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "task_ids": ["TASK-001", "TASK-002"], "tasks": [{"id":"TASK-001","title":"...","status":"todo"}] }`.
     - Expect a direct result that includes a design summary and created or updated task IDs.
 
 2.  **Phase 2: Implementation Delegation**
     - After `SystemArchitect` returns successfully, use `read_project_status` or `query_graph` to determine the active task IDs.
+    - If the architect result does not reference concrete task IDs and persisted runtime state still has no active tasks, stop and report that the architect handoff is incomplete.
     - Invoke `Implementation` through the native Task tool with those task IDs and the architect's summary.
     - Expect a direct result that includes completed tasks, blocked tasks, and any clarification dependency that was resolved.
+    - After `Implementation` returns, immediately re-read persisted runtime state with `read_project_status(section="tasks")` or `query_graph(mode="tasks_by_status", status="done")` before advancing.
+    - Treat persisted runtime state as the source of truth. A conversational child result is not sufficient by itself to prove implementation completion.
 
 3.  **Phase 3: Parallel Validation**
-    - After `Implementation` returns, invoke `QualityAssurance` and `Audit` as separate child tasks.
+    - Invoke `QualityAssurance` and `Audit` only if persisted runtime state shows at least one active task and at least one task with status `done`.
+    - If runtime state is empty, unchanged, or contains no `done` task, do not start validation. Re-read state once, then route back to `Implementation` or `SystemArchitect` based on what is missing.
     - You must evaluate both child results before deciding the next step.
 
 4.  **Phase 4: Decision and Rework**
@@ -42,6 +49,7 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - **IF** Audit fails, invoke `SystemArchitect` with the audit gap summary.
     - **IF** the architect returns `ModelUpdated`, run `Audit` again.
     - **IF** the architect returns `ReworkRequired`, invoke `Implementation` with the new refactoring task IDs.
+    - **IF** runtime state never reflects implementation progress, stop the workflow and report that the implementation agent did not persist execution state through the runtime-backed tools.
 
 5.  **Phase 5: Release Delegation**
     - Invoke `ReleaseAgent` only after both QA and Audit return success.
