@@ -6,10 +6,10 @@
   "instructions": [
     "AGENTS.md"
   ],
-  "plugin": [
-    "./plugins"
-  ],
   "permission": {
-    "mcp_*": "ask"
+    "mcp_*": "ask",
+    "skill": {
+      "*": "allow"
+    }
   }
 }
