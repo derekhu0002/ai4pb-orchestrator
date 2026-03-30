@@ -8,6 +8,7 @@ permission:
   bash: deny
   task:
     "*": deny
+    "AI_ProductManager": allow
     "SystemArchitect": allow
     "Implementation": allow
     "QualityAssurance": allow
