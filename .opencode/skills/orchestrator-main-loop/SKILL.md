@@ -35,7 +35,8 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - Then use the native Task tool to invoke `SystemArchitect` with the formalized goal, the full approved requirement, and the exact persisted task list.
     - If the goal came from `AI_ProductManager`, preserve the PM output separately instead of flattening it into a short goal string.
     - Pass the architect a concrete payload that includes `goal`, `formal_requirement`, `requirement_element_id`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "formal_requirement": "...full approved requirement...", "requirement_element_id": "ELM-REQ-001", "task_ids": ["TASK-001", "TASK-002"], "tasks":[{"id":"TASK-001","title":"...","status":"todo"}] }`.
-    - Expect a direct result that includes a design summary and created or updated task IDs.
+    - Expect a direct result that includes a design summary, created or updated task IDs, and explicit confirmation that human architecture review is approved.
+    - If the architect reports revision requested or does not confirm approved human review, do not continue to implementation. Route back to `SystemArchitect` until the reviewed design is approved.
 
 3.  **Phase 3: Implementation Delegation**
     - After `SystemArchitect` returns successfully, use `read_project_status` or `query_graph` to determine the active task IDs.
