@@ -225,13 +225,6 @@ function importRelationships(importDiagram, relationshipsNode, propertyDefinitio
     connector.StereotypeEx = safeString(mapRelationshipTypeToEaStereotype(relation.type));
     connector.Notes = buildConceptNotes(relation, propertyDefinitionMap);
 
-    if (connectorMeta.aggregationKind > -1) {
-      connector.SupplierEnd.Aggregation = connectorMeta.aggregationKind;
-    }
-    if (connectorMeta.useGeneralizationName === true) {
-      connector.Name = '';
-    }
-
     applyRelationshipTags(connector, relation, propertyDefinitionMap);
     connector.Update();
 
@@ -255,8 +248,33 @@ function addElementToDiagram(diagram, element, index, diagramPositions) {
   var coord = 'l=' + pos.left + ';r=' + pos.right + ';t=' + pos.top + ';b=' + pos.bottom + ';';
   var diagramObject = diagram.DiagramObjects.AddNew(coord, '');
   diagramObject.ElementID = element.ElementID;
+  disableRectangleNotationForDiagramObject(diagramObject);
   diagramObject.Update();
   diagramPositions[element.ElementID] = pos;
+}
+
+function disableRectangleNotationForDiagramObject(diagramObject) {
+  diagramObject.Style = setStyleToken(diagramObject.Style, 'UseRectangleNotation', '0');
+  diagramObject.Style = setStyleToken(diagramObject.Style, 'RECTANGLENOTATION', '0');
+}
+
+function setStyleToken(styleText, key, value) {
+  var source = safeString(styleText);
+  var pattern = new RegExp('(^|;)' + escapeRegExp(key) + '=[^;]*', 'i');
+
+  if (pattern.test(source)) {
+    return source.replace(pattern, '$1' + key + '=' + value);
+  }
+
+  if (source !== '' && source.charAt(source.length - 1) !== ';') {
+    source += ';';
+  }
+
+  return source + key + '=' + value + ';';
+}
+
+function escapeRegExp(text) {
+  return safeString(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function addConnectorToDiagram(diagram, connector) {
