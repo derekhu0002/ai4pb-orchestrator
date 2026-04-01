@@ -44,14 +44,13 @@ function main() {
     var propertyDefinitionMap = buildPropertyDefinitionMap(graph.propertyDefinitions);
     var importPkg = createImportPackage(parentPkg, graph);
     var importDiagram = null;
-    var diagramPositions = {};
 
     if (CREATE_IMPORT_DIAGRAM) {
       importDiagram = createImportDiagram(importPkg, graph);
     }
 
     var elementMap = {};
-    var importedCount = importElements(importPkg, importDiagram, graph.elements, propertyDefinitionMap, elementMap, diagramPositions);
+    var importedCount = importElements(importPkg, importDiagram, graph.elements, propertyDefinitionMap, elementMap);
     var relationshipCount = importRelationships(importDiagram, graph.relationships, propertyDefinitionMap, elementMap);
 
     Repository.RefreshModelView(parentPkg.PackageID);
@@ -156,7 +155,7 @@ function createImportDiagram(importPkg, graph) {
   return diagram;
 }
 
-function importElements(importPkg, importDiagram, elementsNode, propertyDefinitionMap, elementMap, diagramPositions) {
+function importElements(importPkg, importDiagram, elementsNode, propertyDefinitionMap, elementMap) {
   var count = 0;
   if (!elementsNode || !elementsNode.element || !elementsNode.element.length) {
     Session.Output('No elements found in graph.');
@@ -183,7 +182,7 @@ function importElements(importPkg, importDiagram, elementsNode, propertyDefiniti
     elementMap[concept.identifier] = element;
 
     if (importDiagram != null) {
-      addElementToDiagram(importDiagram, element, count, diagramPositions);
+      addElementToDiagram(importDiagram, element);
     }
 
     count++;
@@ -243,19 +242,15 @@ function importRelationships(importDiagram, relationshipsNode, propertyDefinitio
   return count;
 }
 
-function addElementToDiagram(diagram, element, index, diagramPositions) {
-  var pos = nextDiagramPosition(index);
-  var coord = 'l=' + pos.left + ';r=' + pos.right + ';t=' + pos.top + ';b=' + pos.bottom + ';';
-  var diagramObject = diagram.DiagramObjects.AddNew(coord, '');
+function addElementToDiagram(diagram, element) {
+  var diagramObject = diagram.DiagramObjects.AddNew('', '');
   diagramObject.ElementID = element.ElementID;
   disableRectangleNotationForDiagramObject(diagramObject);
   diagramObject.Update();
-  diagramPositions[element.ElementID] = pos;
 }
 
 function disableRectangleNotationForDiagramObject(diagramObject) {
-  diagramObject.Style = setStyleToken(diagramObject.Style, 'UseRectangleNotation', '0');
-  diagramObject.Style = setStyleToken(diagramObject.Style, 'RECTANGLENOTATION', '0');
+  diagramObject.Style = setStyleToken(diagramObject.Style, 'UCRect', '0');
 }
 
 function setStyleToken(styleText, key, value) {
@@ -281,25 +276,6 @@ function addConnectorToDiagram(diagram, connector) {
   var link = diagram.DiagramLinks.AddNew('', '');
   link.ConnectorID = connector.ConnectorID;
   link.Update();
-}
-
-function nextDiagramPosition(index) {
-  var columnCount = 4;
-  var xGap = 260;
-  var yGap = 170;
-  var width = 180;
-  var height = 80;
-  var row = Math.floor(index / columnCount);
-  var col = index % columnCount;
-  var left = 40 + (col * xGap);
-  var top = 40 + (row * yGap);
-
-  return {
-    left: left,
-    right: left + width,
-    top: top,
-    bottom: top + height
-  };
 }
 
 function mapRelationshipTypeToEaStereotype(relationshipType) {
