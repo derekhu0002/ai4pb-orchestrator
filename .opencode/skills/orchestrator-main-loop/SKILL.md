@@ -29,13 +29,14 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
 
 2.  **Phase 2: Goal Processing & Design Delegation**
     - Using the finalized goal (either passed directly from the start or refined by `AI_ProductManager`), check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
-    - Use `decompose_goal` first to create an execution-ready task list in runtime state based on the formalized goal.
+    - Use `decompose_goal` first to create a planning backlog in runtime state based on the formalized goal.
     - Immediately verify persistence with `read_project_status(section="tasks")`.
-    - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered tasks.
-    - Then use the native Task tool to invoke `SystemArchitect` with the formalized goal, the full approved requirement, and the exact persisted task list.
+    - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered planning items.
+    - Treat the persisted tasks from `decompose_goal` as planning seeds only. They are not yet valid developer tasks.
+    - Then use the native Task tool to invoke `SystemArchitect` with the formalized goal, the full approved requirement, and the exact persisted planning list.
     - If the goal came from `AI_ProductManager`, preserve the PM output separately instead of flattening it into a short goal string.
-    - Pass the architect a concrete payload that includes `goal`, `formal_requirement`, `requirement_element_id`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "formal_requirement": "...full approved requirement...", "requirement_element_id": "ELM-REQ-001", "task_ids": ["TASK-001", "TASK-002"], "tasks":[{"id":"TASK-001","title":"...","status":"todo"}] }`.
-    - Expect a direct result that includes a design summary, created or updated task IDs, and explicit confirmation that human architecture review is approved.
+    - Pass the architect a concrete payload that includes `goal`, `formal_requirement`, `requirement_element_id`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "formal_requirement": "...full approved requirement...", "requirement_element_id": "ELM-REQ-001", "task_ids": ["TASK-001", "TASK-002"], "tasks":[{"id":"TASK-001","title":"...","status":"todo","kind":"planning"}] }`.
+    - Expect a direct result that includes a design summary, a software-unit decomposition, created or updated implementation task IDs, and explicit confirmation that human architecture review is approved.
     - If the architect reports revision requested or does not confirm approved human review, do not continue to implementation. Route back to `SystemArchitect` until the reviewed design is approved.
 
 3.  **Phase 3: Implementation Delegation**
@@ -43,8 +44,9 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - Before invoking `Implementation`, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
     - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
     - Also inspect `intentionModel.isIntentModelSufficient`. If it is `false`, treat the design as underspecified even if the four layers nominally exist.
-    - If the architect result does not reference concrete task IDs and persisted runtime state still has no active tasks, stop and report that the architect handoff is incomplete.
-    - Invoke `Implementation` through the native Task tool with those task IDs and the architect's summary.
+    - Require the architect result to identify concrete software units and task IDs derived from those software units.
+    - If the architect result does not reference concrete task IDs, or those tasks are missing software-unit metadata in persisted runtime state, stop and report that the architect handoff is incomplete.
+    - Invoke `Implementation` through the native Task tool with those software-unit-scoped task IDs and the architect's summary.
     - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, and work performed against the established intention baseline.
     - After `Implementation` returns, immediately re-read persisted runtime state with `read_project_status(section="tasks")` or `query_graph(mode="tasks_by_status", status="done")` before advancing.
     - Treat persisted runtime state as the source of truth. A conversational child result is not sufficient by itself to prove implementation completion.

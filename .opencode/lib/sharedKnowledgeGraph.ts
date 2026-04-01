@@ -995,6 +995,10 @@ function pruneManagedConcepts(graph: SharedKnowledgeGraph): void {
   }
 }
 
+function hasElement(graph: SharedKnowledgeGraph, elementId: string): boolean {
+  return Boolean(graph.elements?.element.some((element) => element.identifier === elementId));
+}
+
 export function syncRuntimeStateToSharedKnowledgeGraph(graph: SharedKnowledgeGraph, state: RuntimeState): void {
   pruneManagedConcepts(graph);
 
@@ -1034,9 +1038,13 @@ export function syncRuntimeStateToSharedKnowledgeGraph(graph: SharedKnowledgeGra
         ai4pb: {
           managedBy: 'opencode-runtime',
           kind: 'Task',
+          taskKind: task.kind ?? 'implementation',
           status: runtimeTaskStatusToMasStatus(task.status),
           assignee: task.owner ?? 'Implementation',
           summary: task.summary ?? '',
+          softwareUnitId: task.softwareUnitId ?? '',
+          softwareUnitTitle: task.softwareUnitTitle ?? '',
+          architectureElementId: task.architectureElementId ?? '',
           updatedAt: task.updatedAt,
         },
       },
@@ -1055,6 +1063,24 @@ export function syncRuntimeStateToSharedKnowledgeGraph(graph: SharedKnowledgeGra
         },
       },
     });
+
+    const linkedArchitectureElementId = task.architectureElementId ?? task.softwareUnitId;
+    if (linkedArchitectureElementId && hasElement(graph, linkedArchitectureElementId)) {
+      upsertRelationship(graph, {
+        identifier: `REL-${task.id}-ARCH`,
+        type: 'Association',
+        name: `${task.id} traces to ${linkedArchitectureElementId}`,
+        source: taskElement.identifier,
+        target: linkedArchitectureElementId,
+        documentation: 'Runtime task traceability relationship managed by OpenCode runtime.',
+        extensions: {
+          ai4pb: {
+            managedBy: 'opencode-runtime',
+            kind: 'TaskArchitectureTrace',
+          },
+        },
+      });
+    }
   }
 
   for (const issue of state.issues) {

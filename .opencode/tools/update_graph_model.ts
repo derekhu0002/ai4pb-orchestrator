@@ -101,6 +101,19 @@ function parseTaskTitles(raw?: string): string[] {
     .filter(Boolean);
 }
 
+function normalizeTaskKind(value?: unknown): 'planning' | 'implementation' {
+  return String(value ?? '').trim().toLowerCase() === 'planning' ? 'planning' : 'implementation';
+}
+
+function optionalText(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  return normalized ? normalized : undefined;
+}
+
 export default tool({
   description: 'Record design, task, validation, issue, and release updates for the OpenCode orchestration runtime.',
   args: {
@@ -111,10 +124,14 @@ export default tool({
     title: tool.schema.string().optional().describe('Title for a new task or release log.'),
     content: tool.schema.string().optional().describe('Summary or detailed content for the update.'),
     status: tool.schema.string().optional().describe('Status value for task, validation, or release updates.'),
+    taskKind: tool.schema.string().optional().describe('Task kind for task-related updates. Supported: planning or implementation.'),
     owner: tool.schema.string().optional().describe('Owner for a new task.'),
     kind: tool.schema.string().optional().describe('Validation or issue kind, such as qa, audit, or ArchitectureGap.'),
     issueId: tool.schema.string().optional().describe('Issue ID for resolve_issue operations.'),
     tasksJson: tool.schema.string().optional().describe('Optional JSON array of task objects for bulk_add_tasks or upsert_task.'),
+    softwareUnitId: tool.schema.string().optional().describe('Primary software unit identifier for a task.'),
+    softwareUnitTitle: tool.schema.string().optional().describe('Primary software unit title for a task.'),
+    architectureElementId: tool.schema.string().optional().describe('Architecture element identifier that the task implements or changes.'),
     elementId: tool.schema.string().optional().describe('Element identifier for add_element or upsert_element.'),
     elementType: tool.schema.string().optional().describe('Schema element type, such as ApplicationComponent, BusinessProcess, WorkPackage, or Artifact.'),
     relationshipId: tool.schema.string().optional().describe('Relationship identifier for add_relationship or upsert_relationship.'),
@@ -157,9 +174,13 @@ export default tool({
           id: nextTaskId(state),
           title,
           status: (args.status as 'todo' | 'in_progress' | 'done' | 'blocked') ?? 'todo',
+          kind: normalizeTaskKind(args.taskKind),
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
           details: args.content ?? '',
+          softwareUnitId: optionalText(args.softwareUnitId),
+          softwareUnitTitle: optionalText(args.softwareUnitTitle),
+          architectureElementId: optionalText(args.architectureElementId),
           createdAt: now,
           updatedAt: now,
         };
@@ -179,9 +200,13 @@ export default tool({
             id: nextTaskId(state),
             title,
             status: (String(record.status ?? args.status ?? 'todo') as 'todo' | 'in_progress' | 'done' | 'blocked'),
+            kind: normalizeTaskKind(record.kind ?? args.taskKind),
             owner: String(record.owner ?? args.owner ?? 'Implementation'),
             summary: String(record.summary ?? record.content ?? ''),
             details: String(record.details ?? record.content ?? ''),
+            softwareUnitId: optionalText(record.softwareUnitId ?? args.softwareUnitId),
+            softwareUnitTitle: optionalText(record.softwareUnitTitle ?? args.softwareUnitTitle),
+            architectureElementId: optionalText(record.architectureElementId ?? args.architectureElementId),
             createdAt: now,
             updatedAt: now,
           };
@@ -199,12 +224,24 @@ export default tool({
           if (args.status) {
             existing.status = args.status as 'todo' | 'in_progress' | 'done' | 'blocked';
           }
+          if (args.taskKind) {
+            existing.kind = normalizeTaskKind(args.taskKind);
+          }
           if (args.owner) {
             existing.owner = args.owner;
           }
           if (args.content) {
             existing.summary = args.content;
             existing.details = args.content;
+          }
+          if (args.softwareUnitId) {
+            existing.softwareUnitId = optionalText(args.softwareUnitId);
+          }
+          if (args.softwareUnitTitle) {
+            existing.softwareUnitTitle = optionalText(args.softwareUnitTitle);
+          }
+          if (args.architectureElementId) {
+            existing.architectureElementId = optionalText(args.architectureElementId);
           }
           existing.updatedAt = now;
           result = { ...result, task: existing, operation: 'updated' };
@@ -215,9 +252,13 @@ export default tool({
           id: args.taskId && args.taskId.trim() ? args.taskId.trim() : nextTaskId(state),
           title: normalizeTaskTitle(args.title ?? args.content ?? 'Untitled task'),
           status: (args.status as 'todo' | 'in_progress' | 'done' | 'blocked') ?? 'todo',
+          kind: normalizeTaskKind(args.taskKind),
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
           details: args.content ?? '',
+          softwareUnitId: optionalText(args.softwareUnitId),
+          softwareUnitTitle: optionalText(args.softwareUnitTitle),
+          architectureElementId: optionalText(args.architectureElementId),
           createdAt: now,
           updatedAt: now,
         };

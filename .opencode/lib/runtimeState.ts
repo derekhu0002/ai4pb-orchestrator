@@ -3,14 +3,19 @@ import * as path from 'node:path';
 
 export type RuntimeTaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
 export type ValidationStatus = 'passed' | 'failed' | 'not_run';
+export type RuntimeTaskKind = 'planning' | 'implementation';
 
 export type RuntimeTask = {
   id: string;
   title: string;
   status: RuntimeTaskStatus;
+  kind?: RuntimeTaskKind;
   owner?: string;
   summary?: string;
   details?: string;
+  softwareUnitId?: string;
+  softwareUnitTitle?: string;
+  architectureElementId?: string;
   createdAt: string;
   updatedAt: string;
 };
