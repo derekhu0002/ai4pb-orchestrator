@@ -448,6 +448,8 @@ function mapStereotypeToEa(conceptType) {
             return 'Archimate_WorkPackage';
         case 'ApplicationComponent':
             return 'Archimate_ApplicationComponent';
+        case 'BusinessObject':
+            return 'Archimate_BusinessObject';
         case 'ApplicationCollaboration':
             return 'Archimate_ApplicationCollaboration';
         case 'TechnologyCollaboration':
@@ -547,6 +549,7 @@ function mapElementTypeToEa(archimateType) {
     case 'SystemSoftware':
     case 'Device':
     case 'Node':
+    case 'BusinessObject':
         return 'Class';
     default:
         return 'Class';
