@@ -14,7 +14,8 @@
  *   - Relationships are imported as EA connectors with the source schema type retained in StereotypeEx.
  */
 
-var KG_JSON_PATH = 'd:\\projects\\AICodingAgent\\ai4pb-orchestrator\\.opencode\\temp\\SharedKnowledgeGraph.archimate3.1.json';
+var KG_JSON_RELATIVE_PATH = '.opencode\\temp\\SharedKnowledgeGraph.archimate3.1.json';
+var KG_JSON_PATH = '';
 var CREATE_IMPORT_DIAGRAM = true;
 var DIAGRAM_TYPE = 'Logical';
 var DIAGRAM_NAME_SUFFIX = ' Import';
@@ -31,6 +32,14 @@ function main() {
       fail('Please select a target Package in the Project Browser before running this script.');
       return;
     }
+
+    KG_JSON_PATH = resolveKnowledgeGraphPathFromCurrentModel();
+    if (KG_JSON_PATH == '') {
+      fail('Could not resolve the knowledge graph path from the current EA model location.');
+      return;
+    }
+
+    Session.Output('Resolved knowledge graph path: ' + KG_JSON_PATH);
 
     var jsonString = readUtf8File(KG_JSON_PATH);
     if (!jsonString) {
@@ -88,6 +97,86 @@ function readUtf8File(filePath) {
       } catch (ignore) {
       }
     }
+  }
+}
+
+function trimString(s) {
+  if (s == null) {
+    return '';
+  }
+  return ('' + s).replace(/^\s+|\s+$/g, '');
+}
+
+function getConnectionProperty(connectionString, keyName) {
+  if (connectionString == null || connectionString == '') {
+    return '';
+  }
+
+  var pattern = new RegExp('(?:^|;)\\s*' + keyName + '\\s*=\\s*([^;]+)', 'i');
+  var match = ('' + connectionString).match(pattern);
+  if (match && match.length > 1) {
+    return trimString(match[1]);
+  }
+
+  return '';
+}
+
+function stripWrappedQuotes(s) {
+  var value = trimString(s);
+  if (value.length >= 2) {
+    var first = value.charAt(0);
+    var last = value.charAt(value.length - 1);
+    if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+      return value.substring(1, value.length - 1);
+    }
+  }
+  return value;
+}
+
+function resolveModelFilePathFromConnectionString() {
+  var connectionString = '';
+  try {
+    connectionString = '' + Repository.ConnectionString;
+  } catch (e) {
+    return '';
+  }
+
+  if (connectionString == '') {
+    return '';
+  }
+
+  var dataSource = getConnectionProperty(connectionString, 'Data Source');
+  if (dataSource == '') {
+    dataSource = getConnectionProperty(connectionString, 'DataSource');
+  }
+  if (dataSource == '') {
+    dataSource = getConnectionProperty(connectionString, 'DBQ');
+  }
+  if (dataSource != '') {
+    return stripWrappedQuotes(dataSource);
+  }
+
+  var directPath = stripWrappedQuotes(connectionString);
+  if (/^[A-Za-z]:\\/.test(directPath) || /^\\\\/.test(directPath)) {
+    return directPath;
+  }
+
+  return '';
+}
+
+function resolveKnowledgeGraphPathFromCurrentModel() {
+  var modelFilePath = resolveModelFilePathFromConnectionString();
+  if (modelFilePath == '') {
+    return '';
+  }
+
+  try {
+    var fso = new ActiveXObject('Scripting.FileSystemObject');
+    var rootPath = fso.GetParentFolderName(modelFilePath);
+    return fso.BuildPath(rootPath, KG_JSON_RELATIVE_PATH);
+  } catch (e) {
+    fail('Could not build the knowledge graph path from the current model path: ' + errorMessage(e));
+    return '';
   }
 }
 
