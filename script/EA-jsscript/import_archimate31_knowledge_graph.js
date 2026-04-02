@@ -440,6 +440,8 @@ function mapStereotypeToEa(conceptType) {
             return 'Archimate_ApplicationProcess';
         case 'TechnologyFunction':
             return 'Archimate_TechnologyFunction';
+        case 'TechnologyService':
+            return 'Archimate_TechnologyService';
         case 'TechnologyProcess':
             return 'Archimate_TechnologyProcess';
         case 'TechnologyInteraction':
@@ -521,6 +523,7 @@ function mapElementTypeToEa(archimateType) {
     case 'BusinessInteraction':
     case 'BusinessFunction':
     case 'BusinessProcess':
+    case 'TechnologyService':
         return 'Activity';
     case 'BusinessActor':
     case 'BusinessRole':
