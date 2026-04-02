@@ -11,6 +11,7 @@ import {
 } from '../lib/runtimeState';
 import {
   ensureCoreArchitectureBaseline,
+  getArchiMateElementDocumentationGuidance,
   getCanonicalKnowledgeGraphPath,
   type SharedKnowledgeGraph,
   getSupportedElementTypes,
@@ -224,6 +225,34 @@ function formatSupportedTypeHint(kind: 'elementType' | 'relationshipType', provi
   const supported = kind === 'elementType' ? getSupportedElementTypes() : getSupportedRelationshipTypes();
   const suggestionText = suggestions.length > 0 ? ` Did you mean: ${suggestions.join(', ')}?` : '';
   return `Unsupported ${kind}: ${provided}.${suggestionText} Supported values include: ${supported.slice(0, 12).join(', ')}`;
+}
+
+function requiresArchitectGradeDocumentation(extensions: Record<string, unknown> | undefined): boolean {
+  const ai4pb = (extensions?.ai4pb ?? {}) as Record<string, unknown>;
+  return ai4pb.managedBy === 'system-architect';
+}
+
+function validateElementDocumentationQuality(
+  action: string,
+  elementType: string,
+  title: string,
+  documentation: string | undefined,
+  requireArchitectGuidance: boolean
+): void {
+  if (!requireArchitectGuidance) {
+    return;
+  }
+
+  const normalizedDocumentation = documentation?.trim() ?? '';
+  if (!normalizedDocumentation) {
+    throw new Error(`${action} requires content for system-architect managed elements. ${getArchiMateElementDocumentationGuidance(elementType)}`);
+  }
+  if (normalizedDocumentation.length < 40) {
+    throw new Error(`${action} content is too short for ${elementType}. ${getArchiMateElementDocumentationGuidance(elementType)}`);
+  }
+  if (normalizedDocumentation.toLowerCase() === title.trim().toLowerCase()) {
+    throw new Error(`${action} content cannot just repeat the title for ${elementType}. ${getArchiMateElementDocumentationGuidance(elementType)}`);
+  }
 }
 
 export default tool({
@@ -495,6 +524,13 @@ export default tool({
         if (!elementTypeCheck.isSupported) {
           throw new Error(formatSupportedTypeHint('elementType', args.elementType ?? elementTypeCheck.normalized, elementTypeCheck.suggestions));
         }
+        validateElementDocumentationQuality(
+          normalizedAction,
+          elementTypeCheck.normalized,
+          elementName,
+          args.content,
+          requiresArchitectGradeDocumentation(parsedExtensions)
+        );
         const element = upsertElement(sharedGraph, {
           identifier: args.elementId,
           type: elementTypeCheck.normalized,

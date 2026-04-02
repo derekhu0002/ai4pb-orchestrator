@@ -152,10 +152,47 @@ const SUPPORTED_RELATIONSHIP_TYPES = [
   'Association',
 ] as const;
 
+const ELEMENT_DOCUMENTATION_GUIDANCE: Partial<Record<(typeof SUPPORTED_ELEMENT_TYPES)[number], string>> = {
+  BusinessActor: 'Describe the element as a business actor: an organizational entity that is capable of performing behavior and owning or using business roles, processes, or services.',
+  BusinessRole: 'Describe the element as a business role: the responsibility for performing specific behavior to which an actor can be assigned.',
+  BusinessCollaboration: 'Describe the element as a business collaboration: a collective of business active structure elements that work together to perform behavior.',
+  BusinessInterface: 'Describe the element as a business interface: a point of access where business services are offered to the environment.',
+  BusinessProcess: 'Describe the element as a business process: a sequence of business behavior that produces a defined set of business outcomes.',
+  BusinessFunction: 'Describe the element as a business function: internal business behavior grouped by required skills, resources, or competencies.',
+  BusinessInteraction: 'Describe the element as a business interaction: behavior performed collectively by multiple business active structure elements.',
+  BusinessEvent: 'Describe the element as a business event: a business-relevant state change that triggers or results from behavior.',
+  BusinessService: 'Describe the element as a business service: externally visible business behavior delivered to customers or other business roles.',
+  BusinessObject: 'Describe the element as a business object: a passive concept relevant from a business perspective and manipulated by business behavior.',
+  ApplicationComponent: 'Describe the element as an application component: a modular application building block that encapsulates automated behavior and data.',
+  ApplicationInterface: 'Describe the element as an application interface: a point of access where application services are made available.',
+  ApplicationFunction: 'Describe the element as an application function: automated behavior grouped by required application resources or competencies.',
+  ApplicationProcess: 'Describe the element as an application process: automated behavior sequenced to achieve a defined application result.',
+  ApplicationService: 'Describe the element as an application service: externally visible automated behavior provided by an application component.',
+  DataObject: 'Describe the element as a data object: passive data suitable for automated processing by application behavior.',
+  Node: 'Describe the element as a node: a computational or physical resource that hosts, executes, or supports technology and application behavior.',
+  Artifact: 'Describe the element as an artifact: a physical or deployable piece of information used or produced in technology or application realization.',
+  Goal: 'Describe the element as a goal: a high-level end state or outcome that stakeholders intend to achieve.',
+  Outcome: 'Describe the element as an outcome: an end result achieved by behavior or capabilities for stakeholders.',
+  Resource: 'Describe the element as a resource: an asset owned or controlled and used to realize capabilities.',
+  Capability: 'Describe the element as a capability: an ability that an organization, person, or system possesses to achieve an outcome.',
+  CourseOfAction: 'Describe the element as a course of action: an approach, directive, or plan for configuring capabilities and resources.',
+  ValueStream: 'Describe the element as a value stream: a sequence of activities that creates value for a stakeholder.',
+  Requirement: 'Describe the element as a requirement: a statement of need that must be realized by the architecture or implementation.',
+  WorkPackage: 'Describe the element as a work package: a defined set of actions or deliverables used to implement change.',
+  Gap: 'Describe the element as a gap: a statement of missing capability, structure, or behavior between baseline and target architecture.',
+};
+
 type CounterMap = Record<string, number>;
 
 function toLangString(value: string): LangString[] {
   return [{ value }];
+}
+
+function humanizeElementType(type: string): string {
+  return type
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase();
 }
 
 function normalizeConceptTypeToken(value: string): string {
@@ -344,6 +381,14 @@ export function getSupportedElementTypes(): string[] {
 
 export function getSupportedRelationshipTypes(): string[] {
   return [...SUPPORTED_RELATIONSHIP_TYPES];
+}
+
+export function getArchiMateElementDocumentationGuidance(type?: string): string {
+  const normalized = normalizeElementType(type);
+  return (
+    ELEMENT_DOCUMENTATION_GUIDANCE[normalized as (typeof SUPPORTED_ELEMENT_TYPES)[number]] ??
+    `Describe the element explicitly as a ${humanizeElementType(normalized)} and explain its architectural responsibility, scope, and role in this solution.`
+  );
 }
 
 export function createDefaultSharedKnowledgeGraph(): SharedKnowledgeGraph {
@@ -1056,6 +1101,18 @@ export function validateCanonicalKnowledgeGraph(graph: SharedKnowledgeGraph): vo
     }
     if (element.documentation) {
       validateLangStrings(element.documentation, `${currentPath}.documentation`, errors);
+    }
+    const ai4pb = (element.extensions?.ai4pb ?? {}) as Record<string, unknown>;
+    if (ai4pb.managedBy === 'system-architect') {
+      const titleText = element.name.map((item) => item.value).join(' ').trim().toLowerCase();
+      const documentationText = element.documentation?.map((item) => item.value).join(' ').trim() ?? '';
+      if (!documentationText) {
+        errors.push(`${currentPath}.documentation is required for system-architect managed elements. ${getArchiMateElementDocumentationGuidance(element.type)}`);
+      } else if (documentationText.length < 40) {
+        errors.push(`${currentPath}.documentation is too short to express ArchiMate semantics for ${element.type}. ${getArchiMateElementDocumentationGuidance(element.type)}`);
+      } else if (titleText && documentationText.toLowerCase() === titleText) {
+        errors.push(`${currentPath}.documentation cannot just repeat the title. ${getArchiMateElementDocumentationGuidance(element.type)}`);
+      }
     }
   });
 
