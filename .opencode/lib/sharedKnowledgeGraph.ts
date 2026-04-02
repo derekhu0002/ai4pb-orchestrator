@@ -153,6 +153,7 @@ const SUPPORTED_RELATIONSHIP_TYPES = [
 ] as const;
 
 type SupportedElementType = (typeof SUPPORTED_ELEMENT_TYPES)[number];
+type SupportedRelationshipType = (typeof SUPPORTED_RELATIONSHIP_TYPES)[number];
 
 const ELEMENT_DOCUMENTATION_GUIDANCE: Record<SupportedElementType, string> = {
   BusinessActor: 'Describe the element as a business actor: an organizational entity that is capable of performing behavior and owning or using business roles, processes, or services.',
@@ -204,6 +205,20 @@ const ELEMENT_DOCUMENTATION_GUIDANCE: Record<SupportedElementType, string> = {
   Gap: 'Describe the element as a gap: a statement of missing capability, structure, or behavior between baseline and target architecture.',
 };
 
+const RELATIONSHIP_DOCUMENTATION_GUIDANCE: Record<SupportedRelationshipType, string> = {
+  Composition: 'Describe the relationship as a composition: a strong whole-part relationship in which the target concept is a constituent part of the source concept.',
+  Aggregation: 'Describe the relationship as an aggregation: a whole-part relationship in which the target concept is grouped by or collected under the source concept without strict lifecycle dependency.',
+  Assignment: 'Describe the relationship as an assignment: the allocation of responsibility, behavior, or execution from an active structure element to a behavior element, or vice versa where appropriate in ArchiMate.',
+  Realization: 'Describe the relationship as a realization: the source concept implements, fulfills, or makes the target concept concrete.',
+  Serving: 'Describe the relationship as a serving relationship: the source concept provides functionality or value that is used by the target concept.',
+  Access: 'Describe the relationship as an access relationship: the source behavior or active structure concept reads, writes, or otherwise uses the target passive structure concept.',
+  Influence: 'Describe the relationship as an influence: the source concept affects the achievement, state, or outcome of the target motivation concept.',
+  Triggering: 'Describe the relationship as a triggering relationship: the source behavior or event causes or precedes the target behavior or event.',
+  Flow: 'Describe the relationship as a flow: the source concept transfers information, value, or material to the target concept.',
+  Specialization: 'Describe the relationship as a specialization: the source concept is a more specific form of the target concept and inherits its characteristics.',
+  Association: 'Describe the relationship as an association: a generic structural or semantic link used when no more specific ArchiMate relationship type applies.',
+};
+
 function validateElementDocumentationGuidanceCoverage(): void {
   const missingTypes = SUPPORTED_ELEMENT_TYPES.filter((type) => !(type in ELEMENT_DOCUMENTATION_GUIDANCE));
   const extraTypes = Object.keys(ELEMENT_DOCUMENTATION_GUIDANCE).filter(
@@ -225,7 +240,29 @@ function validateElementDocumentationGuidanceCoverage(): void {
   throw new Error(`ELEMENT_DOCUMENTATION_GUIDANCE coverage is invalid: ${parts.join(' | ')}`);
 }
 
+function validateRelationshipDocumentationGuidanceCoverage(): void {
+  const missingTypes = SUPPORTED_RELATIONSHIP_TYPES.filter((type) => !(type in RELATIONSHIP_DOCUMENTATION_GUIDANCE));
+  const extraTypes = Object.keys(RELATIONSHIP_DOCUMENTATION_GUIDANCE).filter(
+    (type) => !SUPPORTED_RELATIONSHIP_TYPES.includes(type as SupportedRelationshipType)
+  );
+
+  if (missingTypes.length === 0 && extraTypes.length === 0) {
+    return;
+  }
+
+  const parts: string[] = [];
+  if (missingTypes.length > 0) {
+    parts.push(`missing guidance for: ${missingTypes.join(', ')}`);
+  }
+  if (extraTypes.length > 0) {
+    parts.push(`unsupported guidance keys: ${extraTypes.join(', ')}`);
+  }
+
+  throw new Error(`RELATIONSHIP_DOCUMENTATION_GUIDANCE coverage is invalid: ${parts.join(' | ')}`);
+}
+
 validateElementDocumentationGuidanceCoverage();
+validateRelationshipDocumentationGuidanceCoverage();
 
 type CounterMap = Record<string, number>;
 
@@ -433,6 +470,14 @@ export function getArchiMateElementDocumentationGuidance(type?: string): string 
   return (
     ELEMENT_DOCUMENTATION_GUIDANCE[normalized as SupportedElementType] ??
     `Describe the element explicitly as a ${humanizeElementType(normalized)} and explain its architectural responsibility, scope, and role in this solution.`
+  );
+}
+
+export function getArchiMateRelationshipDocumentationGuidance(type?: string): string {
+  const normalized = normalizeRelationshipType(type);
+  return (
+    RELATIONSHIP_DOCUMENTATION_GUIDANCE[normalized as SupportedRelationshipType] ??
+    `Describe the relationship explicitly as a ${humanizeElementType(normalized)} and explain why the source and target are connected by this ArchiMate relation in this architecture.`
   );
 }
 
@@ -1187,6 +1232,24 @@ export function validateCanonicalKnowledgeGraph(graph: SharedKnowledgeGraph): vo
     }
     if (relationship.documentation) {
       validateLangStrings(relationship.documentation, `${currentPath}.documentation`, errors);
+    }
+    const ai4pb = (relationship.extensions?.ai4pb ?? {}) as Record<string, unknown>;
+    if (ai4pb.managedBy === 'system-architect') {
+      const titleText = relationship.name.map((item) => item.value).join(' ').trim().toLowerCase();
+      const documentationText = relationship.documentation?.map((item) => item.value).join(' ').trim() ?? '';
+      if (!documentationText) {
+        errors.push(
+          `${currentPath}.documentation is required for system-architect managed relationships. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
+        );
+      } else if (documentationText.length < 40) {
+        errors.push(
+          `${currentPath}.documentation is too short to express ArchiMate semantics for ${relationship.type}. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
+        );
+      } else if (titleText && documentationText.toLowerCase() === titleText) {
+        errors.push(
+          `${currentPath}.documentation cannot just repeat the title. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
+        );
+      }
     }
   });
 

@@ -12,6 +12,7 @@ import {
 import {
   ensureCoreArchitectureBaseline,
   getArchiMateElementDocumentationGuidance,
+  getArchiMateRelationshipDocumentationGuidance,
   getCanonicalKnowledgeGraphPath,
   type SharedKnowledgeGraph,
   getSupportedElementTypes,
@@ -252,6 +253,29 @@ function validateElementDocumentationQuality(
   }
   if (normalizedDocumentation.toLowerCase() === title.trim().toLowerCase()) {
     throw new Error(`${action} content cannot just repeat the title for ${elementType}. ${getArchiMateElementDocumentationGuidance(elementType)}`);
+  }
+}
+
+function validateRelationshipDocumentationQuality(
+  action: string,
+  relationshipType: string,
+  title: string,
+  documentation: string | undefined,
+  requireArchitectGuidance: boolean
+): void {
+  if (!requireArchitectGuidance) {
+    return;
+  }
+
+  const normalizedDocumentation = documentation?.trim() ?? '';
+  if (!normalizedDocumentation) {
+    throw new Error(`${action} requires content for system-architect managed relationships. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
+  }
+  if (normalizedDocumentation.length < 40) {
+    throw new Error(`${action} content is too short for ${relationshipType}. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
+  }
+  if (normalizedDocumentation.toLowerCase() === title.trim().toLowerCase()) {
+    throw new Error(`${action} content cannot just repeat the title for ${relationshipType}. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
   }
 }
 
@@ -563,6 +587,13 @@ export default tool({
             )
           );
         }
+        validateRelationshipDocumentationQuality(
+          normalizedAction,
+          relationshipTypeCheck.normalized,
+          relationshipName,
+          args.content,
+          requiresArchitectGradeDocumentation(parsedExtensions)
+        );
         const relationship = upsertRelationship(sharedGraph, {
           identifier: args.relationshipId,
           type: relationshipTypeCheck.normalized,
