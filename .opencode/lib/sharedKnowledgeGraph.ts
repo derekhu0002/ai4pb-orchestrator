@@ -152,7 +152,9 @@ const SUPPORTED_RELATIONSHIP_TYPES = [
   'Association',
 ] as const;
 
-const ELEMENT_DOCUMENTATION_GUIDANCE: Partial<Record<(typeof SUPPORTED_ELEMENT_TYPES)[number], string>> = {
+type SupportedElementType = (typeof SUPPORTED_ELEMENT_TYPES)[number];
+
+const ELEMENT_DOCUMENTATION_GUIDANCE: Record<SupportedElementType, string> = {
   BusinessActor: 'Describe the element as a business actor: an organizational entity that is capable of performing behavior and owning or using business roles, processes, or services.',
   BusinessRole: 'Describe the element as a business role: the responsibility for performing specific behavior to which an actor can be assigned.',
   BusinessCollaboration: 'Describe the element as a business collaboration: a collective of business active structure elements that work together to perform behavior.',
@@ -163,10 +165,16 @@ const ELEMENT_DOCUMENTATION_GUIDANCE: Partial<Record<(typeof SUPPORTED_ELEMENT_T
   BusinessEvent: 'Describe the element as a business event: a business-relevant state change that triggers or results from behavior.',
   BusinessService: 'Describe the element as a business service: externally visible business behavior delivered to customers or other business roles.',
   BusinessObject: 'Describe the element as a business object: a passive concept relevant from a business perspective and manipulated by business behavior.',
+  Contract: 'Describe the element as a contract: a formal or informal specification of rights, obligations, or agreements associated with a product or business service.',
+  Representation: 'Describe the element as a representation: a perceptible form in which one or more business objects are presented to human actors.',
+  Product: 'Describe the element as a product: a coherent collection of services, contract terms, and value delivered to a customer or consumer.',
   ApplicationComponent: 'Describe the element as an application component: a modular application building block that encapsulates automated behavior and data.',
+  ApplicationCollaboration: 'Describe the element as an application collaboration: a collective of application components or other application active structure elements that work together to perform automated behavior.',
   ApplicationInterface: 'Describe the element as an application interface: a point of access where application services are made available.',
   ApplicationFunction: 'Describe the element as an application function: automated behavior grouped by required application resources or competencies.',
+  ApplicationInteraction: 'Describe the element as an application interaction: automated behavior performed collaboratively by multiple application active structure elements.',
   ApplicationProcess: 'Describe the element as an application process: automated behavior sequenced to achieve a defined application result.',
+  ApplicationEvent: 'Describe the element as an application event: an application-relevant state change that triggers or results from automated behavior.',
   ApplicationService: 'Describe the element as an application service: externally visible automated behavior provided by an application component.',
   DataObject: 'Describe the element as a data object: passive data suitable for automated processing by application behavior.',
   Node: 'Describe the element as a node: a computational or physical resource that hosts, executes, or supports technology and application behavior.',
@@ -195,6 +203,29 @@ const ELEMENT_DOCUMENTATION_GUIDANCE: Partial<Record<(typeof SUPPORTED_ELEMENT_T
   WorkPackage: 'Describe the element as a work package: a defined set of actions or deliverables used to implement change.',
   Gap: 'Describe the element as a gap: a statement of missing capability, structure, or behavior between baseline and target architecture.',
 };
+
+function validateElementDocumentationGuidanceCoverage(): void {
+  const missingTypes = SUPPORTED_ELEMENT_TYPES.filter((type) => !(type in ELEMENT_DOCUMENTATION_GUIDANCE));
+  const extraTypes = Object.keys(ELEMENT_DOCUMENTATION_GUIDANCE).filter(
+    (type) => !SUPPORTED_ELEMENT_TYPES.includes(type as SupportedElementType)
+  );
+
+  if (missingTypes.length === 0 && extraTypes.length === 0) {
+    return;
+  }
+
+  const parts: string[] = [];
+  if (missingTypes.length > 0) {
+    parts.push(`missing guidance for: ${missingTypes.join(', ')}`);
+  }
+  if (extraTypes.length > 0) {
+    parts.push(`unsupported guidance keys: ${extraTypes.join(', ')}`);
+  }
+
+  throw new Error(`ELEMENT_DOCUMENTATION_GUIDANCE coverage is invalid: ${parts.join(' | ')}`);
+}
+
+validateElementDocumentationGuidanceCoverage();
 
 type CounterMap = Record<string, number>;
 
@@ -400,7 +431,7 @@ export function getSupportedRelationshipTypes(): string[] {
 export function getArchiMateElementDocumentationGuidance(type?: string): string {
   const normalized = normalizeElementType(type);
   return (
-    ELEMENT_DOCUMENTATION_GUIDANCE[normalized as (typeof SUPPORTED_ELEMENT_TYPES)[number]] ??
+    ELEMENT_DOCUMENTATION_GUIDANCE[normalized as SupportedElementType] ??
     `Describe the element explicitly as a ${humanizeElementType(normalized)} and explain its architectural responsibility, scope, and role in this solution.`
   );
 }
