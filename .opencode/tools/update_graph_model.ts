@@ -124,6 +124,7 @@ export default tool({
     title: tool.schema.string().optional().describe('Title for a new task or release log.'),
     content: tool.schema.string().optional().describe('Summary or detailed content for the update.'),
     status: tool.schema.string().optional().describe('Status value for task, validation, or release updates.'),
+    commitId: tool.schema.string().optional().describe('Git commit ID associated with the task or validation update.'),
     taskKind: tool.schema.string().optional().describe('Task kind for task-related updates. Supported: planning or implementation.'),
     owner: tool.schema.string().optional().describe('Owner for a new task.'),
     kind: tool.schema.string().optional().describe('Validation or issue kind, such as qa, audit, or ArchitectureGap.'),
@@ -178,6 +179,7 @@ export default tool({
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
           details: args.content ?? '',
+          commitId: optionalText(args.commitId),
           softwareUnitId: optionalText(args.softwareUnitId),
           softwareUnitTitle: optionalText(args.softwareUnitTitle),
           architectureElementId: optionalText(args.architectureElementId),
@@ -204,6 +206,7 @@ export default tool({
             owner: String(record.owner ?? args.owner ?? 'Implementation'),
             summary: String(record.summary ?? record.content ?? ''),
             details: String(record.details ?? record.content ?? ''),
+            commitId: optionalText(record.commitId ?? args.commitId),
             softwareUnitId: optionalText(record.softwareUnitId ?? args.softwareUnitId),
             softwareUnitTitle: optionalText(record.softwareUnitTitle ?? args.softwareUnitTitle),
             architectureElementId: optionalText(record.architectureElementId ?? args.architectureElementId),
@@ -234,6 +237,9 @@ export default tool({
             existing.summary = args.content;
             existing.details = args.content;
           }
+          if (args.commitId) {
+            existing.commitId = optionalText(args.commitId);
+          }
           if (args.softwareUnitId) {
             existing.softwareUnitId = optionalText(args.softwareUnitId);
           }
@@ -256,6 +262,7 @@ export default tool({
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
           details: args.content ?? '',
+          commitId: optionalText(args.commitId),
           softwareUnitId: optionalText(args.softwareUnitId),
           softwareUnitTitle: optionalText(args.softwareUnitTitle),
           architectureElementId: optionalText(args.architectureElementId),
@@ -281,6 +288,9 @@ export default tool({
           task.summary = args.content;
           task.details = args.content;
         }
+        if (args.commitId) {
+          task.commitId = optionalText(args.commitId);
+        }
         task.updatedAt = now;
         result = { ...result, task };
         break;
@@ -300,6 +310,7 @@ export default tool({
           status,
           summary: args.content ?? '',
           details: args.content ?? '',
+          commitId: optionalText(args.commitId),
           updatedAt: now,
         };
         result = { ...result, validation: { kind, ...state.validations[kind] } };

@@ -130,7 +130,7 @@ export default tool({
 
     if (scope === 'all' || scope === 'runtime') {
       for (const task of runtimeState.tasks) {
-        const text = `${task.id} ${task.title} ${task.status} ${task.summary ?? ''} ${task.details ?? ''}`;
+        const text = `${task.id} ${task.title} ${task.status} ${task.commitId ?? ''} ${task.summary ?? ''} ${task.details ?? ''}`;
         if (includesAllTerms(text, args.query ?? '')) {
           matches.push({
             scope: 'runtime',
@@ -138,6 +138,19 @@ export default tool({
             id: task.id,
             name: task.title,
             type: task.status,
+            snippet: safeSnippet(text),
+          });
+        }
+      }
+
+      for (const [validationKind, validation] of Object.entries(runtimeState.validations)) {
+        const text = `${validationKind} ${validation.status} ${validation.commitId ?? ''} ${validation.summary} ${validation.details ?? ''}`;
+        if (includesAllTerms(text, args.query ?? '')) {
+          matches.push({
+            scope: 'runtime',
+            kind: 'validation',
+            name: validationKind,
+            type: validation.status,
             snippet: safeSnippet(text),
           });
         }

@@ -47,14 +47,16 @@ As the `@ProjectOrchestrator`, your job is to manage the full development lifecy
     - Require the architect result to identify concrete software units and task IDs derived from those software units.
     - If the architect result does not reference concrete task IDs, or those tasks are missing software-unit metadata in persisted runtime state, stop and report that the architect handoff is incomplete.
     - Invoke `Implementation` through the native Task tool with those software-unit-scoped task IDs and the architect's summary.
-    - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, and work performed against the established intention baseline.
+    - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, work performed against the established intention baseline, and the git commit ID for the implementation batch.
+    - If the implementation result does not include a commit ID, or completed runtime tasks do not record one, stop and report that the implementation handoff is incomplete.
     - After `Implementation` returns, immediately re-read persisted runtime state with `read_project_status(section="tasks")` or `query_graph(mode="tasks_by_status", status="done")` before advancing.
     - Treat persisted runtime state as the source of truth. A conversational child result is not sufficient by itself to prove implementation completion.
 
 4.  **Phase 4: Parallel Validation**
-    - Invoke `QualityAssurance` and `Audit` only if persisted runtime state shows at least one active task and at least one task with status `done`.
+    - Invoke `QualityAssurance` and `Audit` only if persisted runtime state shows at least one active task, at least one task with status `done`, and a recoverable implementation commit ID for that batch.
     - Re-check `intentionModel.isIntentModelSufficient` before starting `Audit`. If the intention model is still weak, route back to `SystemArchitect` instead of auditing.
     - If runtime state is empty, unchanged, or contains no `done` task, do not start validation. Re-read state once, then route back to `Implementation` or `SystemArchitect` based on what is missing.
+    - Pass the implementation `commit_id` explicitly to both `QualityAssurance` and `Audit`, and require both child results to report the reviewed commit ID back.
     - You must evaluate both child results before deciding the next step.
 
 5.  **Phase 5: Decision and Rework**

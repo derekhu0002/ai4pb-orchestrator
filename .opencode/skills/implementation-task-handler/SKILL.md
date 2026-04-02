@@ -10,6 +10,7 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` with one or more task IDs.
 - A Task invocation from `ProjectOrchestrator` carrying a QA or audit rework summary.
+- When implementation succeeds, the output must include the git commit ID for the exact changes delivered for review.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
@@ -32,5 +33,12 @@ As the `@Implementation` agent, execute the assigned coding work and return a di
     - Use `write` and `bash` as needed to implement the code.
     - Use `update_graph_model(action="set_task_status", taskId="TASK-...", status="in_progress|done|blocked", content="...")` to mark progress.
 
-2.  **Reporting Completion**:
-    - Return JSON-like prose with `status`, `completed_task_ids`, `blocked_task_ids`, `files_changed`, and `notes`.
+2.  **Commit Completion**:
+    - Before returning success, inspect the git worktree with non-interactive git commands and make sure the assigned implementation work is the only content being committed.
+    - Stage only the files that belong to the assigned implementation work. Do not mix unrelated user changes into the commit.
+    - Create a non-interactive git commit after the implementation is complete. The commit message should reference the completed task IDs and summarize the software-unit-scoped work.
+    - Capture the resulting commit ID with a git command and persist it on every completed task by calling `update_graph_model(action="set_task_status", taskId="TASK-...", status="done", commitId="<sha>", content="...")`.
+    - If you cannot create a clean commit because the worktree contains unrelated changes that cannot be isolated safely, mark the affected tasks as `blocked` and explain the git-state problem instead of creating an unsafe commit.
+
+3.  **Reporting Completion**:
+    - Return JSON-like prose with `status`, `completed_task_ids`, `blocked_task_ids`, `files_changed`, `commit_id`, and `notes`.

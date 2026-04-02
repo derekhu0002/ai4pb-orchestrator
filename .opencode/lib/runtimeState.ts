@@ -13,6 +13,7 @@ export type RuntimeTask = {
   owner?: string;
   summary?: string;
   details?: string;
+  commitId?: string;
   softwareUnitId?: string;
   softwareUnitTitle?: string;
   architectureElementId?: string;
@@ -25,6 +26,7 @@ export type RuntimeValidation = {
   summary: string;
   updatedAt: string;
   details?: string;
+  commitId?: string;
 };
 
 export type RuntimeIssue = {

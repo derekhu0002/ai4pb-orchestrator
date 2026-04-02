@@ -1042,6 +1042,7 @@ export function syncRuntimeStateToSharedKnowledgeGraph(graph: SharedKnowledgeGra
           status: runtimeTaskStatusToMasStatus(task.status),
           assignee: task.owner ?? 'Implementation',
           summary: task.summary ?? '',
+          commitId: task.commitId ?? '',
           softwareUnitId: task.softwareUnitId ?? '',
           softwareUnitTitle: task.softwareUnitTitle ?? '',
           architectureElementId: task.architectureElementId ?? '',
