@@ -13,6 +13,8 @@ import {
   ensureCoreArchitectureBaseline,
   getCanonicalKnowledgeGraphPath,
   type SharedKnowledgeGraph,
+  getSupportedElementTypes,
+  getSupportedRelationshipTypes,
   loadCanonicalKnowledgeGraph,
   normalizeElementType,
   normalizeRelationshipType,
@@ -22,6 +24,8 @@ import {
   syncRuntimeStateToSharedKnowledgeGraph,
   upsertElement,
   upsertRelationship,
+  validateElementType,
+  validateRelationshipType,
 } from '../lib/sharedKnowledgeGraph';
 
 function normalizeAction(action?: string, args?: Record<string, unknown>): string {
@@ -214,6 +218,12 @@ function requireNonEmptyText(value: string | undefined, fieldName: string, actio
 
 function graphHasElement(graph: SharedKnowledgeGraph, elementId: string): boolean {
   return (graph.elements?.element ?? []).some((element) => element.identifier === elementId);
+}
+
+function formatSupportedTypeHint(kind: 'elementType' | 'relationshipType', provided: string, suggestions: string[]): string {
+  const supported = kind === 'elementType' ? getSupportedElementTypes() : getSupportedRelationshipTypes();
+  const suggestionText = suggestions.length > 0 ? ` Did you mean: ${suggestions.join(', ')}?` : '';
+  return `Unsupported ${kind}: ${provided}.${suggestionText} Supported values include: ${supported.slice(0, 12).join(', ')}`;
 }
 
 export default tool({
@@ -481,9 +491,13 @@ export default tool({
       case 'add_element':
       case 'upsert_element': {
         const elementName = requireNonEmptyText(args.title ?? args.content ?? 'Unnamed Element', 'title or content', normalizedAction);
+        const elementTypeCheck = validateElementType(args.elementType);
+        if (!elementTypeCheck.isSupported) {
+          throw new Error(formatSupportedTypeHint('elementType', args.elementType ?? elementTypeCheck.normalized, elementTypeCheck.suggestions));
+        }
         const element = upsertElement(sharedGraph, {
           identifier: args.elementId,
-          type: normalizeElementType(args.elementType),
+          type: elementTypeCheck.normalized,
           name: elementName,
           documentation: args.content,
           extensions: parsedExtensions,
@@ -503,9 +517,19 @@ export default tool({
           throw new Error(`${normalizedAction} targetId not found: ${args.targetId}. Create or query the target element before creating the relationship.`);
         }
         const relationshipName = requireNonEmptyText(args.title ?? `${args.sourceId} to ${args.targetId}`, 'title', normalizedAction);
+        const relationshipTypeCheck = validateRelationshipType(args.relationshipType);
+        if (!relationshipTypeCheck.isSupported) {
+          throw new Error(
+            formatSupportedTypeHint(
+              'relationshipType',
+              args.relationshipType ?? relationshipTypeCheck.normalized,
+              relationshipTypeCheck.suggestions
+            )
+          );
+        }
         const relationship = upsertRelationship(sharedGraph, {
           identifier: args.relationshipId,
-          type: normalizeRelationshipType(args.relationshipType),
+          type: relationshipTypeCheck.normalized,
           name: relationshipName,
           source: args.sourceId,
           target: args.targetId,

@@ -79,13 +79,199 @@ export type IntentionModelStatus = {
   isIntentModelSufficient: boolean;
 };
 
+export type TypeValidationResult = {
+  isSupported: boolean;
+  normalized: string;
+  suggestions: string[];
+};
+
 const CANONICAL_GRAPH_FILE = path.join('.opencode', 'temp', 'SharedKnowledgeGraph.archimate3.1.json');
 const LEGACY_GRAPH_FILE = path.join('design', 'KG', 'SystemArchitecture.json');
+
+const SUPPORTED_ELEMENT_TYPES = [
+  'BusinessActor',
+  'BusinessRole',
+  'BusinessCollaboration',
+  'BusinessInterface',
+  'BusinessProcess',
+  'BusinessFunction',
+  'BusinessInteraction',
+  'BusinessEvent',
+  'BusinessService',
+  'BusinessObject',
+  'Contract',
+  'Representation',
+  'Product',
+  'ApplicationComponent',
+  'ApplicationCollaboration',
+  'ApplicationInterface',
+  'ApplicationFunction',
+  'ApplicationInteraction',
+  'ApplicationProcess',
+  'ApplicationEvent',
+  'ApplicationService',
+  'DataObject',
+  'Node',
+  'Device',
+  'SystemSoftware',
+  'TechnologyCollaboration',
+  'TechnologyInterface',
+  'Path',
+  'CommunicationNetwork',
+  'TechnologyFunction',
+  'TechnologyProcess',
+  'TechnologyInteraction',
+  'TechnologyEvent',
+  'TechnologyService',
+  'Artifact',
+  'Equipment',
+  'Facility',
+  'DistributionNetwork',
+  'Goal',
+  'Outcome',
+  'Resource',
+  'Capability',
+  'CourseOfAction',
+  'ValueStream',
+  'Requirement',
+  'WorkPackage',
+  'Gap',
+] as const;
+
+const SUPPORTED_RELATIONSHIP_TYPES = [
+  'Composition',
+  'Aggregation',
+  'Assignment',
+  'Realization',
+  'Serving',
+  'Access',
+  'Influence',
+  'Triggering',
+  'Flow',
+  'Specialization',
+  'Association',
+] as const;
 
 type CounterMap = Record<string, number>;
 
 function toLangString(value: string): LangString[] {
   return [{ value }];
+}
+
+function normalizeConceptTypeToken(value: string): string {
+  return value
+    .trim()
+    .replace(/^ArchiMate_/i, '')
+    .replace(/[^a-zA-Z0-9]+/g, '')
+    .toLowerCase();
+}
+
+function levenshteinDistance(left: string, right: string): number {
+  if (left === right) {
+    return 0;
+  }
+  if (!left.length) {
+    return right.length;
+  }
+  if (!right.length) {
+    return left.length;
+  }
+
+  const previous = Array.from({ length: right.length + 1 }, (_value, index) => index);
+  const current = new Array<number>(right.length + 1).fill(0);
+
+  for (let row = 1; row <= left.length; row += 1) {
+    current[0] = row;
+    for (let column = 1; column <= right.length; column += 1) {
+      const substitutionCost = left[row - 1] === right[column - 1] ? 0 : 1;
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        previous[column - 1] + substitutionCost
+      );
+    }
+    for (let column = 0; column <= right.length; column += 1) {
+      previous[column] = current[column];
+    }
+  }
+
+  return previous[right.length];
+}
+
+function suggestClosestTypes(value: string, candidates: readonly string[]): string[] {
+  const needle = normalizeConceptTypeToken(value);
+  if (!needle) {
+    return [...candidates.slice(0, 5)];
+  }
+
+  return [...candidates]
+    .map((candidate) => {
+      const normalizedCandidate = normalizeConceptTypeToken(candidate);
+      let score = levenshteinDistance(needle, normalizedCandidate);
+
+      if (normalizedCandidate.startsWith(needle) || needle.startsWith(normalizedCandidate)) {
+        score -= 2;
+      }
+      if (normalizedCandidate.includes(needle) || needle.includes(normalizedCandidate)) {
+        score -= 1;
+      }
+
+      return { candidate, score };
+    })
+    .sort((left, right) => left.score - right.score || left.candidate.localeCompare(right.candidate))
+    .slice(0, 5)
+    .map((entry) => entry.candidate);
+}
+
+function validateSupportedType(value: string | undefined, fallback: string, candidates: readonly string[]): TypeValidationResult {
+  const normalized = (value ?? fallback).trim() || fallback;
+  const isSupported = candidates.includes(normalized as (typeof candidates)[number]);
+  return {
+    isSupported,
+    normalized,
+    suggestions: isSupported ? [] : suggestClosestTypes(normalized, candidates),
+  };
+}
+
+function validateLangStrings(values: LangString[] | undefined, pathLabel: string, errors: string[]): void {
+  if (!values || values.length === 0) {
+    errors.push(`${pathLabel} must contain at least one value.`);
+    return;
+  }
+
+  values.forEach((entry, index) => {
+    if (!entry || typeof entry.value !== 'string' || !entry.value.trim()) {
+      errors.push(`${pathLabel}[${index}].value must be a non-empty string.`);
+    }
+  });
+}
+
+function validateOrganizationRefs(
+  organizations: GraphOrganization[] | undefined,
+  elementIds: Set<string>,
+  relationshipIds: Set<string>,
+  errors: string[],
+  pathLabel = 'organizations'
+): void {
+  if (!organizations) {
+    return;
+  }
+
+  organizations.forEach((organization, index) => {
+    const currentPath = `${pathLabel}[${index}]`;
+    if (organization.label) {
+      validateLangStrings(organization.label, `${currentPath}.label`, errors);
+    }
+    if (organization.elementRef && !elementIds.has(organization.elementRef)) {
+      errors.push(`${currentPath}.elementRef references missing element ${organization.elementRef}.`);
+    }
+    if (organization.relationshipRef && !relationshipIds.has(organization.relationshipRef)) {
+      errors.push(`${currentPath}.relationshipRef references missing relationship ${organization.relationshipRef}.`);
+    }
+    if (organization.item) {
+      validateOrganizationRefs(organization.item, elementIds, relationshipIds, errors, `${currentPath}.item`);
+    }
+  });
 }
 
 function toDocumentation(value?: string): LangString[] | undefined {
@@ -152,6 +338,14 @@ export function getLegacyKnowledgeGraphPath(worktree: string): string {
   return path.join(worktree, LEGACY_GRAPH_FILE);
 }
 
+export function getSupportedElementTypes(): string[] {
+  return [...SUPPORTED_ELEMENT_TYPES];
+}
+
+export function getSupportedRelationshipTypes(): string[] {
+  return [...SUPPORTED_RELATIONSHIP_TYPES];
+}
+
 export function createDefaultSharedKnowledgeGraph(): SharedKnowledgeGraph {
   return {
     identifier: 'ai4pb-shared-knowledge-graph',
@@ -194,6 +388,7 @@ export function saveCanonicalKnowledgeGraph(worktree: string, graph: SharedKnowl
   const graphPath = getCanonicalKnowledgeGraphPath(worktree);
   fs.mkdirSync(path.dirname(graphPath), { recursive: true });
   cleanupEmptySections(graph);
+  validateCanonicalKnowledgeGraph(graph);
   fs.writeFileSync(graphPath, JSON.stringify(graph, null, 2), 'utf8');
 }
 
@@ -241,6 +436,10 @@ export function normalizeElementType(value?: string): string {
     ArchiMate_Gap: 'Gap',
   };
   return aliases[raw] ?? raw;
+}
+
+export function validateElementType(value?: string): TypeValidationResult {
+  return validateSupportedType(normalizeElementType(value), 'BusinessObject', SUPPORTED_ELEMENT_TYPES);
 }
 
 export function getArchitectureLayerForElementType(type?: string): ArchitectureLayer {
@@ -817,6 +1016,90 @@ export function normalizeRelationshipType(value?: string): string {
     ArchiMate_Association: 'Association',
   };
   return aliases[raw] ?? raw;
+}
+
+export function validateRelationshipType(value?: string): TypeValidationResult {
+  return validateSupportedType(normalizeRelationshipType(value), 'Association', SUPPORTED_RELATIONSHIP_TYPES);
+}
+
+export function validateCanonicalKnowledgeGraph(graph: SharedKnowledgeGraph): void {
+  const errors: string[] = [];
+
+  if (!graph.identifier?.trim()) {
+    errors.push('identifier must be a non-empty string.');
+  }
+
+  validateLangStrings(graph.name, 'name', errors);
+
+  if (graph.documentation) {
+    validateLangStrings(graph.documentation, 'documentation', errors);
+  }
+
+  const elements = graph.elements?.element ?? [];
+  const relationships = graph.relationships?.relationship ?? [];
+  const elementIds = new Set<string>();
+  const relationshipIds = new Set<string>();
+
+  elements.forEach((element, index) => {
+    const currentPath = `elements.element[${index}]`;
+    if (!element.identifier?.trim()) {
+      errors.push(`${currentPath}.identifier must be a non-empty string.`);
+    } else {
+      elementIds.add(element.identifier);
+    }
+
+    validateLangStrings(element.name, `${currentPath}.name`, errors);
+    const typeCheck = validateElementType(element.type);
+    if (!typeCheck.isSupported) {
+      const suggestionText = typeCheck.suggestions.length > 0 ? ` Did you mean: ${typeCheck.suggestions.join(', ')}?` : '';
+      errors.push(`${currentPath}.type is not a supported ArchiMate element type: ${element.type}.${suggestionText}`);
+    }
+    if (element.documentation) {
+      validateLangStrings(element.documentation, `${currentPath}.documentation`, errors);
+    }
+  });
+
+  relationships.forEach((relationship, index) => {
+    const currentPath = `relationships.relationship[${index}]`;
+    if (!relationship.identifier?.trim()) {
+      errors.push(`${currentPath}.identifier must be a non-empty string.`);
+    } else {
+      relationshipIds.add(relationship.identifier);
+    }
+
+    validateLangStrings(relationship.name, `${currentPath}.name`, errors);
+    const typeCheck = validateRelationshipType(relationship.type);
+    if (!typeCheck.isSupported) {
+      const suggestionText = typeCheck.suggestions.length > 0 ? ` Did you mean: ${typeCheck.suggestions.join(', ')}?` : '';
+      errors.push(`${currentPath}.type is not a supported ArchiMate relationship type: ${relationship.type}.${suggestionText}`);
+    }
+    if (!relationship.source?.trim()) {
+      errors.push(`${currentPath}.source must be a non-empty element identifier.`);
+    } else if (!elementIds.has(relationship.source)) {
+      errors.push(`${currentPath}.source references missing element ${relationship.source}.`);
+    }
+    if (!relationship.target?.trim()) {
+      errors.push(`${currentPath}.target must be a non-empty element identifier.`);
+    } else if (!elementIds.has(relationship.target)) {
+      errors.push(`${currentPath}.target references missing element ${relationship.target}.`);
+    }
+    if (relationship.documentation) {
+      validateLangStrings(relationship.documentation, `${currentPath}.documentation`, errors);
+    }
+  });
+
+  if (graph.propertyDefinitions && !Array.isArray(graph.propertyDefinitions.propertyDefinition)) {
+    errors.push('propertyDefinitions.propertyDefinition must be an array when present.');
+  }
+
+  validateOrganizationRefs(graph.organizations, elementIds, relationshipIds, errors);
+
+  if (errors.length > 0) {
+    throw new Error(
+      `Canonical graph validation failed with ${errors.length} issue(s): ${errors.slice(0, 12).join(' | ')}` +
+        (errors.length > 12 ? ' | ...' : '')
+    );
+  }
 }
 
 export function findElement(graph: SharedKnowledgeGraph, identifierOrName: string): GraphElement | undefined {
