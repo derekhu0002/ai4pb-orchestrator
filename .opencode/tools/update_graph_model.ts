@@ -12,6 +12,7 @@ import {
 import {
   ensureCoreArchitectureBaseline,
   getCanonicalKnowledgeGraphPath,
+  type SharedKnowledgeGraph,
   loadCanonicalKnowledgeGraph,
   normalizeElementType,
   normalizeRelationshipType,
@@ -114,6 +115,107 @@ function optionalText(value: unknown): string | undefined {
   return normalized ? normalized : undefined;
 }
 
+function stripCodeFences(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('```')) {
+    return trimmed;
+  }
+
+  return trimmed.replace(/^```[a-zA-Z0-9_-]*\s*/, '').replace(/\s*```$/, '').trim();
+}
+
+function normalizeLooseJson(raw: string): string {
+  let normalized = stripCodeFences(raw)
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/,\s*([}\]])/g, '$1');
+
+  normalized = normalized.replace(/([{,]\s*)'([^'\n\r]+)'\s*:/g, '$1"$2":');
+  normalized = normalized.replace(/:\s*'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_match, value: string) => {
+    const escaped = value.replace(/"/g, '\\"');
+    return `: "${escaped}"`;
+  });
+
+  return normalized;
+}
+
+function formatJsonFieldError(fieldName: string, raw: string, detail: string, expected: string): Error {
+  const preview = raw.replace(/\s+/g, ' ').trim().slice(0, 220);
+  return new Error(
+    `${fieldName} is invalid: ${detail}. Expected ${expected}. ` +
+      `Remove markdown fences, use double-quoted JSON, and avoid trailing commas. Input preview: ${preview}`
+  );
+}
+
+function parseJsonWithAutoFix(fieldName: string, raw: string, expected: 'object' | 'array'): unknown {
+  const attempts = [stripCodeFences(raw), normalizeLooseJson(raw)].filter(Boolean);
+  let lastError: unknown;
+
+  for (const candidate of attempts) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (expected === 'array' && !Array.isArray(parsed)) {
+        if (parsed && typeof parsed === 'object') {
+          return [parsed];
+        }
+        throw formatJsonFieldError(fieldName, raw, 'parsed value is not an array', 'a JSON array of objects');
+      }
+      if (expected === 'object' && (!parsed || Array.isArray(parsed) || typeof parsed !== 'object')) {
+        throw formatJsonFieldError(fieldName, raw, 'parsed value is not an object', 'a JSON object');
+      }
+      return parsed;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const detail = lastError instanceof Error ? lastError.message : 'unable to parse JSON';
+  throw formatJsonFieldError(fieldName, raw, detail, expected === 'array' ? 'a JSON array of objects' : 'a JSON object');
+}
+
+function parseExtensionsJson(raw?: string): Record<string, unknown> | undefined {
+  if (!raw?.trim()) {
+    return undefined;
+  }
+
+  return parseJsonWithAutoFix('extensionsJson', raw, 'object') as Record<string, unknown>;
+}
+
+function parseTasksJson(raw?: string, fallbackContent?: string): Array<Record<string, unknown>> {
+  if (raw?.trim()) {
+    const parsed = parseJsonWithAutoFix('tasksJson', raw, 'array');
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('tasksJson is invalid: expected a non-empty JSON array of task objects.');
+    }
+
+    return parsed.map((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error(`tasksJson[${index}] is invalid: each task must be a JSON object with at least a title, name, summary, or content field.`);
+      }
+      return item as Record<string, unknown>;
+    });
+  }
+
+  const titles = parseTaskTitles(fallbackContent);
+  if (titles.length === 0) {
+    throw new Error('bulk_add_tasks requires tasksJson or content containing at least one task title.');
+  }
+
+  return titles.map((title) => ({ title }));
+}
+
+function requireNonEmptyText(value: string | undefined, fieldName: string, action: string): string {
+  const normalized = value?.trim();
+  if (!normalized) {
+    throw new Error(`${action} requires ${fieldName} to be a non-empty string.`);
+  }
+  return normalized;
+}
+
+function graphHasElement(graph: SharedKnowledgeGraph, elementId: string): boolean {
+  return (graph.elements?.element ?? []).some((element) => element.identifier === elementId);
+}
+
 export default tool({
   description: 'Record design, task, validation, issue, and release updates for the OpenCode orchestration runtime.',
   args: {
@@ -151,9 +253,10 @@ export default tool({
       requestedAction: args.action,
       sharedKnowledgeGraphPath: getCanonicalKnowledgeGraphPath(context.worktree),
     };
-    const parsedExtensions = args.extensionsJson ? (JSON.parse(args.extensionsJson) as Record<string, unknown>) : undefined;
+    const parsedExtensions = parseExtensionsJson(args.extensionsJson);
 
-    switch (normalizedAction) {
+    try {
+      switch (normalizedAction) {
       case 'set_design_summary': {
         state.designSummary = args.content ?? '';
         sharedGraph.documentation = args.content ? [{ value: args.content }] : sharedGraph.documentation;
@@ -161,10 +264,7 @@ export default tool({
         break;
       }
       case 'record_decision': {
-        const decision = args.content?.trim();
-        if (!decision) {
-          throw new Error('record_decision requires content.');
-        }
+        const decision = requireNonEmptyText(args.content, 'content', 'record_decision');
         state.designDecisions.push(decision);
         result = { ...result, decisions: state.designDecisions };
         break;
@@ -191,13 +291,13 @@ export default tool({
         break;
       }
       case 'bulk_add_tasks': {
-        const rawTasks = args.tasksJson ? JSON.parse(args.tasksJson) : parseTaskTitles(args.content).map((title) => ({ title }));
-        if (!Array.isArray(rawTasks) || rawTasks.length === 0) {
-          throw new Error('bulk_add_tasks requires tasksJson or content containing at least one task title.');
-        }
+        const rawTasks = parseTasksJson(args.tasksJson, args.content);
         const createdTasks = rawTasks.map((item) => {
           const record = item as Record<string, unknown>;
           const title = normalizeTaskTitle(String(record.title ?? record.name ?? 'Untitled task'));
+          if (!title) {
+            throw new Error('bulk_add_tasks is invalid: each task must provide a non-empty title, name, summary, or content field.');
+          }
           return {
             id: nextTaskId(state),
             title,
@@ -275,11 +375,11 @@ export default tool({
       }
       case 'set_task_status': {
         if (!args.taskId) {
-          throw new Error('set_task_status requires taskId.');
+          throw new Error('set_task_status requires taskId. Provide the exact runtime task ID such as TASK-001.');
         }
         const task = state.tasks.find((item) => item.id === args.taskId);
         if (!task) {
-          throw new Error(`Task not found: ${args.taskId}`);
+          throw new Error(`Task not found: ${args.taskId}. Call query_graph(mode="task_by_id", id="${args.taskId}") first to confirm the exact task ID.`);
         }
         if (args.status) {
           task.status = args.status as 'todo' | 'in_progress' | 'done' | 'blocked';
@@ -331,11 +431,11 @@ export default tool({
       case 'resolve_issue': {
         const issueId = args.issueId ?? args.taskId;
         if (!issueId) {
-          throw new Error('resolve_issue requires issueId.');
+          throw new Error('resolve_issue requires issueId. Provide the exact issue ID such as ISSUE-001.');
         }
         const issue = state.issues.find((item) => item.id === issueId);
         if (!issue) {
-          throw new Error(`Issue not found: ${issueId}`);
+          throw new Error(`Issue not found: ${issueId}. Call query_graph(mode="issues") first to inspect available issue IDs.`);
         }
         issue.summary = `${issue.summary} [Resolved]`;
         if (args.content) {
@@ -380,10 +480,11 @@ export default tool({
       }
       case 'add_element':
       case 'upsert_element': {
+        const elementName = requireNonEmptyText(args.title ?? args.content ?? 'Unnamed Element', 'title or content', normalizedAction);
         const element = upsertElement(sharedGraph, {
           identifier: args.elementId,
           type: normalizeElementType(args.elementType),
-          name: args.title ?? args.content ?? 'Unnamed Element',
+          name: elementName,
           documentation: args.content,
           extensions: parsedExtensions,
         });
@@ -393,12 +494,19 @@ export default tool({
       case 'add_relationship':
       case 'upsert_relationship': {
         if (!args.sourceId || !args.targetId) {
-          throw new Error(`${normalizedAction} requires sourceId and targetId.`);
+          throw new Error(`${normalizedAction} requires sourceId and targetId. Provide existing architecture element IDs for both ends of the relationship.`);
         }
+        if (!graphHasElement(sharedGraph, args.sourceId)) {
+          throw new Error(`${normalizedAction} sourceId not found: ${args.sourceId}. Create or query the source element before creating the relationship.`);
+        }
+        if (!graphHasElement(sharedGraph, args.targetId)) {
+          throw new Error(`${normalizedAction} targetId not found: ${args.targetId}. Create or query the target element before creating the relationship.`);
+        }
+        const relationshipName = requireNonEmptyText(args.title ?? `${args.sourceId} to ${args.targetId}`, 'title', normalizedAction);
         const relationship = upsertRelationship(sharedGraph, {
           identifier: args.relationshipId,
           type: normalizeRelationshipType(args.relationshipType),
-          name: args.title ?? `${args.sourceId} to ${args.targetId}`,
+          name: relationshipName,
           source: args.sourceId,
           target: args.targetId,
           documentation: args.content,
@@ -422,6 +530,10 @@ export default tool({
       }
       default:
         throw new Error(`Unsupported action: ${args.action}. Supported actions include set_design_summary, record_decision, add_task, bulk_add_tasks, upsert_task, set_task_status, record_validation, log_issue, resolve_issue, record_release, reset_runtime, add_element, upsert_element, add_relationship, upsert_relationship, ensure_architecture_baseline.`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`update_graph_model failed for action ${normalizedAction}: ${message}`);
     }
 
     syncRuntimeStateToSharedKnowledgeGraph(sharedGraph, state);
