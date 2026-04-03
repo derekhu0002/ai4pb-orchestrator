@@ -25,6 +25,7 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
     - If no single commit ID can be identified, fail the audit handoff as incomplete instead of auditing an ambiguous workspace state.
     - Use `bash` to inspect the reviewed commit with a narrow command such as `git show --stat --oneline <sha>` before running deeper reality analysis.
     - Use `run_reality_scanner` to analyze the codebase and generate a "reality" model.
+    - Read the reviewed tasks and collect any explicit `architectureElementId` values before deciding whether ArchitectureID trace markers are mandatory.
 
 2.  **Compare Models**:
     - Use `query_graph(mode="summary")` and `query_graph(mode="search", scope="architecture", query="...")` to get the current "intent" model.
@@ -32,6 +33,8 @@ As the `@Audit` agent, perform an architecture-to-code compliance check using re
     - If any of `strategy`, `business`, `application`, or `technology` is missing, fail the audit as an intention-model gap and route back to `SystemArchitect`.
     - Inspect `intentionModel.isIntentModelSufficient`, `intentionModel.architecturalElementCount`, and `intentionModel.crossLayerRelationshipCount`.
     - If the graph contains only runtime-synchronized concepts, lacks architect-managed cross-layer relationships, or is otherwise too thin to act as a real intention contract, fail the audit as an intention-model gap before comparing code details.
+    - If the reviewed implementation tasks contain one or more `architectureElementId` values, use `run_reality_scanner` output to confirm that the changed codebase exposes matching `@ArchitectureID` trace markers for those elements, or that the implementation continues an already-marked construct. Treat missing trace evidence as an implementation traceability gap.
+    - If the reviewed implementation tasks do not contain `architectureElementId`, report that handoff defect first instead of fabricating an ArchitectureID expectation from task titles alone.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps), and keep the reviewed commit ID visible in the audit reasoning.
 
 3.  **Report Findings**:

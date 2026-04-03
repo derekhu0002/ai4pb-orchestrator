@@ -10,9 +10,15 @@ const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.json', '.py', '
 type ScanResult = {
   fileCount: number;
   extensionCounts: Record<string, number>;
-  architectureReferences: Array<{ file: string; snippet: string }>;
+  architectureReferences: Array<{ file: string; architectureId: string; line: number; snippet: string }>;
   sampleFiles: string[];
 };
+
+const ARCHITECTURE_ID_PATTERN = /@ArchitectureID:\s*([^\r\n]+)/g;
+
+function getLineNumber(content: string, index: number): number {
+  return content.slice(0, index).split(/\r?\n/).length;
+}
 
 function walkFiles(root: string, current: string, results: string[]): void {
   for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
@@ -43,7 +49,7 @@ export default tool({
     walkFiles(context.worktree, context.worktree, files);
 
     const extensionCounts: Record<string, number> = {};
-    const architectureReferences: Array<{ file: string; snippet: string }> = [];
+    const architectureReferences: Array<{ file: string; architectureId: string; line: number; snippet: string }> = [];
 
     for (const relativeFile of files) {
       const extension = path.extname(relativeFile) || '<none>';
@@ -52,10 +58,16 @@ export default tool({
       const absolute = path.join(context.worktree, relativeFile);
       try {
         const content = fs.readFileSync(absolute, 'utf8');
-        const match = content.match(/@ArchitectureID:\s*([^\r\n]+)/);
-        if (match) {
+        const matches = content.matchAll(ARCHITECTURE_ID_PATTERN);
+        for (const match of matches) {
+          const architectureId = match[1]?.trim();
+          if (!architectureId) {
+            continue;
+          }
           architectureReferences.push({
             file: relativeFile,
+            architectureId,
+            line: getLineNumber(content, match.index ?? 0),
             snippet: safeSnippet(match[0]),
           });
         }
