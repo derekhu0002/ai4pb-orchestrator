@@ -2,10 +2,9 @@ import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { asJson, safeSnippet } from '../lib/runtimeState';
+import { asJson, collectReadableWorkspaceFiles, safeSnippet } from '../lib/runtimeState';
 
-const IGNORED_DIRS = new Set(['.git', 'node_modules', '.venv', 'out', '.opencode/runtime']);
-const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.json', '.py', '.md']);
+const MAX_FILE_BYTES = 200_000;
 
 type ScanResult = {
   fileCount: number;
@@ -20,33 +19,13 @@ function getLineNumber(content: string, index: number): number {
   return content.slice(0, index).split(/\r?\n/).length;
 }
 
-function walkFiles(root: string, current: string, results: string[]): void {
-  for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-    const absolute = path.join(current, entry.name);
-    const relative = path.relative(root, absolute).replace(/\\/g, '/');
-
-    if (entry.isDirectory()) {
-      if (IGNORED_DIRS.has(entry.name) || relative.startsWith('.opencode/node_modules')) {
-        continue;
-      }
-      walkFiles(root, absolute, results);
-      continue;
-    }
-
-    if (CODE_EXTENSIONS.has(path.extname(entry.name))) {
-      results.push(relative);
-    }
-  }
-}
-
 export default tool({
   description: 'Scan the repository for implementation reality: source files, extension counts, and architecture trace markers.',
   args: {
     maxFiles: tool.schema.number().int().min(10).max(500).optional().describe('Maximum number of sample files to report.'),
   },
   async execute(args, context) {
-    const files: string[] = [];
-    walkFiles(context.worktree, context.worktree, files);
+    const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
 
     const extensionCounts: Record<string, number> = {};
     const architectureReferences: Array<{ file: string; architectureId: string; line: number; snippet: string }> = [];

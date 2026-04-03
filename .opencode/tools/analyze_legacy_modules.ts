@@ -2,9 +2,8 @@ import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { asJson, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
+import { asJson, collectReadableWorkspaceFiles, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
 
-const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.json', '.py', '.md']);
 const STOP_WORDS = new Set([
   'about',
   'after',
@@ -34,14 +33,6 @@ const STOP_WORDS = new Set([
 ]);
 const MAX_FILE_BYTES = 200_000;
 
-type GitIgnoreRule = {
-  pattern: string;
-  regex: RegExp;
-  negated: boolean;
-  directoryOnly: boolean;
-  basenameOnly: boolean;
-};
-
 type CandidateFile = {
   file: string;
   score: number;
@@ -57,112 +48,6 @@ type CandidateAggregate = {
   architectureIds: Set<string>;
   files: CandidateFile[];
 };
-
-function escapeRegex(value: string): string {
-  return value.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
-}
-
-function globToRegex(pattern: string, basenameOnly: boolean, directoryOnly: boolean): RegExp {
-  const normalized = pattern.replace(/\\/g, '/');
-  let source = '';
-
-  for (let index = 0; index < normalized.length; index += 1) {
-    const character = normalized[index];
-    const next = normalized[index + 1];
-
-    if (character === '*' && next === '*') {
-      source += '.*';
-      index += 1;
-      continue;
-    }
-
-    if (character === '*') {
-      source += '[^/]*';
-      continue;
-    }
-
-    if (character === '?') {
-      source += '[^/]';
-      continue;
-    }
-
-    source += escapeRegex(character);
-  }
-
-  if (basenameOnly) {
-    return new RegExp(`(^|/)${source}${directoryOnly ? '(/.*)?' : '($|/)'}`);
-  }
-
-  return new RegExp(`^${source}${directoryOnly ? '(/.*)?' : '$'}`);
-}
-
-function parseGitIgnore(worktree: string): GitIgnoreRule[] {
-  const gitIgnorePath = path.join(worktree, '.gitignore');
-  if (!fs.existsSync(gitIgnorePath)) {
-    return [];
-  }
-
-  const raw = fs.readFileSync(gitIgnorePath, 'utf8');
-  return raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith('#'))
-    .map((line) => {
-      const negated = line.startsWith('!');
-      const unsigned = negated ? line.slice(1).trim() : line;
-      const directoryOnly = unsigned.endsWith('/');
-      const normalized = unsigned.replace(/^\//, '').replace(/\/$/, '');
-      const basenameOnly = !normalized.includes('/');
-
-      return {
-        pattern: normalized,
-        regex: globToRegex(normalized, basenameOnly, directoryOnly),
-        negated,
-        directoryOnly,
-        basenameOnly,
-      };
-    })
-    .filter((rule) => rule.pattern.length > 0);
-}
-
-function isIgnoredPath(relativePath: string, isDirectory: boolean, rules: GitIgnoreRule[]): boolean {
-  const normalized = relativePath.replace(/\\/g, '/').replace(/^\.\//, '');
-  if (!normalized || normalized === '.git') {
-    return normalized === '.git';
-  }
-
-  let ignored = false;
-  for (const rule of rules) {
-    if (rule.directoryOnly && !isDirectory) {
-      continue;
-    }
-
-    if (rule.regex.test(normalized)) {
-      ignored = !rule.negated;
-    }
-  }
-
-  return ignored;
-}
-
-function walkFiles(root: string, current: string, results: string[], ignoreRules: GitIgnoreRule[]): void {
-  for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-    const absolute = path.join(current, entry.name);
-    const relative = path.relative(root, absolute).replace(/\\/g, '/');
-
-    if (entry.isDirectory()) {
-      if (isIgnoredPath(relative, true, ignoreRules)) {
-        continue;
-      }
-      walkFiles(root, absolute, results, ignoreRules);
-      continue;
-    }
-
-    if (!isIgnoredPath(relative, false, ignoreRules) && CODE_EXTENSIONS.has(path.extname(entry.name))) {
-      results.push(relative);
-    }
-  }
-}
 
 function tokenize(value: string): string[] {
   return value
@@ -226,7 +111,7 @@ function upsertCandidate(store: Map<string, CandidateAggregate>, modulePath: str
 
 export default tool({
   description:
-    'Analyze a brownfield repository and rank the best-fit existing modules, seams, or packages for implementing a requirement before software-unit decomposition.',
+    'Analyze a brownfield repository and rank the best-fit existing modules, seams, or packages for implementing a requirement before software-unit decomposition using readable-text scanning and ArchitectureID evidence.',
   args: {
     goal: tool.schema.string().optional().describe('High-level goal or requirement title.'),
     formalRequirement: tool.schema.string().optional().describe('Approved formal requirement text, if available.'),
@@ -236,15 +121,12 @@ export default tool({
   },
   async execute(args, context) {
     const runtimeState = loadRuntimeState(context.worktree);
-    const ignoreRules = parseGitIgnore(context.worktree);
     const goal = args.goal?.trim() || runtimeState.activeGoal || '';
     const requirement = args.formalRequirement?.trim() || '';
     const softwareUnitTitle = args.softwareUnitTitle?.trim() || '';
     const architectureElementId = args.architectureElementId?.trim() || '';
     const queryTerms = unique(tokenize([goal, requirement, softwareUnitTitle, architectureElementId].filter(Boolean).join(' '))).slice(0, 24);
-
-    const files: string[] = [];
-  walkFiles(context.worktree, context.worktree, files, ignoreRules);
+    const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
 
     const candidates = new Map<string, CandidateAggregate>();
     let analyzedFiles = 0;
@@ -252,11 +134,6 @@ export default tool({
     for (const relativeFile of files) {
       const absolute = path.join(context.worktree, relativeFile);
       try {
-        const stats = fs.statSync(absolute);
-        if (stats.size > MAX_FILE_BYTES) {
-          continue;
-        }
-
         const content = fs.readFileSync(absolute, 'utf8');
         analyzedFiles += 1;
 
