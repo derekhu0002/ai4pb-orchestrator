@@ -79,6 +79,8 @@ The main agent roles are:
 
 Registered tools:
 
+- `analyze_legacy_modules`
+  - Ranks the best-fit existing legacy modules or seams for a requirement before software-unit decomposition.
 - `decompose_goal`
   - Breaks a requirement into runtime tasks.
 - `read_project_status`

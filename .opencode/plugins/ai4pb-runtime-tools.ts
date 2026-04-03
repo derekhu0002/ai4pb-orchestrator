@@ -1,3 +1,4 @@
+import analyzeLegacyModules from '../tools/analyze_legacy_modules';
 import decomposeGoal from '../tools/decompose_goal';
 import generateGapReport from '../tools/generate_gap_report';
 import generateTestCases from '../tools/generate_test_cases';
@@ -11,6 +12,7 @@ export const id = 'ai4pb-runtime-tools';
 export async function server() {
   return {
     tool: {
+      analyze_legacy_modules: analyzeLegacyModules,
       decompose_goal: decomposeGoal,
       generate_gap_report: generateGapReport,
       generate_test_cases: generateTestCases,
