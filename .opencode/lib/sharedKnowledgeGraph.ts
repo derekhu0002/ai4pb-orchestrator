@@ -481,6 +481,26 @@ export function getArchiMateRelationshipDocumentationGuidance(type?: string): st
   );
 }
 
+function normalizeDocumentationSentence(value: string): string {
+  return value.trim().replace(/[.!?]+$/g, '');
+}
+
+function buildBaselineDocumentation(guidance: string, context: string, detail?: string): string {
+  const parts = [guidance, context, detail]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value && value.length > 0))
+    .map((value) => `${normalizeDocumentationSentence(value)}.`);
+  return parts.join(' ');
+}
+
+function createBaselineElementDocumentation(type: string, context: string, detail?: string): string {
+  return buildBaselineDocumentation(getArchiMateElementDocumentationGuidance(type), context, detail);
+}
+
+function createBaselineRelationshipDocumentation(type: string, context: string, detail?: string): string {
+  return buildBaselineDocumentation(getArchiMateRelationshipDocumentationGuidance(type), context, detail);
+}
+
 export function createDefaultSharedKnowledgeGraph(): SharedKnowledgeGraph {
   return {
     identifier: 'ai4pb-shared-knowledge-graph',
@@ -727,7 +747,11 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-STRATEGY-GOAL',
     type: 'Goal',
     name: 'Product Delivery Goal',
-    documentation: `Primary strategic outcome for: ${goalLabel}. ${summary}`,
+    documentation: createBaselineElementDocumentation(
+      'Goal',
+      `In this architecture, Product Delivery Goal defines the intended strategic outcome for ${goalLabel} and anchors the rest of the baseline intention model`,
+      summary
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -741,7 +765,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-STRATEGY-CAPABILITY',
     type: 'Capability',
     name: 'Core Product Capability',
-    documentation: `Core capability required to achieve: ${goalLabel}.`,
+    documentation: createBaselineElementDocumentation(
+      'Capability',
+      `In this architecture, Core Product Capability captures the organization or product's capacity to achieve ${goalLabel} through coordinated business and application behavior`
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -755,7 +782,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-STRATEGY-COURSE',
     type: 'CourseOfAction',
     name: 'MVP Delivery Course Of Action',
-    documentation: 'Delivery approach that favors a runnable local MVP with explicit architecture-to-implementation traceability.',
+    documentation: createBaselineElementDocumentation(
+      'CourseOfAction',
+      'In this architecture, MVP Delivery Course Of Action prescribes a runnable local MVP with explicit architecture-to-implementation traceability as the preferred means of delivery'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -769,7 +799,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-BUSINESS-ACTOR',
     type: 'BusinessActor',
     name: 'Primary User',
-    documentation: 'Primary business actor interacting with the product.',
+    documentation: createBaselineElementDocumentation(
+      'BusinessActor',
+      'In this architecture, Primary User identifies the main human or organizational party that consumes the delivered business service and interacts with the core business flow'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -783,7 +816,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-BUSINESS-PROCESS',
     type: 'BusinessProcess',
     name: 'Core Business Flow',
-    documentation: `Business process baseline that operationalizes the product strategy for: ${goalLabel}.`,
+    documentation: createBaselineElementDocumentation(
+      'BusinessProcess',
+      `In this architecture, Core Business Flow sequences the core activities needed to operationalize ${goalLabel} and deliver the intended value to the primary user`
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -797,7 +833,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-BUSINESS-SERVICE',
     type: 'BusinessService',
     name: 'Core User Service',
-    documentation: 'Business-facing service exposed to the primary user through the core business flow.',
+    documentation: createBaselineElementDocumentation(
+      'BusinessService',
+      'In this architecture, Core User Service is the user-facing service delivered through the core business process to the primary actor'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -811,7 +850,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-APPLICATION-COMPONENT',
     type: 'ApplicationComponent',
     name: 'Core Application System',
-    documentation: `Application layer baseline that supports the core business flow for: ${goalLabel}.`,
+    documentation: createBaselineElementDocumentation(
+      'ApplicationComponent',
+      `In this architecture, Core Application System is the modular software building block that automates and supports the business process behind ${goalLabel}`
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -825,7 +867,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-APPLICATION-SERVICE',
     type: 'ApplicationService',
     name: 'Core Application Service',
-    documentation: 'Application service boundary implementing the core business service.',
+    documentation: createBaselineElementDocumentation(
+      'ApplicationService',
+      'In this architecture, Core Application Service provides the externally visible automation boundary that supports and serves the core business service'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -839,7 +884,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-APPLICATION-DATA',
     type: 'DataObject',
     name: 'Core Domain Data',
-    documentation: 'Primary domain or state data managed by the application layer.',
+    documentation: createBaselineElementDocumentation(
+      'DataObject',
+      'In this architecture, Core Domain Data captures the domain and state information created, read, and maintained by the core application system'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -853,7 +901,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-TECHNOLOGY-NODE',
     type: 'Node',
     name: 'Core Technology Runtime',
-    documentation: `Technology/runtime baseline hosting the core application system for: ${goalLabel}.`,
+    documentation: createBaselineElementDocumentation(
+      'Node',
+      `In this architecture, Core Technology Runtime is the runtime environment that hosts and executes the technology and application behavior required for ${goalLabel}`
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -867,7 +918,10 @@ export function ensureCoreArchitectureBaseline(
     identifier: 'ELM-TECHNOLOGY-ARTIFACT',
     type: 'Artifact',
     name: 'Deployable Solution Artifact',
-    documentation: 'Deployable build artifact produced from the core application system.',
+    documentation: createBaselineElementDocumentation(
+      'Artifact',
+      'In this architecture, Deployable Solution Artifact is the deployable solution package generated from the core application system for operation on the target runtime node'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -883,7 +937,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Capability realizes goal',
     source: strategyCapability.identifier,
     target: strategyGoal.identifier,
-    documentation: 'Core product capability realizes the product delivery goal.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, Core Product Capability makes Product Delivery Goal concrete by providing the ability needed to achieve that strategic outcome'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -898,7 +955,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Course realizes capability',
     source: strategyCourse.identifier,
     target: strategyCapability.identifier,
-    documentation: 'The MVP delivery course of action realizes the core product capability.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, MVP Delivery Course Of Action gives concrete form to Core Product Capability by prescribing how that capability will be established'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -913,7 +973,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Business realizes strategy',
     source: business.identifier,
     target: strategyCapability.identifier,
-    documentation: 'Core business flow realizes the strategic capability.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, Core Business Flow operationalizes Core Product Capability through executable business behavior'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -928,7 +991,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Actor participates in business flow',
     source: businessActor.identifier,
     target: business.identifier,
-    documentation: 'Primary user participates in the core business flow.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Assignment',
+      'In this architecture, Primary User is allocated participation responsibility in Core Business Flow from a business perspective'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -943,7 +1009,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Business process realizes service',
     source: business.identifier,
     target: businessService.identifier,
-    documentation: 'Core business flow realizes the core user service.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, Core Business Flow implements and makes Core User Service concrete as externally visible behavior'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -958,7 +1027,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Business service serves actor',
     source: businessService.identifier,
     target: businessActor.identifier,
-    documentation: 'Core user service serves the primary user.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Serving',
+      'In this architecture, Core User Service provides business value and externally visible behavior to Primary User'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -973,7 +1045,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Application service serves business service',
     source: applicationService.identifier,
     target: businessService.identifier,
-    documentation: 'Application service serves the business-facing core user service.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Serving',
+      'In this architecture, Core Application Service provides the automated support needed by the business-facing Core User Service'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -988,7 +1063,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Application component realizes application service',
     source: application.identifier,
     target: applicationService.identifier,
-    documentation: 'Core application system realizes the application service boundary.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, Core Application System implements and makes Core Application Service concrete as the exposed application service boundary'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -1003,7 +1081,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Application accesses domain data',
     source: application.identifier,
     target: applicationData.identifier,
-    documentation: 'Core application system accesses and manages the core domain data.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Access',
+      'In this architecture, Core Application System reads and writes Core Domain Data in order to execute application behavior'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -1018,7 +1099,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Technology supports application',
     source: technology.identifier,
     target: application.identifier,
-    documentation: 'Core technology runtime supports the application execution environment.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Association',
+      'In this architecture, Core Technology Runtime has a structural support link with Core Application System where no more specific baseline relationship is modeled'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -1033,7 +1117,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Technology hosts application service',
     source: technology.identifier,
     target: applicationService.identifier,
-    documentation: 'Core technology runtime hosts the application service boundary.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Serving',
+      'In this architecture, Core Technology Runtime provides the infrastructure behavior required to host and expose Core Application Service'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
@@ -1048,7 +1135,10 @@ export function ensureCoreArchitectureBaseline(
     name: 'Artifact realizes application deliverable',
     source: technologyArtifact.identifier,
     target: application.identifier,
-    documentation: 'Deployable artifact realizes the application system in deployable form.',
+    documentation: createBaselineRelationshipDocumentation(
+      'Realization',
+      'In this architecture, Deployable Solution Artifact is the concrete deployable manifestation of Core Application System'
+    ),
     extensions: {
       ai4pb: {
         managedBy: 'system-architect',
