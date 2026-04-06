@@ -28,4 +28,25 @@ export const LANGUAGE_WORKFLOW_REGISTRY: LanguageWorkflowProfile[] = [
     recommendedSkills: ['verification-loop'],
     recommendedTools: ['run_reality_scanner', 'query_graph'],
   },
+  {
+    languageId: 'java',
+    displayName: 'Java',
+    fileExtensions: ['.java'],
+    recommendedSkills: ['verification-loop'],
+    recommendedTools: ['run_reality_scanner', 'query_graph'],
+  },
+  {
+    languageId: 'go',
+    displayName: 'Go',
+    fileExtensions: ['.go'],
+    recommendedSkills: ['verification-loop', 'api-design'],
+    recommendedTools: ['run_reality_scanner', 'query_graph'],
+  },
+  {
+    languageId: 'csharp',
+    displayName: 'C#',
+    fileExtensions: ['.cs'],
+    recommendedSkills: ['verification-loop'],
+    recommendedTools: ['run_reality_scanner', 'query_graph'],
+  },
 ];

@@ -45,7 +45,7 @@ export type LanguageSupport = {
   languageId: string;
   displayName: string;
   fileExtensions: string[];
-  extractionMode: StructuralSource;
+  extractionMode: StructuralSource | 'ast-heuristic';
   fileCount: number;
   symbolCount: number;
   recommendedSkills: string[];

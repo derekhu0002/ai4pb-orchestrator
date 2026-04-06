@@ -2,6 +2,7 @@ import * as path from 'node:path';
 
 import { LANGUAGE_WORKFLOW_REGISTRY, type LanguageWorkflowProfile } from './languageRegistry';
 import type { LanguageSupport, StructuralSymbol } from './types';
+import { csharpLanguageProvider, goLanguageProvider, javaLanguageProvider } from './providers/polyglot';
 import { pythonLanguageProvider } from './providers/python';
 import { javaScriptLanguageProvider, typeScriptLanguageProvider } from './providers/typescript';
 import type { RealityScannerLanguageProvider } from './providers/types';
@@ -10,6 +11,9 @@ const LANGUAGE_PROVIDERS: RealityScannerLanguageProvider[] = [
   typeScriptLanguageProvider,
   javaScriptLanguageProvider,
   pythonLanguageProvider,
+  javaLanguageProvider,
+  goLanguageProvider,
+  csharpLanguageProvider,
 ];
 
 const PROVIDERS_BY_LANGUAGE = new Map(LANGUAGE_PROVIDERS.map((provider) => [provider.languageId, provider]));

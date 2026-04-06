@@ -49,6 +49,7 @@ Key files and folders:
   - Repo-local OpenCode tools like `decompose_goal`, `query_graph`, and `update_graph_model`.
 - `lib/realityScanner/`
   - Language workflow registry plus per-language extraction modules used by `run_reality_scanner`.
+  - Includes AST-backed providers for TypeScript, JavaScript, Python, Java, Go, and C#.
 - `lib/runtimeState.ts`
   - Runtime state read/write helpers.
 - `lib/sharedKnowledgeGraph.ts`
