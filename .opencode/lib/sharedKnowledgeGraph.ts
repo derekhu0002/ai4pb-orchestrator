@@ -170,6 +170,73 @@ const SUPPORTED_RELATIONSHIP_TYPES = [
 type SupportedElementType = (typeof SUPPORTED_ELEMENT_TYPES)[number];
 type SupportedRelationshipType = (typeof SUPPORTED_RELATIONSHIP_TYPES)[number];
 
+const DOCUMENTATION_STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'by',
+  'for',
+  'from',
+  'in',
+  'into',
+  'is',
+  'it',
+  'of',
+  'on',
+  'or',
+  'the',
+  'their',
+  'this',
+  'to',
+  'that',
+  'these',
+  'those',
+  'through',
+  'with',
+]);
+
+const ARCHITECTURE_ROLE_TOKENS = new Set([
+  'automates',
+  'captures',
+  'connects',
+  'constrains',
+  'coordinates',
+  'defines',
+  'delivers',
+  'encapsulates',
+  'executes',
+  'exposes',
+  'flows',
+  'governs',
+  'hosts',
+  'implements',
+  'integrates',
+  'links',
+  'manages',
+  'models',
+  'orchestrates',
+  'owns',
+  'persists',
+  'processes',
+  'provides',
+  'reads',
+  'realizes',
+  'routes',
+  'serves',
+  'stores',
+  'supports',
+  'tracks',
+  'transfers',
+  'triggers',
+  'uses',
+  'validates',
+  'writes',
+]);
+
 const ELEMENT_DOCUMENTATION_GUIDANCE: Record<SupportedElementType, string> = {
   BusinessActor: 'Describe the element as a business actor: an organizational entity that is capable of performing behavior and owning or using business roles, processes, or services.',
   BusinessRole: 'Describe the element as a business role: the responsibility for performing specific behavior to which an actor can be assigned.',
@@ -514,6 +581,94 @@ export function getArchiMateRelationshipDocumentationGuidance(type?: string): st
     RELATIONSHIP_DOCUMENTATION_GUIDANCE[normalized as SupportedRelationshipType] ??
     `Describe the relationship explicitly as a ${humanizeElementType(normalized)} and explain why the source and target are connected by this ArchiMate relation in this architecture.`
   );
+}
+
+function splitCamelCaseWords(value: string): string {
+  return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+}
+
+function extractDocumentationTokens(value: string): string[] {
+  const normalized = splitCamelCaseWords(value).toLowerCase();
+  const matches = normalized.match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [];
+  return matches
+    .map((token) => token.replace(/^-+|-+$/g, ''))
+    .filter((token) => token.length >= 2 || /[^\u0000-\u007f]/.test(token));
+}
+
+function createMeaningfulTokenSet(...values: Array<string | undefined>): Set<string> {
+  const tokens = values
+    .flatMap((value) => extractDocumentationTokens(value ?? ''))
+    .filter((token) => !DOCUMENTATION_STOP_WORDS.has(token));
+  return new Set(tokens);
+}
+
+function countSentenceLikeSegments(value: string): number {
+  return value
+    .split(/[.!?。！？]+/)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0).length;
+}
+
+function hasEnoughDocumentationSignal(documentation: string, guidance: string, title: string, type: string): boolean {
+  const titleTokens = createMeaningfulTokenSet(title);
+  const guidanceTokens = createMeaningfulTokenSet(guidance, humanizeElementType(type));
+  const documentationTokens = extractDocumentationTokens(documentation).filter(
+    (token) => !DOCUMENTATION_STOP_WORDS.has(token) && !titleTokens.has(token)
+  );
+  const uniqueDocumentationTokens = new Set(documentationTokens);
+  const guidanceOverlapCount = [...uniqueDocumentationTokens].filter((token) => guidanceTokens.has(token)).length;
+  const roleSignalCount = [...uniqueDocumentationTokens].filter((token) => ARCHITECTURE_ROLE_TOKENS.has(token)).length;
+  const sentenceCount = countSentenceLikeSegments(documentation);
+
+  return guidanceOverlapCount >= 1 && (roleSignalCount >= 1 || uniqueDocumentationTokens.size >= 5 || sentenceCount >= 2);
+}
+
+function getArchitectManagedDocumentationIssue(
+  conceptKind: 'element' | 'relationship',
+  type: string,
+  title: string,
+  documentation: string | undefined
+): string | undefined {
+  const normalizedDocumentation = documentation?.trim() ?? '';
+  const guidance =
+    conceptKind === 'element'
+      ? getArchiMateElementDocumentationGuidance(type)
+      : getArchiMateRelationshipDocumentationGuidance(type);
+
+  if (!normalizedDocumentation) {
+    return `documentation is required for system-architect managed ${conceptKind}s. ${guidance}`;
+  }
+
+  const normalizedTitle = title.trim().toLowerCase();
+  if (normalizedTitle && normalizedDocumentation.toLowerCase() === normalizedTitle) {
+    return `documentation cannot just repeat the title. ${guidance}`;
+  }
+
+  if (hasEnoughDocumentationSignal(normalizedDocumentation, guidance, title, type)) {
+    return undefined;
+  }
+
+  if (conceptKind === 'element') {
+    return `documentation should explain the ArchiMate meaning of ${type} and the element's responsibility or role in this architecture instead of using generic filler. ${guidance}`;
+  }
+
+  return `documentation should explain the ArchiMate meaning of ${type} and why the source and target are connected in this architecture instead of using generic filler. ${guidance}`;
+}
+
+export function getArchitectManagedElementDocumentationIssue(
+  type: string,
+  title: string,
+  documentation: string | undefined
+): string | undefined {
+  return getArchitectManagedDocumentationIssue('element', type, title, documentation);
+}
+
+export function getArchitectManagedRelationshipDocumentationIssue(
+  type: string,
+  title: string,
+  documentation: string | undefined
+): string | undefined {
+  return getArchitectManagedDocumentationIssue('relationship', type, title, documentation);
 }
 
 function normalizeDocumentationSentence(value: string): string {
@@ -1436,14 +1591,11 @@ export function validateCanonicalKnowledgeGraph(graph: SharedKnowledgeGraph): vo
     }
     const ai4pb = (element.extensions?.ai4pb ?? {}) as Record<string, unknown>;
     if (ai4pb.managedBy === 'system-architect') {
-      const titleText = element.name.map((item) => item.value).join(' ').trim().toLowerCase();
+      const titleText = element.name.map((item) => item.value).join(' ').trim();
       const documentationText = element.documentation?.map((item) => item.value).join(' ').trim() ?? '';
-      if (!documentationText) {
-        errors.push(`${currentPath}.documentation is required for system-architect managed elements. ${getArchiMateElementDocumentationGuidance(element.type)}`);
-      } else if (documentationText.length < 40) {
-        errors.push(`${currentPath}.documentation is too short to express ArchiMate semantics for ${element.type}. ${getArchiMateElementDocumentationGuidance(element.type)}`);
-      } else if (titleText && documentationText.toLowerCase() === titleText) {
-        errors.push(`${currentPath}.documentation cannot just repeat the title. ${getArchiMateElementDocumentationGuidance(element.type)}`);
+      const documentationIssue = getArchitectManagedElementDocumentationIssue(element.type, titleText, documentationText);
+      if (documentationIssue) {
+        errors.push(`${currentPath}.${documentationIssue}`);
       }
     }
   });
@@ -1477,20 +1629,15 @@ export function validateCanonicalKnowledgeGraph(graph: SharedKnowledgeGraph): vo
     }
     const ai4pb = (relationship.extensions?.ai4pb ?? {}) as Record<string, unknown>;
     if (ai4pb.managedBy === 'system-architect') {
-      const titleText = relationship.name.map((item) => item.value).join(' ').trim().toLowerCase();
+      const titleText = relationship.name.map((item) => item.value).join(' ').trim();
       const documentationText = relationship.documentation?.map((item) => item.value).join(' ').trim() ?? '';
-      if (!documentationText) {
-        errors.push(
-          `${currentPath}.documentation is required for system-architect managed relationships. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
-        );
-      } else if (documentationText.length < 40) {
-        errors.push(
-          `${currentPath}.documentation is too short to express ArchiMate semantics for ${relationship.type}. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
-        );
-      } else if (titleText && documentationText.toLowerCase() === titleText) {
-        errors.push(
-          `${currentPath}.documentation cannot just repeat the title. ${getArchiMateRelationshipDocumentationGuidance(relationship.type)}`
-        );
+      const documentationIssue = getArchitectManagedRelationshipDocumentationIssue(
+        relationship.type,
+        titleText,
+        documentationText
+      );
+      if (documentationIssue) {
+        errors.push(`${currentPath}.${documentationIssue}`);
       }
     }
   });

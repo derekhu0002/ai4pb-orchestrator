@@ -10,9 +10,9 @@ import {
   saveRuntimeState,
 } from '../lib/runtimeState';
 import {
+  getArchitectManagedElementDocumentationIssue,
+  getArchitectManagedRelationshipDocumentationIssue,
   ensureCoreArchitectureBaseline,
-  getArchiMateElementDocumentationGuidance,
-  getArchiMateRelationshipDocumentationGuidance,
   getCanonicalKnowledgeGraphPath,
   type SharedKnowledgeGraph,
   getSupportedElementTypes,
@@ -274,15 +274,9 @@ function validateElementDocumentationQuality(
     return;
   }
 
-  const normalizedDocumentation = documentation?.trim() ?? '';
-  if (!normalizedDocumentation) {
-    throw new Error(`${action} requires content for system-architect managed elements. ${getArchiMateElementDocumentationGuidance(elementType)}`);
-  }
-  if (normalizedDocumentation.length < 40) {
-    throw new Error(`${action} content is too short for ${elementType}. ${getArchiMateElementDocumentationGuidance(elementType)}`);
-  }
-  if (normalizedDocumentation.toLowerCase() === title.trim().toLowerCase()) {
-    throw new Error(`${action} content cannot just repeat the title for ${elementType}. ${getArchiMateElementDocumentationGuidance(elementType)}`);
+  const documentationIssue = getArchitectManagedElementDocumentationIssue(elementType, title, documentation);
+  if (documentationIssue) {
+    throw new Error(`${action} ${documentationIssue}`);
   }
 }
 
@@ -297,15 +291,9 @@ function validateRelationshipDocumentationQuality(
     return;
   }
 
-  const normalizedDocumentation = documentation?.trim() ?? '';
-  if (!normalizedDocumentation) {
-    throw new Error(`${action} requires content for system-architect managed relationships. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
-  }
-  if (normalizedDocumentation.length < 40) {
-    throw new Error(`${action} content is too short for ${relationshipType}. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
-  }
-  if (normalizedDocumentation.toLowerCase() === title.trim().toLowerCase()) {
-    throw new Error(`${action} content cannot just repeat the title for ${relationshipType}. ${getArchiMateRelationshipDocumentationGuidance(relationshipType)}`);
+  const documentationIssue = getArchitectManagedRelationshipDocumentationIssue(relationshipType, title, documentation);
+  if (documentationIssue) {
+    throw new Error(`${action} ${documentationIssue}`);
   }
 }
 
