@@ -17,9 +17,9 @@ Use this skill when handling a design request, implementation clarification, or 
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read + Write`.
 - Use `analyze_legacy_modules` first when you need to fit a new requirement into an existing brownfield codebase.
-- Use `query_graph` to inspect the architecture JSON and runtime state.
+- Use `query_graph` to inspect current architecture data and workflow state.
 - Use `read` to inspect relevant legacy source files, package boundaries, and existing implementation seams when the repository already contains implementation code.
-- Use `update_graph_model` to record design summary, design decisions, and task definitions in the repo-local runtime state and graph-update log.
+- Use `update_graph_model` to record design summary, design decisions, task definitions, and other graph-backed workflow changes.
 - Use `question` to obtain explicit human approval before a final design result is handed back to `ProjectOrchestrator`.
 
 ## BEHAVIORAL RULES

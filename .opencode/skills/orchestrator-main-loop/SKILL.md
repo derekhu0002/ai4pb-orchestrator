@@ -35,7 +35,7 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 
 2.  **Phase 2: Goal Processing & Design Delegation**
     - This phase applies to requirement-driven work after `ProductManager` approval, or to issue-driven work only when `SystemArchitect` has decided that new planned implementation tasks are required.
-    - Using the finalized goal, check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
+    - Using the finalized goal, check workflow state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the persisted project state before planning.
     - Use `decompose_goal` first to create a planning backlog in runtime state based on the formalized goal.
     - Immediately verify persistence with `read_project_status(section="tasks")`.
     - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered planning items.
