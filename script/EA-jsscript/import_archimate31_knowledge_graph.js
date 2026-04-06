@@ -19,6 +19,8 @@ var KG_JSON_PATH = '';
 var CREATE_IMPORT_DIAGRAM = true;
 var DIAGRAM_TYPE = 'Logical';
 var DIAGRAM_NAME_SUFFIX = ' Import';
+var WARNED_UNKNOWN_ELEMENT_TYPES = {};
+var WARNED_UNKNOWN_RELATIONSHIP_TYPES = {};
 
 function main() {
   Repository.EnsureOutputVisible('Script');
@@ -202,12 +204,12 @@ function validateGraph(graph) {
 
 function buildPropertyDefinitionMap(propertyDefinitionsNode) {
   var map = {};
-  if (!propertyDefinitionsNode || !propertyDefinitionsNode.property) {
+  if (!propertyDefinitionsNode || !propertyDefinitionsNode.propertyDefinition) {
     return map;
   }
 
-  for (var i = 0; i < propertyDefinitionsNode.property.length; i++) {
-    var definition = propertyDefinitionsNode.property[i];
+  for (var i = 0; i < propertyDefinitionsNode.propertyDefinition.length; i++) {
+    var definition = propertyDefinitionsNode.propertyDefinition[i];
     if (definition && isNonEmptyString(definition.identifier)) {
       map[definition.identifier] = definition;
     }
@@ -258,11 +260,12 @@ function importElements(importPkg, importDiagram, elementsNode, propertyDefiniti
     }
     Session.Output('concept.type:' + concept.type);
     var baseType = mapElementTypeToEa(concept.type);
+    warnIfUnknownElementType(concept.type, baseType);
     Session.Output('baseType:' + baseType);
     var elementName = firstLangValue(concept.name, concept.identifier);
     var element = importPkg.Elements.AddNew(elementName, baseType);
     element.Alias = concept.identifier;
-    element.StereotypeEx = mapStereotypeToEa(safeString(concept.type));
+    element.StereotypeEx = resolveElementStereotype(concept.type);
     element.Notes = buildConceptNotes(concept, propertyDefinitionMap);
     applyConceptTags(element.TaggedValues, concept, propertyDefinitionMap);
     element.Update();
@@ -307,10 +310,11 @@ function importRelationships(importDiagram, relationshipsNode, propertyDefinitio
     }
 
     var connectorMeta = mapRelationshipTypeToEa(relation.type);
+    warnIfUnknownRelationshipType(relation.type, connectorMeta);
     var connector = sourceElement.Connectors.AddNew(firstLangValue(relation.name, relation.type), connectorMeta.connectorType);
     connector.SupplierID = targetElement.ElementID;
     connector.Alias = relation.identifier;
-    connector.StereotypeEx = safeString(mapRelationshipTypeToEaStereotype(relation.type));
+    connector.StereotypeEx = resolveRelationshipStereotype(relation.type);
     connector.Notes = buildConceptNotes(relation, propertyDefinitionMap);
 
     applyRelationshipTags(connector, relation, propertyDefinitionMap);
@@ -367,6 +371,80 @@ function addConnectorToDiagram(diagram, connector) {
   link.Update();
 }
 
+function warnOnce(cache, key, message) {
+  var normalizedKey = safeString(key);
+  if (normalizedKey === '') {
+    normalizedKey = '<empty>';
+  }
+
+  if (cache[normalizedKey]) {
+    return;
+  }
+
+  cache[normalizedKey] = true;
+  Session.Output('WARNING: ' + message);
+}
+
+function resolveElementStereotype(conceptType) {
+  var rawType = safeString(conceptType);
+  var stereotype = safeString(mapStereotypeToEa(rawType));
+
+  if (stereotype === rawType) {
+    warnOnce(
+      WARNED_UNKNOWN_ELEMENT_TYPES,
+      rawType,
+      'Unknown element type mapping: ' + rawType + '. Using EA base type "' + mapElementTypeToEa(rawType) + '" and raw stereotype text. Update mapStereotypeToEa/mapElementTypeToEa to support this schema extension explicitly.'
+    );
+  }
+
+  return stereotype;
+}
+
+function resolveRelationshipStereotype(relationshipType) {
+  var rawType = safeString(relationshipType);
+  var stereotype = safeString(mapRelationshipTypeToEaStereotype(rawType));
+
+  if (stereotype === rawType) {
+    warnOnce(
+      WARNED_UNKNOWN_RELATIONSHIP_TYPES,
+      rawType,
+      'Unknown relationship type mapping: ' + rawType + '. Using EA connector type "' + mapRelationshipTypeToEa(rawType).connectorType + '" and raw stereotype text. Update mapRelationshipTypeToEa/mapRelationshipTypeToEaStereotype to support this schema extension explicitly.'
+    );
+  }
+
+  return stereotype;
+}
+
+function warnIfUnknownElementType(conceptType, baseType) {
+  var rawType = safeString(conceptType);
+  var stereotype = safeString(mapStereotypeToEa(rawType));
+
+  if (stereotype !== rawType) {
+    return;
+  }
+
+  warnOnce(
+    WARNED_UNKNOWN_ELEMENT_TYPES,
+    rawType,
+    'Unknown element type mapping: ' + rawType + '. Using EA base type "' + safeString(baseType) + '" and raw stereotype text. Update mapStereotypeToEa/mapElementTypeToEa to support this schema extension explicitly.'
+  );
+}
+
+function warnIfUnknownRelationshipType(relationshipType, connectorMeta) {
+  var rawType = safeString(relationshipType);
+  var stereotype = safeString(mapRelationshipTypeToEaStereotype(rawType));
+
+  if (stereotype !== rawType) {
+    return;
+  }
+
+  warnOnce(
+    WARNED_UNKNOWN_RELATIONSHIP_TYPES,
+    rawType,
+    'Unknown relationship type mapping: ' + rawType + '. Using EA connector type "' + safeString(connectorMeta.connectorType) + '" and raw stereotype text. Update mapRelationshipTypeToEa/mapRelationshipTypeToEaStereotype to support this schema extension explicitly.'
+  );
+}
+
 function mapRelationshipTypeToEaStereotype(relationshipType) {
   switch (safeString(relationshipType)) {
     case 'Flow':
@@ -402,6 +480,10 @@ function mapStereotypeToEa(conceptType) {
             return 'Archimate_Requirement';
         case 'Constraint':
             return 'Archimate_Constraint';
+    case 'Meaning':
+      return 'Archimate_Meaning';
+    case 'Value':
+      return 'Archimate_Value';
         case 'Capability':
             return 'Archimate_Capability';
         case 'CourseOfAction':
@@ -424,20 +506,40 @@ function mapStereotypeToEa(conceptType) {
             return 'Archimate_BusinessActor';
         case 'BusinessRole':
             return 'Archimate_BusinessRole';
+        case 'BusinessCollaboration':
+          return 'Archimate_BusinessCollaboration';
         case 'Stakeholder':
             return 'Archimate_Stakeholder';
+        case 'BusinessInterface':
+          return 'Archimate_BusinessInterface';
+        case 'BusinessEvent':
+          return 'Archimate_BusinessEvent';
         case 'BusinessProcess':
             return 'Archimate_BusinessProcess';
         case 'BusinessFunction':
             return 'Archimate_BusinessFunction';
         case 'BusinessInteraction':
             return 'Archimate_BusinessInteraction';
+        case 'Contract':
+          return 'Archimate_Contract';
+        case 'Representation':
+          return 'Archimate_Representation';
+        case 'Product':
+          return 'Archimate_Product';
+        case 'ApplicationInterface':
+          return 'Archimate_ApplicationInterface';
+        case 'ApplicationEvent':
+          return 'Archimate_ApplicationEvent';
         case 'ApplicationFunction':
             return 'Archimate_ApplicationFunction';
         case 'ApplicationInteraction':
             return 'Archimate_ApplicationInteraction';
         case 'ApplicationProcess':
             return 'Archimate_ApplicationProcess';
+        case 'TechnologyInterface':
+          return 'Archimate_TechnologyInterface';
+        case 'TechnologyEvent':
+          return 'Archimate_TechnologyEvent';
         case 'TechnologyFunction':
             return 'Archimate_TechnologyFunction';
         case 'TechnologyService':
@@ -468,12 +570,30 @@ function mapStereotypeToEa(conceptType) {
             return 'Archimate_Facility';
         case 'DistributionNetwork':
             return 'Archimate_DistributionNetwork';
+        case 'Material':
+          return 'Archimate_Material';
         case 'CommunicationNetwork':
             return 'Archimate_CommunicationNetwork';
         case 'Path':
             return 'Archimate_Path';
         case 'Artifact':
             return 'Archimate_Artifact';
+        case 'Deliverable':
+          return 'Archimate_Deliverable';
+        case 'ImplementationEvent':
+          return 'Archimate_ImplementationEvent';
+        case 'Plateau':
+          return 'Archimate_Plateau';
+        case 'Gap':
+          return 'Archimate_Gap';
+        case 'Grouping':
+          return 'Archimate_Grouping';
+        case 'Location':
+          return 'Archimate_Location';
+        case 'AndJunction':
+          return 'Archimate_AndJunction';
+        case 'OrJunction':
+          return 'Archimate_OrJunction';
         case 'Specialization':
             return 'Archimate_Specialization';
         case 'Association':
@@ -511,6 +631,9 @@ function mapElementTypeToEa(archimateType) {
   switch (safeString(archimateType)) {
     case 'ApplicationComponent':
         return 'Component';
+    case 'BusinessEvent':
+    case 'ApplicationEvent':
+    case 'TechnologyEvent':
     case 'BusinessService':
     case 'ApplicationService':
     case 'ValueStream':
@@ -529,12 +652,20 @@ function mapElementTypeToEa(archimateType) {
     case 'BusinessRole':
     case 'Stakeholder':
     case 'WorkPackage':
+    case 'Deliverable':
+    case 'Plateau':
+    case 'Gap':
+    case 'Grouping':
+    case 'Location':
+    case 'AndJunction':
+    case 'OrJunction':
     case 'TechnologyCollaboration':
     case 'Capability':
     case 'Resource':
     case 'Product':
     case 'DataObject':
     case 'ApplicationCollaboration':
+    case 'BusinessCollaboration':
     case 'CourseOfAction':
     case 'Assessment':
     case 'Driver':
@@ -542,16 +673,25 @@ function mapElementTypeToEa(archimateType) {
     case 'Outcome':
     case 'Goal':
     case 'Constraint':
+    case 'Meaning':
+    case 'Value':
     case 'Requirement':
     case 'Artifact':
     case 'Path':
     case 'CommunicationNetwork':
     case 'DistributionNetwork':
+    case 'Material':
     case 'Facility':
     case 'Equipment':
     case 'SystemSoftware':
     case 'Device':
     case 'Node':
+    case 'BusinessInterface':
+    case 'ApplicationInterface':
+    case 'TechnologyInterface':
+    case 'Contract':
+    case 'Representation':
+    case 'ImplementationEvent':
     case 'BusinessObject':
         return 'Class';
     default:
