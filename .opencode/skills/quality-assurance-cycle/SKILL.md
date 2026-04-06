@@ -10,6 +10,7 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` to validate the latest implementation batch.
 - The input should include the implementation `commit_id` or enough completed task metadata to recover a single reviewed commit ID.
+- The handoff payload may also include consolidated `recommendedSkills` and `recommendedTools` emitted from repository language and environment detection.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
@@ -21,6 +22,8 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 ## BEHAVIORAL RULES
 
 1.  **Test Preparation**:
+    - Check the handoff payload for `recommendedSkills`. If present, you MUST use the `skill` tool to read EACH recommended skill document before planning tests, choosing commands, or making environment assumptions.
+    - Check the handoff payload for `recommendedTools`. If present, treat them as the preferred domain-specific execution toolchain for this validation batch.
     - Use `query_graph(mode="summary")` and `query_graph(mode="tasks_by_status", status="done")` to find requirements, acceptance criteria, and the git commit ID for the latest implementation batch.
     - If the input does not provide a commit ID and the completed runtime tasks do not converge on a single commit ID, fail the QA handoff as incomplete instead of validating an ambiguous working tree state.
     - Derive the review scope from the completed runtime tasks that share the reviewed `commitId`. Collect every non-empty `architectureElementId` in that batch as the required traceability scope for QA.
@@ -32,6 +35,7 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 
 2.  **Test Execution**:
     - Treat the identified commit ID as the review target and mention it explicitly in the test notes and final result.
+    - If the handoff payload includes `recommendedTools`, you MUST prioritize those domain-specific tools for execution and environment-specific testing over generic `bash` commands whenever they can cover the required validation step.
     - Run the narrowest targeted test command that directly exercises the touched module coverage first, including any new test files you just wrote.
     - Running only a broad command such as `npm test` is insufficient unless you also show that it executed the targeted tests covering the reviewed architecture-linked modules.
     - After targeted tests pass, use `bash` to run the narrowest additional verification commands in the repository that are still useful for regression confidence.

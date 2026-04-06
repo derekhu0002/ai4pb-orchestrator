@@ -83,8 +83,9 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Before invoking `Implementation` for `full-model` work, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
     - If any of `strategy`, `business`, `application`, or `technology` is missing for `full-model` work, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
     - Also inspect `intentionModel.isIntentModelSufficient`. If it is `false` for `full-model` work, treat the design as underspecified even if the four layers nominally exist.
-    - When the repository appears polyglot or the implementation language is unclear from the task metadata, call `run_reality_scanner` before invoking `Implementation` and inspect `languageSupport`.
-    - Pass the detected dominant language plus any `recommendedSkills` / `recommendedTools` from `languageSupport` into the `Implementation` handoff so the child agent can choose language-appropriate skills and tools.
+    - When the repository appears polyglot, the implementation language is unclear from the task metadata, or environment-specific execution constraints may affect implementation, call `run_reality_scanner` before invoking `Implementation` and inspect both `languageSupport` and `detectedEnvironments`.
+    - Extract every `recommendedSkills` and `recommendedTools` entry from both `languageSupport` and `detectedEnvironments`, consolidate and de-duplicate them, and pass those consolidated arrays explicitly in the native Task handoff payload to `Implementation`.
+    - Treat those arrays as opaque runtime context. The orchestrator is a generic context router and MUST NOT add any environment-specific branching such as Chrome-, Android-, or iOS-only logic.
     - Require the architect result to identify concrete software units and task IDs derived from those software units.
     - When existing implementation structure was analyzed, require the architect result to show that each implementation task is anchored either to an existing module chosen for extension or to a justified new software unit when no suitable module exists.
     - If the architect result does not reference concrete task IDs, or those tasks are missing software-unit metadata in persisted runtime state, stop and report that the architect handoff is incomplete.
@@ -102,6 +103,8 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - For `fast-track` work, skip `Audit` by default.
     - Re-check `intentionModel.isIntentModelSufficient` before starting `Audit`. If the intention model is still weak, route back to `SystemArchitect` instead of auditing.
     - If runtime state is empty, unchanged, or contains no `done` task, do not start validation. Re-read state once, then route back to `Implementation` or `SystemArchitect` based on what is missing.
+    - When validation setup needs repository execution context, call `run_reality_scanner` and inspect both `languageSupport` and `detectedEnvironments`.
+    - Extract every `recommendedSkills` and `recommendedTools` entry from both `languageSupport` and `detectedEnvironments`, consolidate and de-duplicate them, and pass those consolidated arrays explicitly in the native Task handoff payload to `QualityAssurance`.
     - Pass the implementation `commit_id` explicitly to `QualityAssurance` in all lanes, and to `Audit` when `full-model` validation is required.
     - Require `QualityAssurance` and `Audit` to return concrete affected task IDs whenever they fail so retry accounting can be persisted without inference.
     - If a supposedly `fast-track` change is reported by `Implementation` or `QualityAssurance` as structurally impactful, traceability-sensitive, or no longer clearly non-architectural, escalate it into the `full-model` lane and invoke `SystemArchitect` before any release step.

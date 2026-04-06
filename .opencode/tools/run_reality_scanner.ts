@@ -2,6 +2,7 @@ import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { detectEnvironmentProfiles } from '../lib/realityScanner/environmentRegistry';
 import { extractStructuralSymbolsForFile, summarizeLanguageSupport } from '../lib/realityScanner/providers';
 import type { ArchitectureReference, LanguageSupport, MappingFileSummary, ScanResult, SemanticTrace, StructuralSymbol } from '../lib/realityScanner/types';
 import { asJson, collectReadableWorkspaceFiles, safeSnippet } from '../lib/runtimeState';
@@ -383,7 +384,7 @@ function buildSemanticTraces(symbols: StructuralSymbol[], semanticElements: Sema
 }
 
 export default tool({
-  description: 'Scan the repository for implementation reality using ArchitectureID markers, external mappings, pluggable language providers, and semantic tracing against ApplicationComponent documentation.',
+  description: 'Scan the repository for implementation reality using ArchitectureID markers, external mappings, pluggable language providers, environment profile detection, and semantic tracing against ApplicationComponent documentation.',
   args: {
     maxFiles: tool.schema.number().int().min(10).max(500).optional().describe('Maximum number of sample files to report.'),
   },
@@ -391,6 +392,7 @@ export default tool({
     const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
     const { entries: mappingEntries, mappingFiles, warnings: mappingWarnings } = loadArchitectureMappings(context.worktree);
     const semanticElements = loadSemanticElements(context.worktree);
+    const detectedEnvironments = detectEnvironmentProfiles(files);
 
     const extensionCounts: Record<string, number> = {};
     const architectureReferences: ArchitectureReference[] = [];
@@ -489,6 +491,7 @@ export default tool({
       structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
       semanticTraces,
       languageSupport,
+      detectedEnvironments,
       mappingFiles,
       mappingWarnings,
       sampleFiles: files.slice(0, args.maxFiles ?? 80),

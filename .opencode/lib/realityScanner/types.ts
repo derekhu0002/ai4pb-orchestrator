@@ -1,3 +1,5 @@
+import type { EnvironmentProfile } from './environmentRegistry';
+
 export type TraceSource = 'comment' | 'mapping-path' | 'mapping-glob' | 'mapping-symbol';
 
 export type StructuralSource = 'ast' | 'regex';
@@ -65,6 +67,7 @@ export type ScanResult = {
   structuralSymbols: StructuralSymbol[];
   semanticTraces: SemanticTrace[];
   languageSupport: LanguageSupport[];
+  detectedEnvironments: EnvironmentProfile[];
   mappingFiles: MappingFileSummary[];
   mappingWarnings: string[];
   sampleFiles: string[];

@@ -4,6 +4,7 @@ import generateGapReport from '../tools/generate_gap_report';
 import generateTestCases from '../tools/generate_test_cases';
 import queryGraph from '../tools/query_graph';
 import readProjectStatus from '../tools/read_project_status';
+import runChromeSandbox from '../tools/run_chrome_sandbox';
 import runRealityScanner from '../tools/run_reality_scanner';
 import updateGraphModel from '../tools/update_graph_model';
 
@@ -18,6 +19,7 @@ export async function server() {
       generate_test_cases: generateTestCases,
       query_graph: queryGraph,
       read_project_status: readProjectStatus,
+      run_chrome_sandbox: runChromeSandbox,
       run_reality_scanner: runRealityScanner,
       update_graph_model: updateGraphModel,
     },

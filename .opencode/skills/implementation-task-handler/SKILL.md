@@ -11,6 +11,7 @@ Use this skill to execute the assigned coding work and return a direct structure
 - A Task invocation from `ProjectOrchestrator` with one or more task IDs.
 - A Task invocation from `ProjectOrchestrator` carrying a `lane: "fast-track"` handoff for a localized, non-structural change.
 - A Task invocation from `ProjectOrchestrator` carrying a QA or audit rework summary.
+- The handoff payload may also include consolidated `recommendedSkills` and `recommendedTools` emitted from repository language and environment detection.
 - When implementation succeeds, the output must include the git commit ID for the exact changes delivered for review.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
@@ -25,12 +26,14 @@ Use this skill to execute the assigned coding work and return a direct structure
 0.  **Runtime Bootstrap**:
     - Before reading any specific task, call `query_graph(mode="summary")` once so workflow state and the shared graph context are initialized in projects that were created from this template.
     - Detect whether the handoff explicitly marks the work as `lane: "fast-track"` or otherwise states that the change was pre-classified as localized and non-structural.
+    - Check the handoff payload for `recommendedSkills`. If present, you MUST use the `skill` tool to read EACH recommended skill document before planning implementation, choosing a verification path, or making environment assumptions.
+    - Check the handoff payload for `recommendedTools`. If present, treat them as the preferred domain-specific execution toolchain for this task batch.
     - Treat `architectureCoverage.missingCoreLayers` in that summary as a hard blocker for normal implementation work. If any core layer is missing, ask `SystemArchitect` to complete the intention baseline before coding.
     - Also treat `intentionModel.isIntentModelSufficient === false` as a blocker for normal implementation work. A graph that only contains runtime-synced tasks or thin placeholders is not enough implementation guidance.
     - For an explicit `fast-track` handoff, do not block solely because the intention model is thin or the core layers are incomplete.
     - A `fast-track` handoff is valid only while the requested change remains local and non-structural. If the task touches a workflow boundary, API, schema, persistence contract, infra behavior, security behavior, package/module ownership boundary, or multiple software units, stop the fast-track path and ask `SystemArchitect` to take over.
-    - When the dominant language or verification path is not obvious from the assigned files, call `run_reality_scanner` once and inspect `languageSupport`.
-    - Use the dominant detected language's `recommendedSkills` and `recommendedTools` as the preferred execution stack for that task batch.
+    - When the dominant language, active environment, or verification path is not obvious from the assigned files, call `run_reality_scanner` once and inspect both `languageSupport` and `detectedEnvironments`.
+    - Consolidate any `recommendedSkills` and `recommendedTools` from the handoff payload plus the scanner's `languageSupport` and `detectedEnvironments`, then use those consolidated arrays as the preferred execution stack for that task batch.
     - If the task spans multiple implementation languages, split the execution and verification plan by language boundary instead of assuming one workflow fits every changed file.
 
 1.  **Task Execution Loop**:
@@ -45,6 +48,7 @@ Use this skill to execute the assigned coding work and return a direct structure
     - If a task is implementation-scoped but does not include `architectureElementId`, and the work cannot be cleanly traced back to an existing marked construct, ask `SystemArchitect` for clarification instead of inventing an ArchitectureID.
     - Exception: for an explicit `fast-track` change that remains local, superficial, and non-architectural, you may complete the work without inventing an `ArchitectureID`. In that case, report that no architecture IDs were touched and keep the scope narrow.
     - If `run_reality_scanner` reports that the dominant language has only fallback extraction coverage, state that limitation explicitly in your notes and compensate with narrower manual inspection instead of overstating scanner confidence.
+    - If the handoff payload or scanner result includes `recommendedTools`, you MUST prioritize those domain-specific tools for execution and testing over generic `bash` commands whenever they can cover the required step.
     - Use `write` and `bash` as needed to implement the code.
     - Use `update_graph_model(action="set_task_status", taskId="TASK-...", status="in_progress|done|blocked", content="...")` to mark progress.
 
