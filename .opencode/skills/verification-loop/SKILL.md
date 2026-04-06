@@ -1,7 +1,6 @@
 ---
 name: verification-loop
 description: "A comprehensive verification system for Claude Code sessions."
-origin: ECC
 ---
 
 # Verification Loop Skill
@@ -24,6 +23,19 @@ Invoke this skill:
 npm run build 2>&1 | tail -20
 # OR
 pnpm build 2>&1 | tail -20
+
+# Java projects
+./mvnw -q -DskipTests compile
+# OR
+mvn -q -DskipTests compile
+# OR
+./gradlew compileJava
+
+# Go projects
+go build ./...
+
+# C# projects
+dotnet build
 ```
 
 If build fails, STOP and fix before continuing.
@@ -35,6 +47,17 @@ npx tsc --noEmit 2>&1 | head -30
 
 # Python projects
 pyright . 2>&1 | head -30
+
+# Java projects
+./mvnw -q -DskipTests compile
+# OR
+./gradlew compileJava
+
+# Go projects
+go test ./... -run TestDoesNotExist
+
+# C# projects
+dotnet build
 ```
 
 Report all type errors. Fix critical ones before continuing.
@@ -46,6 +69,17 @@ npm run lint 2>&1 | head -30
 
 # Python
 ruff check . 2>&1 | head -30
+
+# Java
+./gradlew checkstyleMain
+# OR
+./mvnw -q checkstyle:check
+
+# Go
+go vet ./...
+
+# C#
+dotnet format --verify-no-changes
 ```
 
 ### Phase 4: Test Suite
@@ -55,6 +89,20 @@ npm run test -- --coverage 2>&1 | tail -50
 
 # Check coverage threshold
 # Target: 80% minimum
+
+# Python
+pytest
+
+# Java
+./mvnw test
+# OR
+./gradlew test
+
+# Go
+go test ./...
+
+# C#
+dotnet test
 ```
 
 Report:
@@ -71,6 +119,9 @@ grep -rn "api_key" --include="*.ts" --include="*.js" . 2>/dev/null | head -10
 
 # Check for console.log
 grep -rn "console.log" --include="*.ts" --include="*.tsx" src/ 2>/dev/null | head -10
+
+# General backend secrets check
+grep -rn "password\|secret\|token\|api[_-]key" . 2>/dev/null | head -20
 ```
 
 ### Phase 6: Diff Review

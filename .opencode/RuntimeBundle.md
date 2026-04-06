@@ -95,6 +95,7 @@ Registered tools:
 - `run_reality_scanner`
   - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, pluggable language-specific structural extraction, and semantic trace candidates scored against `ApplicationComponent` documentation.
   - Returns `languageSupport` so agents can see which languages were detected, whether coverage is AST-backed or fallback-based, and which repo-local skills/tools are recommended for follow-up work.
+  - The recommended language workflows come from `lib/realityScanner/languageRegistry.ts`; keep that registry aligned with actual skills present under `skills/`.
 - `generate_test_cases`
   - Produces a QA checklist or test plan.
 - `generate_gap_report`
