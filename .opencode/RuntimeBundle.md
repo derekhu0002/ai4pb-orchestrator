@@ -90,7 +90,7 @@ Registered tools:
 - `update_graph_model`
   - Updates runtime state and the shared knowledge graph.
 - `run_reality_scanner`
-  - Collects implementation-side reality signals.
+  - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, and extracted structural symbols.
 - `generate_test_cases`
   - Produces a QA checklist or test plan.
 - `generate_gap_report`
@@ -124,6 +124,25 @@ It is intended to conform to the schema at:
 - `schema/archimate3.1/archimate3.1-exchange-model.schema.json`
 
 This graph stores the structured architecture model and synchronized runtime-derived concepts.
+
+### Optional `architecture-mapping.yaml|yml|json`
+
+If a repository cannot or should not carry intrusive inline `@ArchitectureID` comments everywhere, the runtime scanner can also read an optional external architecture mapping file from the repo root, `.opencode/`, or `design/`.
+
+Supported shape:
+
+```yaml
+mappings:
+  - architectureId: ELM-APP-001
+    paths:
+      - src/runtime/state.ts
+    globs:
+      - config/**/*.json
+    symbols:
+      - RuntimeStateManager
+```
+
+This lets Audit use declarative path or symbol bindings as trace evidence in addition to inline code markers.
 
 ### `temp/opencode-graph-updates.jsonl`
 
