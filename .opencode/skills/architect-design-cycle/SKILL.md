@@ -66,6 +66,30 @@ Use this skill when handling a design request, implementation clarification, or 
   - Use `update_graph_model(action="set_design_summary", content="...")` to store the design summary and `update_graph_model(action="record_decision", content="...")` for each major architectural decision, including why a legacy module was chosen or rejected.
   - Use `update_graph_model(action="bulk_add_tasks", tasksJson="[{\"title\":\"...\",\"owner\":\"Implementation\",\"kind\":\"implementation\",\"softwareUnitId\":\"...\",\"softwareUnitTitle\":\"...\",\"architectureElementId\":\"...\"}]")` when you need to create implementation tasks from the model.
   - Before returning a final design result, first present the architecture design to the human in normal conversation content.
+  - You MUST NOT call `question`, request approval, or return a final architect result before the full architecture design has been shown in normal conversation content.
+  - The displayed architecture design must be substantive, not only a short summary. At minimum it must include clearly labeled sections for: `Design Summary`, `Architecture Layers`, `Key Elements and Relationships`, `Software Units`, `Implementation Task Mapping`, and `Key Decisions / Rationale`.
+  - Preferred presentation shape for the conversational architecture display:
+    ```md
+    # Architecture Design Draft
+
+    ## Design Summary
+    ...
+
+    ## Architecture Layers
+    ...
+
+    ## Key Elements and Relationships
+    ...
+
+    ## Software Units
+    ...
+
+    ## Implementation Task Mapping
+    ...
+
+    ## Key Decisions / Rationale
+    ...
+    ```
   - Then call `question` for mandatory human review using a short decision-only prompt.
   - Use this approval prompt shape:
     - Title: `Architecture Review Needed`

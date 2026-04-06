@@ -45,6 +45,30 @@ Use this skill to turn raw, unstructured ideas into formal, actionable requireme
 2. **Phase 2: Formalization & Human Approval (Mandatory)**
    - Draft a structured requirement specification (User Stories, Acceptance Criteria, Business Constraints).
    - You MUST first present the complete PRD to the human as a normal conversational response in the main dialog area.
+   - You MUST NOT ask for approval, call `question`, or return a final PM result before the full PRD has been displayed in normal conversation content.
+   - The displayed PRD must be substantive, not a short summary. At minimum it must include clearly labeled sections for: `Goal`, `Scope`, `User Stories or Usage Scenarios`, `Acceptance Criteria`, `Constraints`, and `Open Questions or Assumptions` when applicable.
+   - Preferred presentation shape for the conversational PRD display:
+     ```md
+     # Formal Requirement Draft
+
+     ## Goal
+     ...
+
+     ## Scope
+     ...
+
+     ## User Stories / Usage Scenarios
+     ...
+
+     ## Acceptance Criteria
+     ...
+
+     ## Constraints
+     ...
+
+     ## Open Questions / Assumptions
+     ...
+     ```
    - After the full PRD has been shown, you MUST use the `question` tool only for the final decision.
    - The `question` body must stay short and must not repeat the PRD content.
    - Use this short approval body template:
