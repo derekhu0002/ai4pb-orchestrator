@@ -696,19 +696,19 @@ function isArchitectManaged(extensions?: Record<string, unknown>): boolean {
   return ai4pb.managedBy === 'system-architect';
 }
 
-function needsDocumentationRepair(title: string | undefined, documentation: string | undefined): boolean {
-  const normalizedTitle = title?.trim().toLowerCase() ?? '';
-  const normalizedDocumentation = documentation?.trim() ?? '';
+function needsDocumentationRepair(
+  conceptKind: 'element' | 'relationship',
+  type: string,
+  title: string | undefined,
+  documentation: string | undefined
+): boolean {
+  const normalizedTitle = title?.trim() ?? '';
 
-  if (!normalizedDocumentation) {
-    return true;
+  if (conceptKind === 'element') {
+    return Boolean(getArchitectManagedElementDocumentationIssue(type, normalizedTitle, documentation));
   }
 
-  if (normalizedDocumentation.length < 40) {
-    return true;
-  }
-
-  return Boolean(normalizedTitle && normalizedDocumentation.toLowerCase() === normalizedTitle);
+  return Boolean(getArchitectManagedRelationshipDocumentationIssue(type, normalizedTitle, documentation));
 }
 
 function repairSystemArchitectManagedDocumentation(graph: SharedKnowledgeGraph): void {
@@ -725,7 +725,7 @@ function repairSystemArchitectManagedDocumentation(graph: SharedKnowledgeGraph):
     const title = getFirstLangStringValue(element.name) ?? element.identifier;
     const existingDocumentation = getFirstLangStringValue(element.documentation);
 
-    if (!needsDocumentationRepair(title, existingDocumentation)) {
+    if (!needsDocumentationRepair('element', element.type, title, existingDocumentation)) {
       continue;
     }
 
@@ -749,7 +749,7 @@ function repairSystemArchitectManagedDocumentation(graph: SharedKnowledgeGraph):
     const title = getFirstLangStringValue(relationship.name) ?? relationship.identifier;
     const existingDocumentation = getFirstLangStringValue(relationship.documentation);
 
-    if (!needsDocumentationRepair(title, existingDocumentation)) {
+    if (!needsDocumentationRepair('relationship', relationship.type, title, existingDocumentation)) {
       continue;
     }
 
