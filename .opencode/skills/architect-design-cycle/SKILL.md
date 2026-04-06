@@ -113,5 +113,6 @@ Use this skill when handling a design request, implementation clarification, or 
 3.  **On Audit Gap Report**
   - Analyze the gap summary from `Audit`.
   - **If** the code deviation is acceptable, use `update_graph_model(action="record_decision", content="ModelUpdated: ...")`.
+  - **If** the code must change, prefer reusing the incoming affected task IDs when the same logical implementation work is being retried so the orchestrator can preserve retry history. Create new task IDs only when the decomposition materially changes.
   - **If** the code must change, use `update_graph_model(action="bulk_add_tasks", tasksJson="[{\"title\":\"Refactor ...\",\"owner\":\"Implementation\"}]")` and optionally `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")`.
-  - **Output**: Return JSON-like prose with `resolution`, `details`, and optional `task_ids`.
+  - **Output**: Return JSON-like prose with `resolution`, `details`, optional `task_ids`, and `affected_task_ids` when an existing task remains the right retry target.

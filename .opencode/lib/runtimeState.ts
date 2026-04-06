@@ -9,6 +9,7 @@ export type RuntimeTask = {
   id: string;
   title: string;
   status: RuntimeTaskStatus;
+  retryCount: number;
   kind?: RuntimeTaskKind;
   owner?: string;
   summary?: string;
@@ -61,6 +62,50 @@ export type RuntimeState = {
   updatedAt: string;
 };
 
+function normalizeRetryCount(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.trunc(value));
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) {
+      return Math.max(0, parsed);
+    }
+  }
+
+  return 0;
+}
+
+function normalizeRuntimeTask(task: RuntimeTask | Record<string, unknown>): RuntimeTask {
+  const record = task as RuntimeTask & { retry_count?: number | string };
+
+  return {
+    ...record,
+    retryCount: normalizeRetryCount(record.retryCount ?? record.retry_count),
+  };
+}
+
+function normalizeRuntimeState(state: RuntimeState): { state: RuntimeState; changed: boolean } {
+  let changed = state.version !== 2;
+  const normalizedTasks = state.tasks.map((task) => {
+    const normalizedTask = normalizeRuntimeTask(task);
+    if (normalizedTask.retryCount !== task.retryCount) {
+      changed = true;
+    }
+    return normalizedTask;
+  });
+
+  return {
+    changed,
+    state: {
+      ...state,
+      version: 2,
+      tasks: normalizedTasks,
+    },
+  };
+}
+
 const RUNTIME_DIR = path.join('.opencode', 'runtime');
 const RUNTIME_FILE = path.join(RUNTIME_DIR, 'project-state.json');
 const GRAPH_UPDATE_LOG = path.join('.opencode', 'temp', 'opencode-graph-updates.jsonl');
@@ -93,7 +138,7 @@ function defaultValidation(): RuntimeValidation {
 export function createDefaultState(): RuntimeState {
   const now = new Date().toISOString();
   return {
-    version: 1,
+    version: 2,
     activeGoal: '',
     designSummary: '',
     designDecisions: [],
@@ -131,7 +176,14 @@ export function loadRuntimeState(worktree: string): RuntimeState {
     return state;
   }
 
-  return JSON.parse(raw) as RuntimeState;
+  const parsed = JSON.parse(raw) as RuntimeState;
+  const normalized = normalizeRuntimeState(parsed);
+
+  if (normalized.changed) {
+    saveRuntimeState(worktree, normalized.state);
+  }
+
+  return normalized.state;
 }
 
 export function saveRuntimeState(worktree: string, state: RuntimeState): void {
@@ -169,6 +221,7 @@ export function summarizeState(state: RuntimeState): Record<string, unknown> {
     activeGoal: state.activeGoal,
     designSummary: state.designSummary,
     taskCounts: counts,
+    maxRetryCount: state.tasks.reduce((maximum, task) => Math.max(maximum, task.retryCount), 0),
     tasks: state.tasks,
     issues: state.issues,
     validations: state.validations,

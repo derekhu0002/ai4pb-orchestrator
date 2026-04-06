@@ -130,7 +130,7 @@ export default tool({
 
     if (scope === 'all' || scope === 'runtime') {
       for (const task of runtimeState.tasks) {
-        const text = `${task.id} ${task.title} ${task.status} ${task.commitId ?? ''} ${task.summary ?? ''} ${task.details ?? ''}`;
+        const text = `${task.id} ${task.title} ${task.status} retry ${task.retryCount} ${task.commitId ?? ''} ${task.summary ?? ''} ${task.details ?? ''}`;
         if (includesAllTerms(text, args.query ?? '')) {
           matches.push({
             scope: 'runtime',

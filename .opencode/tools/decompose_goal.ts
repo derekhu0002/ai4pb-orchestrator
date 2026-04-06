@@ -19,6 +19,7 @@ export default tool({
       id: nextTaskId(state),
       title,
       status: 'todo',
+      retryCount: 0,
       kind: 'planning',
       owner: 'SystemArchitect',
       summary: 'Created by decompose_goal as planning input for software-unit decomposition.',

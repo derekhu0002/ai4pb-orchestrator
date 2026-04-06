@@ -46,4 +46,5 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
     - If gaps are found, use `generate_gap_report(intentSummary="...", realitySummary="...", gaps="...", recommendedActions="...")` to produce a structured report.
     - Use `update_graph_model(action="record_validation", kind="audit", status="passed|failed", commitId="<sha>", content="...")` to store audit status.
     - If gaps are important enough to track, use `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")`.
+    - If audit fails, return the exact existing runtime task IDs that are implicated by the gap whenever they can be determined from the reviewed batch. Only recommend new task IDs when the architect must create genuinely new work.
     - Return JSON-like prose with `status`, `reviewed_commit_id`, `gaps`, `resolution_hint`, and `recommended_task_ids` when rework is needed.

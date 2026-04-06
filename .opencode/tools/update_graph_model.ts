@@ -112,6 +112,36 @@ function normalizeTaskKind(value?: unknown): 'planning' | 'implementation' {
   return String(value ?? '').trim().toLowerCase() === 'planning' ? 'planning' : 'implementation';
 }
 
+function normalizeRetryCount(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.trunc(value));
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) {
+      return Math.max(0, parsed);
+    }
+  }
+
+  return 0;
+}
+
+function normalizeRetryDelta(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
 function optionalText(value: unknown): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -290,6 +320,8 @@ export default tool({
     content: tool.schema.string().optional().describe('Summary or detailed content for the update.'),
     status: tool.schema.string().optional().describe('Status value for task, validation, or release updates.'),
     commitId: tool.schema.string().optional().describe('Git commit ID associated with the task or validation update.'),
+    retryCount: tool.schema.number().int().min(0).optional().describe('Absolute retry counter to persist on a runtime task.'),
+    retryDelta: tool.schema.number().int().optional().describe('Relative retry counter adjustment applied to an existing runtime task.'),
     taskKind: tool.schema.string().optional().describe('Task kind for task-related updates. Supported: planning or implementation.'),
     owner: tool.schema.string().optional().describe('Owner for a new task.'),
     kind: tool.schema.string().optional().describe('Validation or issue kind, such as qa, audit, or ArchitectureGap.'),
@@ -338,6 +370,7 @@ export default tool({
           id: nextTaskId(state),
           title,
           status: (args.status as 'todo' | 'in_progress' | 'done' | 'blocked') ?? 'todo',
+          retryCount: normalizeRetryCount(args.retryCount),
           kind: normalizeTaskKind(args.taskKind),
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
@@ -365,6 +398,7 @@ export default tool({
             id: nextTaskId(state),
             title,
             status: (String(record.status ?? args.status ?? 'todo') as 'todo' | 'in_progress' | 'done' | 'blocked'),
+            retryCount: normalizeRetryCount(record.retryCount ?? args.retryCount),
             kind: normalizeTaskKind(record.kind ?? args.taskKind),
             owner: String(record.owner ?? args.owner ?? 'Implementation'),
             summary: String(record.summary ?? record.content ?? ''),
@@ -389,6 +423,11 @@ export default tool({
           }
           if (args.status) {
             existing.status = args.status as 'todo' | 'in_progress' | 'done' | 'blocked';
+          }
+          if (args.retryCount !== undefined) {
+            existing.retryCount = normalizeRetryCount(args.retryCount);
+          } else if (args.retryDelta !== undefined) {
+            existing.retryCount = Math.max(0, existing.retryCount + normalizeRetryDelta(args.retryDelta));
           }
           if (args.taskKind) {
             existing.kind = normalizeTaskKind(args.taskKind);
@@ -421,6 +460,7 @@ export default tool({
           id: args.taskId && args.taskId.trim() ? args.taskId.trim() : nextTaskId(state),
           title: normalizeTaskTitle(args.title ?? args.content ?? 'Untitled task'),
           status: (args.status as 'todo' | 'in_progress' | 'done' | 'blocked') ?? 'todo',
+          retryCount: normalizeRetryCount(args.retryCount),
           kind: normalizeTaskKind(args.taskKind),
           owner: args.owner ?? 'Implementation',
           summary: args.content ?? '',
@@ -446,6 +486,11 @@ export default tool({
         }
         if (args.status) {
           task.status = args.status as 'todo' | 'in_progress' | 'done' | 'blocked';
+        }
+        if (args.retryCount !== undefined) {
+          task.retryCount = normalizeRetryCount(args.retryCount);
+        } else if (args.retryDelta !== undefined) {
+          task.retryCount = Math.max(0, task.retryCount + normalizeRetryDelta(args.retryDelta));
         }
         if (args.content) {
           task.summary = args.content;

@@ -15,10 +15,20 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read Only`.
 - Read scope: project-level context, task backlogs, issue state, release readiness, and high-level traceability across `metadata`, `elements`, `relationships`, `organizations`, and `extensions`.
-- This agent may use `query_graph` and `read_project_status` to inspect architecture and runtime execution state.
+- This agent may use `query_graph`, `read_project_status`, `update_graph_model`, and `question` to inspect runtime execution state, persist orchestration decisions, and escalate hard blockers to a human.
 - This agent MUST NOT perform implementation work itself when a specialist subagent should handle it.
 
 ## CORE BEHAVIORAL RULES (MANDATORY)
+
+0.  **Runtime Circuit Breaker**
+    - Treat repeated QA or Audit bounce-backs as a circuit-breaker problem, not as open-ended agent conversation.
+    - Every persisted runtime task must carry a `retryCount` counter. If an older runtime record does not expose this field, treat it as `0` before making any routing decision.
+    - The orchestrator owns this counter. Specialist agents may recommend rework, but they do not decide whether the workflow keeps looping.
+    - When QA or Audit fails, identify the exact affected task IDs from the child result before routing rework. If the result does not name concrete task IDs, stop and report the validation handoff as incomplete rather than guessing.
+    - Increment `retryCount` for each affected task through `update_graph_model` before routing the next rework attempt.
+    - A task may be retried at most 3 times. If incrementing the counter would make `retryCount > 3`, immediately set that task status to `blocked`, persist the blocker reason, and stop automatic delegation.
+    - When the circuit breaker opens, the orchestrator MUST call `question` to request human intervention from `Human_Developer`. The escalation must include the task IDs, current `retryCount`, last failing validator (`QA` or `Audit`), failure summary, and the reason automatic routing has been stopped.
+    - Do not invoke `Implementation`, `SystemArchitect`, `Audit`, or `ReleaseAgent` again for a blocked task until the human provides an explicit next step.
 
 1.  **Phase 1: Input Triage**
     - Upon activation, classify the **Initial Invocation Goal** along two axes: `input_type` and `execution_lane`.
@@ -83,17 +93,19 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Re-check `intentionModel.isIntentModelSufficient` before starting `Audit`. If the intention model is still weak, route back to `SystemArchitect` instead of auditing.
     - If runtime state is empty, unchanged, or contains no `done` task, do not start validation. Re-read state once, then route back to `Implementation` or `SystemArchitect` based on what is missing.
     - Pass the implementation `commit_id` explicitly to `QualityAssurance` in all lanes, and to `Audit` when `full-model` validation is required.
+    - Require `QualityAssurance` and `Audit` to return concrete affected task IDs whenever they fail so retry accounting can be persisted without inference.
     - If a supposedly `fast-track` change is reported by `Implementation` or `QualityAssurance` as structurally impactful, traceability-sensitive, or no longer clearly non-architectural, escalate it into the `full-model` lane and invoke `SystemArchitect` before any release step.
     - Evaluate all child results that are relevant to the active lane before deciding the next step.
 
 5.  **Phase 5: Decision and Rework**
     - **IF** `full-model` QA and Audit both pass, invoke `ReleaseAgent`.
     - **IF** `fast-track` QA passes and no escalation back to architecture was requested, invoke `ReleaseAgent`.
-    - **IF** QA fails, invoke `Implementation` again with the QA failure summary.
-    - **IF** Audit fails, invoke `SystemArchitect` with the audit gap summary.
+    - **IF** QA fails, require `affected_task_ids` in the QA result, increment `retryCount` for each affected task, and only invoke `Implementation` again when every affected task still has `retryCount <= 3`.
+    - **IF** Audit fails, require `recommended_task_ids` in the audit result, increment `retryCount` for each affected task, and only invoke `SystemArchitect` when every affected task still has `retryCount <= 3`.
+    - **IF** any affected task exceeds the retry limit after incrementing, set it to `blocked`, stop the workflow, and use `question` to escalate to `Human_Developer` with the full failure context.
     - **IF** a `fast-track` change is escalated because it is no longer local or non-structural, invoke `SystemArchitect`, switch the workflow to `full-model`, and continue with architecture-led decomposition before resuming implementation.
     - **IF** the architect returns `ModelUpdated`, run `Audit` again.
-    - **IF** the architect returns `ReworkRequired`, invoke `Implementation` with the new refactoring task IDs.
+    - **IF** the architect returns `ReworkRequired`, invoke `Implementation` with the refactoring task IDs while preserving retry history on any task IDs that still represent the same logical work item.
     - **IF** runtime state never reflects implementation progress, stop the workflow and report that the implementation agent did not persist execution state through the runtime-backed tools.
 
 6.  **Phase 6: Release Delegation**

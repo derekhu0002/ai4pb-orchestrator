@@ -1730,6 +1730,7 @@ export function syncRuntimeStateToSharedKnowledgeGraph(graph: SharedKnowledgeGra
           kind: 'Task',
           taskKind: task.kind ?? 'implementation',
           status: runtimeTaskStatusToMasStatus(task.status),
+          retryCount: task.retryCount,
           assignee: task.owner ?? 'Implementation',
           summary: task.summary ?? '',
           commitId: task.commitId ?? '',

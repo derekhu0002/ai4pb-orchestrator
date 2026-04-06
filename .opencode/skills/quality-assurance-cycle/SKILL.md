@@ -33,4 +33,5 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 3.  **Reporting**:
     - Use `update_graph_model(action="record_validation", kind="qa", status="passed|failed", commitId="<sha>", content="...")` to record QA status.
     - If the implementation is blocked by a defect, use `update_graph_model(action="log_issue", kind="BugReport", title="...", content="...")`.
-    - Return JSON-like prose with `status`, `reviewed_commit_id`, `commands_run`, `failures`, and `recommended_rework`.
+    - If QA fails, identify the exact runtime task IDs impacted by the defect. Reuse existing task IDs from the reviewed implementation batch; do not invent replacement IDs for the same logical work.
+    - Return JSON-like prose with `status`, `reviewed_commit_id`, `commands_run`, `failures`, `affected_task_ids`, and `recommended_rework`.
