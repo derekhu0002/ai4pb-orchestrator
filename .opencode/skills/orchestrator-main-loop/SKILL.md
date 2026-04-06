@@ -28,6 +28,16 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Increment `retryCount` for each affected task through `update_graph_model` before routing the next rework attempt.
     - A task may be retried at most 3 times. If incrementing the counter would make `retryCount > 3`, immediately set that task status to `blocked`, persist the blocker reason, and stop automatic delegation.
     - When the circuit breaker opens, the orchestrator MUST call `question` to request human intervention from `Human_Developer`. The escalation must include the task IDs, current `retryCount`, last failing validator (`QA` or `Audit`), failure summary, and the reason automatic routing has been stopped.
+        - The circuit-breaker `question` MUST use a single-choice recovery contract rather than an open-ended prompt. Tell the human to choose exactly one option and include these exact labels in the prompt:
+            - `[已修复代码]`：`我（人类）已经手动改了代码并 commit，请直接重试 QA/Audit。`
+            - `[架构需重构]`：`我决定变更架构，请把任务发回给 SystemArchitect，重置 retryCount。`
+            - `[忽略偏差]`：`这是合理的架构偏差，请强行置为 Done。`
+        - The `question` prompt MUST also remind the human that `[已修复代码]` is valid only after the manual fix is already committed to git.
+        - After the human replies, treat the selected option as a workflow state transition, not as normal chat:
+            - If `[已修复代码]` is selected, clear the `blocked` state on the affected tasks, preserve existing retry history, ensure the latest human fix commit is written back to the affected runtime tasks, and then re-enter validation immediately. If the affected tasks do not yet carry the human commit ID, invoke a narrow `Implementation` handoff whose only purpose is to inspect the latest human commit and persist `commitId` for the affected task IDs before QA/Audit resumes.
+            - If `[架构需重构]` is selected, clear the `blocked` state on the affected tasks, reset `retryCount` to `0`, route the full failure context back to `SystemArchitect`, and continue in the `full-model` lane.
+            - If `[忽略偏差]` is selected, use it only for architecture or audit deviations, not for failed functional QA. Persist the human override rationale through `update_graph_model`, force the affected task state to `done`, and continue only when all remaining release gates are satisfied.
+        - After executing the selected recovery path, explicitly report which option was applied and which validator or child agent will run next.
     - Do not invoke `Implementation`, `SystemArchitect`, `Audit`, or `ReleaseAgent` again for a blocked task until the human provides an explicit next step.
 
 1.  **Phase 1: Input Triage**
@@ -103,6 +113,9 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - **IF** QA fails, require `affected_task_ids` in the QA result, increment `retryCount` for each affected task, and only invoke `Implementation` again when every affected task still has `retryCount <= 3`.
     - **IF** Audit fails, require `recommended_task_ids` in the audit result, increment `retryCount` for each affected task, and only invoke `SystemArchitect` when every affected task still has `retryCount <= 3`.
     - **IF** any affected task exceeds the retry limit after incrementing, set it to `blocked`, stop the workflow, and use `question` to escalate to `Human_Developer` with the full failure context.
+    - **IF** the human selects `[已修复代码]`, do not start a fresh planning or coding loop. Resume from validation using the human-fixed commit as the handoff baseline.
+    - **IF** the human selects `[架构需重构]`, re-enter the workflow through `SystemArchitect` with `retryCount` reset for the affected logical work items.
+    - **IF** the human selects `[忽略偏差]`, allow it to bypass audit-style deviation blockers only. Never treat it as permission to ignore a failing QA result.
     - **IF** a `fast-track` change is escalated because it is no longer local or non-structural, invoke `SystemArchitect`, switch the workflow to `full-model`, and continue with architecture-led decomposition before resuming implementation.
     - **IF** the architect returns `ModelUpdated`, run `Audit` again.
     - **IF** the architect returns `ReworkRequired`, invoke `Implementation` with the refactoring task IDs while preserving retry history on any task IDs that still represent the same logical work item.
