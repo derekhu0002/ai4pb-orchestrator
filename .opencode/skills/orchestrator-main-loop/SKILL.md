@@ -8,7 +8,7 @@ description: The primary thinking and delegation loop for the master project orc
 Use this skill to manage the full development lifecycle with native OpenCode primitives. Use Task-based subagent invocation, direct child-session returns, and the repo-local runtime state tools. Do not assume asynchronous mailboxes or fictional orchestration APIs.
 
 ## INPUT DATA
-- **Initial Invocation Goal**: The high-level requirement provided by the **human Product Manager** when you are first activated.
+- **Initial Invocation Goal**: The high-level requirement or issue provided by the human when you are first activated.
 - **Runtime Inputs**: Structured child results returned by the `ProductManager`, `SystemArchitect`, `Implementation`, `QualityAssurance`, `Audit`, and `ReleaseAgent` subagents.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
@@ -20,15 +20,22 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 
 ## CORE BEHAVIORAL RULES (MANDATORY)
 
-1.  **Phase 1: Requirement Triage & PM Delegation**
-    - Upon activation, parse the **Initial Invocation Goal**.
-    - Evaluate the goal: Is it a raw, ambiguous, unstructured idea (e.g., "build a shopping cart"), or is it already a highly structured, execution-ready formal specification with clear business rules and acceptance criteria?
-    - If the goal is raw or lacks detailed constraints, **do not decompose it yet**. Instead, invoke the `ProductManager` subagent through the native Task tool with the raw goal.
+1.  **Phase 1: Input Triage**
+    - Upon activation, first classify the **Initial Invocation Goal** as either a new requirement or an issue.
+    - Treat inputs such as new features, change requests, business requirements, user stories, capability requests, and scope proposals as requirements.
+    - Treat inputs such as bugs, regressions, production problems, failed validations, audit gaps, refactoring requests, or implementation/design defects as issues.
+    - If the input is a requirement, always invoke `ProductManager` first through the native Task tool. Do not bypass `ProductManager` just because the requirement already looks structured.
     - Expect a direct result from `ProductManager` containing at least `status`, `formal_requirement`, and `element_id` for the approved requirement.
-    - Treat this returned formal requirement as the new baseline goal for the project. If the goal was already highly structured from the start, skip this phase and proceed to Phase 2.
+    - Treat that approved requirement as the baseline goal for the subsequent architecture and implementation phases.
+    - If the input is an issue, do not send it to `ProductManager`.
+    - Route issue inputs to `SystemArchitect` when the issue concerns architecture intent, missing or incorrect design, software-unit decomposition, legacy-module fit, ArchitectureID traceability expectations, audit gaps, or any change that needs design-level judgment before coding.
+    - Route issue inputs to `Implementation` when the issue is already implementation-scoped, code-facing, and can be acted on without new architecture decisions.
+    - If an issue appears ambiguous between architecture and implementation, route it to `SystemArchitect` first.
+    - For issue-driven invocations, skip `decompose_goal` unless `SystemArchitect` explicitly converts the issue into new planned implementation work.
 
 2.  **Phase 2: Goal Processing & Design Delegation**
-    - Using the finalized goal (either passed directly from the start or refined by `ProductManager`), check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
+    - This phase applies to requirement-driven work after `ProductManager` approval, or to issue-driven work only when `SystemArchitect` has decided that new planned implementation tasks are required.
+    - Using the finalized goal, check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
     - Use `decompose_goal` first to create a planning backlog in runtime state based on the formalized goal.
     - Immediately verify persistence with `read_project_status(section="tasks")`.
     - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered planning items.
@@ -41,6 +48,7 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - If the architect reports revision requested or does not confirm approved human review, do not continue to implementation. Route back to `SystemArchitect` until the reviewed design is approved.
 
 3.  **Phase 3: Implementation Delegation**
+    - For an issue that was routed directly to `Implementation`, use the implementation-oriented issue summary as the handoff baseline instead of waiting for `ProductManager`.
     - After `SystemArchitect` returns successfully, use `read_project_status` or `query_graph` to determine the active task IDs.
     - Before invoking `Implementation`, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
     - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
