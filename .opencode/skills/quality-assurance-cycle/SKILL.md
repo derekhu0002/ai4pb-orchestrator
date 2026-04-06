@@ -23,15 +23,22 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 1.  **Test Preparation**:
     - Use `query_graph(mode="summary")` and `query_graph(mode="tasks_by_status", status="done")` to find requirements, acceptance criteria, and the git commit ID for the latest implementation batch.
     - If the input does not provide a commit ID and the completed runtime tasks do not converge on a single commit ID, fail the QA handoff as incomplete instead of validating an ambiguous working tree state.
-    - Use `generate_test_cases` to create a comprehensive test suite.
+    - Derive the review scope from the completed runtime tasks that share the reviewed `commitId`. Collect every non-empty `architectureElementId` in that batch as the required traceability scope for QA.
+    - Use `generate_test_cases(commitId="<sha>")` to create a commit-scoped test plan that lists touched runtime tasks, architecture-linked modules, existing automated test evidence, and any missing unit-test coverage.
+    - Treat missing automated test coverage for any touched architecture-linked module as a hard QA gap, not as a documentation note.
+    - If `generate_test_cases` reports a touched module with missing unit-test coverage, you MUST use `read` plus `write` to add targeted automated tests for that module first, before you run any `bash` verification command.
+    - Name new tests according to the repo's existing conventions when possible, for example `*.spec.ts`, `*.test.ts`, or files under `tests/` / `__tests__/`.
+    - If the repository has no usable automated test harness for the touched language and you cannot add runnable targeted tests safely, fail QA as blocked. Do not mark QA passed based only on manual reasoning, smoke checks, or a broad build.
 
 2.  **Test Execution**:
     - Treat the identified commit ID as the review target and mention it explicitly in the test notes and final result.
-    - Use `bash` to run the narrowest available verification commands in the repository.
-    - If there is no formal automated test suite, run the best available build or smoke checks and say so explicitly.
+    - Run the narrowest targeted test command that directly exercises the touched module coverage first, including any new test files you just wrote.
+    - Running only a broad command such as `npm test` is insufficient unless you also show that it executed the targeted tests covering the reviewed architecture-linked modules.
+    - After targeted tests pass, use `bash` to run the narrowest additional verification commands in the repository that are still useful for regression confidence.
+    - If there is no broader formal automated test suite beyond the targeted tests, run the best available build or smoke checks and say so explicitly.
 
 3.  **Reporting**:
     - Use `update_graph_model(action="record_validation", kind="qa", status="passed|failed", commitId="<sha>", content="...")` to record QA status.
     - If the implementation is blocked by a defect, use `update_graph_model(action="log_issue", kind="BugReport", title="...", content="...")`.
     - If QA fails, identify the exact runtime task IDs impacted by the defect. Reuse existing task IDs from the reviewed implementation batch; do not invent replacement IDs for the same logical work.
-    - Return JSON-like prose with `status`, `reviewed_commit_id`, `commands_run`, `failures`, `affected_task_ids`, and `recommended_rework`.
+    - Return JSON-like prose with `status`, `reviewed_commit_id`, `commands_run`, `tests_added_or_updated`, `coverage_gaps`, `failures`, `affected_task_ids`, and `recommended_rework`.
