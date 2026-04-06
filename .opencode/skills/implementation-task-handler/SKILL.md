@@ -9,6 +9,7 @@ Use this skill to execute the assigned coding work and return a direct structure
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` with one or more task IDs.
+- A Task invocation from `ProjectOrchestrator` carrying a `lane: "fast-track"` handoff for a localized, non-structural change.
 - A Task invocation from `ProjectOrchestrator` carrying a QA or audit rework summary.
 - When implementation succeeds, the output must include the git commit ID for the exact changes delivered for review.
 
@@ -23,20 +24,26 @@ Use this skill to execute the assigned coding work and return a direct structure
 
 0.  **Runtime Bootstrap**:
     - Before reading any specific task, call `query_graph(mode="summary")` once so workflow state and the shared graph context are initialized in projects that were created from this template.
-    - Treat `architectureCoverage.missingCoreLayers` in that summary as a hard blocker for implementation. If any core layer is missing, ask `SystemArchitect` to complete the intention baseline before coding.
-    - Also treat `intentionModel.isIntentModelSufficient === false` as a blocker. A graph that only contains runtime-synced tasks or thin placeholders is not enough implementation guidance.
+    - Detect whether the handoff explicitly marks the work as `lane: "fast-track"` or otherwise states that the change was pre-classified as localized and non-structural.
+    - Treat `architectureCoverage.missingCoreLayers` in that summary as a hard blocker for normal implementation work. If any core layer is missing, ask `SystemArchitect` to complete the intention baseline before coding.
+    - Also treat `intentionModel.isIntentModelSufficient === false` as a blocker for normal implementation work. A graph that only contains runtime-synced tasks or thin placeholders is not enough implementation guidance.
+    - For an explicit `fast-track` handoff, do not block solely because the intention model is thin or the core layers are incomplete.
+    - A `fast-track` handoff is valid only while the requested change remains local and non-structural. If the task touches a workflow boundary, API, schema, persistence contract, infra behavior, security behavior, package/module ownership boundary, or multiple software units, stop the fast-track path and ask `SystemArchitect` to take over.
     - When the dominant language or verification path is not obvious from the assigned files, call `run_reality_scanner` once and inspect `languageSupport`.
     - Use the dominant detected language's `recommendedSkills` and `recommendedTools` as the preferred execution stack for that task batch.
     - If the task spans multiple implementation languages, split the execution and verification plan by language boundary instead of assuming one workflow fits every changed file.
 
 1.  **Task Execution Loop**:
     - For each assigned task ID, use `query_graph(mode="task_by_id", id="TASK-...")` to read its full specification.
-    - Use the intention model, not only the free-text task summary, as the implementation contract.
+    - For normal implementation work, use the intention model, not only the free-text task summary, as the implementation contract.
+    - For an explicit `fast-track` handoff, use the narrow user request, the orchestrator's fast-track rationale, and the persisted runtime task summary as the implementation contract.
     - If a specification is ambiguous, or the required architecture baseline is incomplete, invoke `SystemArchitect` through the native Task tool, then resume the task with the returned clarification.
+    - If a `fast-track` task stops being obviously local during code inspection, do not guess. Escalate to `SystemArchitect` and report that the lane classification was invalidated by implementation reality.
     - Prefer language-aware execution. If `languageSupport` indicates TypeScript or JavaScript, use the repo's JS/TS-oriented skills and verification flow. If it indicates Python, use Python-oriented verification commands and avoid assuming Node-specific build steps.
     - When the task includes `architectureElementId`, treat that ID as required traceability metadata for the code reality. Add or preserve a nearby source comment in the form `@ArchitectureID: <architectureElementId>` on the main changed code construct or file that realizes the element whenever the file format supports comments.
     - Reuse existing `@ArchitectureID` markers when they already point to the same architecture element. Do not spam every edited line with duplicate markers, but do ensure the main implemented construct remains traceable for downstream reality scanning.
     - If a task is implementation-scoped but does not include `architectureElementId`, and the work cannot be cleanly traced back to an existing marked construct, ask `SystemArchitect` for clarification instead of inventing an ArchitectureID.
+    - Exception: for an explicit `fast-track` change that remains local, superficial, and non-architectural, you may complete the work without inventing an `ArchitectureID`. In that case, report that no architecture IDs were touched and keep the scope narrow.
     - If `run_reality_scanner` reports that the dominant language has only fallback extraction coverage, state that limitation explicitly in your notes and compensate with narrower manual inspection instead of overstating scanner confidence.
     - Use `write` and `bash` as needed to implement the code.
     - Use `update_graph_model(action="set_task_status", taskId="TASK-...", status="in_progress|done|blocked", content="...")` to mark progress.
@@ -50,3 +57,4 @@ Use this skill to execute the assigned coding work and return a direct structure
 
 3.  **Reporting Completion**:
     - Return JSON-like prose with `status`, `completed_task_ids`, `blocked_task_ids`, `files_changed`, `commit_id`, `architecture_ids_touched`, and `notes`.
+    - If a `fast-track` task had to be escalated, say so explicitly in `status` or `notes` and explain which discovered structural concern forced the escalation.
