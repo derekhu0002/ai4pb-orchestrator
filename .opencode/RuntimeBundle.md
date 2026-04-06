@@ -47,6 +47,8 @@ Key files and folders:
   - Skill instructions used by agents.
 - `tools/`
   - Repo-local OpenCode tools like `decompose_goal`, `query_graph`, and `update_graph_model`.
+- `lib/realityScanner/`
+  - Language workflow registry plus per-language extraction modules used by `run_reality_scanner`.
 - `lib/runtimeState.ts`
   - Runtime state read/write helpers.
 - `lib/sharedKnowledgeGraph.ts`
@@ -90,7 +92,8 @@ Registered tools:
 - `update_graph_model`
   - Updates runtime state and the shared knowledge graph.
 - `run_reality_scanner`
-  - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, AST-extracted structural symbols, and semantic trace candidates scored against `ApplicationComponent` documentation.
+  - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, pluggable language-specific structural extraction, and semantic trace candidates scored against `ApplicationComponent` documentation.
+  - Returns `languageSupport` so agents can see which languages were detected, whether coverage is AST-backed or fallback-based, and which repo-local skills/tools are recommended for follow-up work.
 - `generate_test_cases`
   - Produces a QA checklist or test plan.
 - `generate_gap_report`

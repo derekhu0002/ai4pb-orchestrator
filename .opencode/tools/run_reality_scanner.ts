@@ -1,8 +1,9 @@
 import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
 
+import { extractStructuralSymbolsForFile, summarizeLanguageSupport } from '../lib/realityScanner/providers';
+import type { ArchitectureReference, LanguageSupport, MappingFileSummary, ScanResult, SemanticTrace, StructuralSymbol } from '../lib/realityScanner/types';
 import { asJson, collectReadableWorkspaceFiles, safeSnippet } from '../lib/runtimeState';
 import { loadCanonicalKnowledgeGraph } from '../lib/sharedKnowledgeGraph';
 
@@ -13,69 +14,12 @@ const MAX_SEMANTIC_TRACES = 200;
 const MAX_SEMANTIC_CANDIDATES = 3;
 const MIN_SEMANTIC_SCORE = 0.12;
 
-type TraceSource = 'comment' | 'mapping-path' | 'mapping-glob' | 'mapping-symbol';
-type StructuralSource = 'ast' | 'regex';
-
-type ArchitectureReference = {
-  file: string;
-  architectureId: string;
-  line: number;
-  snippet: string;
-  source: TraceSource;
-  symbolName?: string;
-  mappingFile?: string;
-};
-
-type StructuralSymbol = {
-  file: string;
-  line: number;
-  kind: string;
-  name: string;
-  signature: string;
-  snippet: string;
-  source: StructuralSource;
-};
-
 type MappingEntry = {
   architectureId: string;
   paths: string[];
   globs: string[];
   symbols: string[];
   sourceFile: string;
-};
-
-type MappingFileSummary = {
-  file: string;
-  format: 'json' | 'yaml';
-  mappingCount: number;
-};
-
-type SemanticCandidate = {
-  architectureId: string;
-  title: string;
-  elementType: string;
-  score: number;
-  documentationSnippet: string;
-};
-
-type SemanticTrace = {
-  file: string;
-  line: number;
-  kind: string;
-  symbolName: string;
-  signature: string;
-  candidates: SemanticCandidate[];
-};
-
-type ScanResult = {
-  fileCount: number;
-  extensionCounts: Record<string, number>;
-  architectureReferences: ArchitectureReference[];
-  structuralSymbols: StructuralSymbol[];
-  semanticTraces: SemanticTrace[];
-  mappingFiles: MappingFileSummary[];
-  mappingWarnings: string[];
-  sampleFiles: string[];
 };
 
 type SemanticElement = {
@@ -325,142 +269,12 @@ function loadArchitectureMappings(worktree: string): { entries: MappingEntry[]; 
   return { entries, mappingFiles, warnings };
 }
 
-function getSourceFileLine(sourceFile: ts.SourceFile, position: number): number {
-  return sourceFile.getLineAndCharacterOfPosition(position).line + 1;
-}
-
-function formatParameters(sourceFile: ts.SourceFile, parameters: readonly ts.ParameterDeclaration[]): string {
-  return parameters
-    .map((parameter) => {
-      const name = parameter.name.getText(sourceFile);
-      const type = parameter.type?.getText(sourceFile);
-      return type ? `${name}: ${type}` : name;
-    })
-    .join(', ');
-}
-
-function createSymbol(relativeFile: string, line: number, kind: string, name: string, signature: string, snippet: string, source: StructuralSource): StructuralSymbol {
-  return {
-    file: relativeFile,
-    line,
-    kind,
-    name,
-    signature,
-    snippet: safeSnippet(snippet),
-    source,
-  };
-}
-
-function extractTypeScriptAstSymbols(relativeFile: string, content: string): StructuralSymbol[] {
-  const sourceFile = ts.createSourceFile(relativeFile, content, ts.ScriptTarget.Latest, true);
-  const symbols: StructuralSymbol[] = [];
-
-  function visit(node: ts.Node): void {
-    if (ts.isClassDeclaration(node) && node.name) {
-      const name = node.name.getText(sourceFile);
-      symbols.push(
-        createSymbol(relativeFile, getSourceFileLine(sourceFile, node.getStart(sourceFile)), 'class', name, `class ${name}`, node.getText(sourceFile), 'ast')
-      );
-    } else if (ts.isInterfaceDeclaration(node)) {
-      const name = node.name.getText(sourceFile);
-      symbols.push(
-        createSymbol(relativeFile, getSourceFileLine(sourceFile, node.getStart(sourceFile)), 'interface', name, `interface ${name}`, node.getText(sourceFile), 'ast')
-      );
-    } else if (ts.isTypeAliasDeclaration(node)) {
-      const name = node.name.getText(sourceFile);
-      symbols.push(
-        createSymbol(relativeFile, getSourceFileLine(sourceFile, node.getStart(sourceFile)), 'type', name, `type ${name}`, node.getText(sourceFile), 'ast')
-      );
-    } else if (ts.isFunctionDeclaration(node) && node.name) {
-      const name = node.name.getText(sourceFile);
-      const parameters = formatParameters(sourceFile, node.parameters);
-      const returnType = node.type?.getText(sourceFile);
-      const signature = `function ${name}(${parameters})${returnType ? `: ${returnType}` : ''}`;
-      symbols.push(
-        createSymbol(relativeFile, getSourceFileLine(sourceFile, node.getStart(sourceFile)), 'function', name, signature, node.getText(sourceFile), 'ast')
-      );
-    } else if (ts.isMethodDeclaration(node) && node.name && ts.isClassLike(node.parent) && node.parent.name) {
-      const className = node.parent.name.getText(sourceFile);
-      const methodName = node.name.getText(sourceFile);
-      const parameters = formatParameters(sourceFile, node.parameters);
-      const returnType = node.type?.getText(sourceFile);
-      const signature = `${className}.${methodName}(${parameters})${returnType ? `: ${returnType}` : ''}`;
-      symbols.push(
-        createSymbol(relativeFile, getSourceFileLine(sourceFile, node.getStart(sourceFile)), 'method', `${className}.${methodName}`, signature, node.getText(sourceFile), 'ast')
-      );
-    } else if (ts.isVariableStatement(node)) {
-      for (const declaration of node.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name)) {
-          continue;
-        }
-        const name = declaration.name.getText(sourceFile);
-        const initializer = declaration.initializer;
-        if (initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer))) {
-          const parameters = formatParameters(sourceFile, initializer.parameters);
-          const returnType = initializer.type?.getText(sourceFile);
-          const signature = `function ${name}(${parameters})${returnType ? `: ${returnType}` : ''}`;
-          symbols.push(
-            createSymbol(relativeFile, getSourceFileLine(sourceFile, declaration.getStart(sourceFile)), 'function', name, signature, declaration.getText(sourceFile), 'ast')
-          );
-        } else {
-          const type = declaration.type?.getText(sourceFile);
-          const signature = `variable ${name}${type ? `: ${type}` : ''}`;
-          symbols.push(
-            createSymbol(relativeFile, getSourceFileLine(sourceFile, declaration.getStart(sourceFile)), 'variable', name, signature, declaration.getText(sourceFile), 'ast')
-          );
-        }
-      }
-    }
-
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return symbols;
-}
-
-function extractRegexSymbols(relativeFile: string, content: string): StructuralSymbol[] {
-  const extension = path.extname(relativeFile).toLowerCase();
-  const results: StructuralSymbol[] = [];
-  const patterns: Array<{ kind: string; regex: RegExp }> = [];
-
-  if (extension === '.py') {
-    patterns.push(
-      { kind: 'class', regex: /^\s*class\s+([A-Za-z_][A-Za-z0-9_]*)/gm },
-      { kind: 'function', regex: /^\s*def\s+([A-Za-z_][A-Za-z0-9_]*)/gm }
-    );
-  }
-
-  for (const pattern of patterns) {
-    const matches = content.matchAll(pattern.regex);
-    for (const match of matches) {
-      const name = match[1]?.trim();
-      if (!name) {
-        continue;
-      }
-      const snippet = match[0] ?? `${pattern.kind} ${name}`;
-      results.push(
-        createSymbol(relativeFile, getLineNumber(content, match.index ?? 0), pattern.kind, name, safeSnippet(snippet), snippet, 'regex')
-      );
-    }
-  }
-
-  return results;
-}
-
-function extractStructuralSymbols(relativeFile: string, content: string): StructuralSymbol[] {
-  const extension = path.extname(relativeFile).toLowerCase();
-  if (['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'].includes(extension)) {
-    return extractTypeScriptAstSymbols(relativeFile, content);
-  }
-  return extractRegexSymbols(relativeFile, content);
-}
-
 function addArchitectureReference(references: ArchitectureReference[], seen: Set<string>, reference: ArchitectureReference): void {
   const key = [reference.source, reference.architectureId, reference.file, reference.line, reference.symbolName ?? '', reference.mappingFile ?? ''].join('|');
   if (seen.has(key)) {
     return;
   }
+
   seen.add(key);
   references.push(reference);
 }
@@ -470,9 +284,7 @@ function getLangStringText(value: Array<{ value: string }> | undefined): string 
 }
 
 function tokenizeSemanticText(value: string): string[] {
-  const normalized = value
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .toLowerCase();
+  const normalized = value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
   return normalized.match(/[\p{L}\p{N}_]+/gu)?.filter((token) => token.length > 1) ?? [];
 }
 
@@ -521,13 +333,12 @@ function loadSemanticElements(worktree: string): SemanticElement[] {
     .map((element) => {
       const title = getLangStringText(element.name) || element.identifier;
       const documentation = getLangStringText(element.documentation);
-      const semanticText = [title, documentation].filter(Boolean).join(' ');
       return {
         architectureId: element.identifier,
         title,
         elementType: element.type,
         documentation,
-        vector: buildTokenVector(semanticText),
+        vector: buildTokenVector([title, documentation].filter(Boolean).join(' ')),
       };
     })
     .filter((element) => element.documentation.trim().length > 0);
@@ -539,7 +350,6 @@ function buildSemanticTraces(symbols: StructuralSymbol[], semanticElements: Sema
   }
 
   const traces: SemanticTrace[] = [];
-
   for (const symbol of symbols) {
     const symbolVector = buildTokenVector([symbol.name, symbol.signature, symbol.snippet, symbol.file].join(' '));
     const candidates = semanticElements
@@ -564,6 +374,7 @@ function buildSemanticTraces(symbols: StructuralSymbol[], semanticElements: Sema
       kind: symbol.kind,
       symbolName: symbol.name,
       signature: symbol.signature,
+      languageId: symbol.languageId,
       candidates,
     });
   }
@@ -572,7 +383,7 @@ function buildSemanticTraces(symbols: StructuralSymbol[], semanticElements: Sema
 }
 
 export default tool({
-  description: 'Scan the repository for implementation reality using ArchitectureID markers, external mappings, AST-extracted symbols, and semantic tracing against ApplicationComponent documentation.',
+  description: 'Scan the repository for implementation reality using ArchitectureID markers, external mappings, pluggable language providers, and semantic tracing against ApplicationComponent documentation.',
   args: {
     maxFiles: tool.schema.number().int().min(10).max(500).optional().describe('Maximum number of sample files to report.'),
   },
@@ -593,7 +404,10 @@ export default tool({
       const absolute = path.join(context.worktree, relativeFile);
       try {
         const content = fs.readFileSync(absolute, 'utf8');
-        const fileSymbols = extractStructuralSymbols(relativeFile, content);
+        const fileSymbols = extractStructuralSymbolsForFile(relativeFile, content, context.worktree).map((symbol) => ({
+          ...symbol,
+          snippet: safeSnippet(symbol.snippet),
+        }));
         structuralSymbols.push(...fileSymbols);
 
         const matches = content.matchAll(ARCHITECTURE_ID_PATTERN);
@@ -602,11 +416,87 @@ export default tool({
           if (!architectureId) {
             continue;
           }
+
           addArchitectureReference(architectureReferences, seenReferences, {
             file: relativeFile,
             architectureId,
             line: getLineNumber(content, match.index ?? 0),
             snippet: safeSnippet(match[0]),
+            source: 'comment',
+          });
+        }
+
+        const normalizedFile = normalizeWorkspacePath(relativeFile);
+        for (const entry of mappingEntries) {
+          if (entry.paths.includes(normalizedFile)) {
+            addArchitectureReference(architectureReferences, seenReferences, {
+              file: relativeFile,
+              architectureId: entry.architectureId,
+              line: 1,
+              snippet: safeSnippet(`Mapped by ${entry.sourceFile} to ${normalizedFile}`),
+              source: 'mapping-path',
+              mappingFile: entry.sourceFile,
+            });
+          }
+
+          for (const glob of entry.globs) {
+            if (!globToRegex(glob).test(normalizedFile)) {
+              continue;
+            }
+
+            addArchitectureReference(architectureReferences, seenReferences, {
+              file: relativeFile,
+              architectureId: entry.architectureId,
+              line: 1,
+              snippet: safeSnippet(`Mapped by ${entry.sourceFile} glob ${glob}`),
+              source: 'mapping-glob',
+              mappingFile: entry.sourceFile,
+            });
+          }
+
+          if (entry.symbols.length === 0) {
+            continue;
+          }
+
+          for (const symbol of fileSymbols) {
+            if (!entry.symbols.includes(symbol.name)) {
+              continue;
+            }
+
+            addArchitectureReference(architectureReferences, seenReferences, {
+              file: relativeFile,
+              architectureId: entry.architectureId,
+              line: symbol.line,
+              snippet: symbol.snippet,
+              source: 'mapping-symbol',
+              symbolName: symbol.name,
+              mappingFile: entry.sourceFile,
+            });
+          }
+        }
+      } catch {
+        // Ignore unreadable files and continue scanning.
+      }
+    }
+
+    const semanticTraces = buildSemanticTraces(structuralSymbols, semanticElements);
+    const languageSupport: LanguageSupport[] = summarizeLanguageSupport(files, structuralSymbols);
+
+    const result: ScanResult = {
+      fileCount: files.length,
+      extensionCounts,
+      architectureReferences: architectureReferences.slice(0, MAX_ARCHITECTURE_REFERENCES),
+      structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
+      semanticTraces,
+      languageSupport,
+      mappingFiles,
+      mappingWarnings,
+      sampleFiles: files.slice(0, args.maxFiles ?? 80),
+    };
+
+    return asJson(result);
+  },
+});
             source: 'comment',
           });
         }

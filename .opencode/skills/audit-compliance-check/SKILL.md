@@ -37,6 +37,7 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
     - Accept trace evidence from any of these sources: matching `@ArchitectureID` markers, explicit entries in an external `architecture-mapping.yaml|yml|json` file, or mapping-symbol evidence that binds architecture IDs to extracted structural symbols.
     - Treat plain comment markers as only one form of evidence, not as the sole definition of architecture compliance.
     - Use `semanticTraces` as implicit supplementary evidence, not as the sole basis for architectural conformance. High semantic similarity can justify deeper review, but it does not override explicit trace mismatches.
+    - Inspect `languageSupport` to understand whether changed files were analyzed through AST-backed providers or fallback extraction. If a changed language has only fallback coverage, lower audit confidence accordingly and state that limitation explicitly.
     - If no explicit trace evidence exists for a required `architectureElementId`, treat that as an implementation traceability gap even if the code otherwise appears plausible.
     - If the reviewed implementation tasks do not contain `architectureElementId`, report that handoff defect first instead of fabricating an ArchitectureID expectation from task titles alone.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps), and keep the reviewed commit ID visible in the audit reasoning.

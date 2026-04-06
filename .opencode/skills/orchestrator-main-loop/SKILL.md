@@ -53,6 +53,8 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Before invoking `Implementation`, call `query_graph(mode="summary")` and inspect `architectureCoverage.missingCoreLayers`.
     - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
     - Also inspect `intentionModel.isIntentModelSufficient`. If it is `false`, treat the design as underspecified even if the four layers nominally exist.
+    - When the repository appears polyglot or the implementation language is unclear from the task metadata, call `run_reality_scanner` before invoking `Implementation` and inspect `languageSupport`.
+    - Pass the detected dominant language plus any `recommendedSkills` / `recommendedTools` from `languageSupport` into the `Implementation` handoff so the child agent can choose language-appropriate skills and tools.
     - Require the architect result to identify concrete software units and task IDs derived from those software units.
     - When existing implementation structure was analyzed, require the architect result to show that each implementation task is anchored either to an existing module chosen for extension or to a justified new software unit when no suitable module exists.
     - If the architect result does not reference concrete task IDs, or those tasks are missing software-unit metadata in persisted runtime state, stop and report that the architect handoff is incomplete.
