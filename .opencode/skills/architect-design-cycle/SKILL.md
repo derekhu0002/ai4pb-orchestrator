@@ -9,9 +9,11 @@ Use this skill when handling a design request, implementation clarification, or 
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` to create or refine the design.
+- A Task invocation from `ProductManager` or `ProjectOrchestrator` carrying an issue that requires design-level judgment.
 - A Task invocation from `Implementation` asking for clarification.
 - A Task invocation from `ProjectOrchestrator` carrying an audit-gap summary.
 - For a design request from `ProjectOrchestrator`, the input should explicitly include `goal`, `formal_requirement`, `requirement_element_id`, and `task_ids` or detailed `tasks` from persisted runtime state.
+- For an issue-oriented handoff from `ProductManager` or `ProjectOrchestrator`, the input should explicitly include an `issue_summary` or equivalent issue statement, plus any available `goal`, `affected_requirement_id`, `affected_architecture_element_id`, `task_ids`, or other context needed to judge whether the issue requires model updates, new software-unit decomposition, or implementation-only follow-up.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
@@ -24,7 +26,11 @@ Use this skill when handling a design request, implementation clarification, or 
 
 ## BEHAVIORAL RULES
 
-1.  **On Design Request**
+1.  **On Design Or Issue Request**
+  - First determine whether the incoming handoff is requirement-driven design work or issue-driven architectural analysis.
+  - Treat issue-oriented handoffs from `ProductManager` or `ProjectOrchestrator` as valid architect inputs when they ask for design judgment rather than direct coding.
+  - If the handoff is issue-driven, use the provided `issue_summary`, affected IDs, and runtime context as the baseline problem statement instead of requiring a newly approved `formal_requirement`.
+  - If the issue-oriented handoff lacks both a clear issue statement and any traceable affected context, report the handoff as incomplete instead of inferring the architectural problem from memory.
   - If the invocation does not include explicit `task_ids` or `tasks`, do not infer them from memory alone. Report that `ProjectOrchestrator` failed to pass the persisted task handoff.
   - Treat the incoming tasks from `ProjectOrchestrator` as planning seeds only unless they already contain explicit software-unit metadata created by an earlier architecture pass.
   - Treat `formal_requirement` as the authoritative business requirement whenever it is provided by `ProjectOrchestrator`.
