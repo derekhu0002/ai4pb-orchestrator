@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { LANGUAGE_WORKFLOW_REGISTRY, type LanguageWorkflowProfile } from './languageRegistry';
@@ -17,6 +18,9 @@ const LANGUAGE_PROVIDERS: RealityScannerLanguageProvider[] = [
 ];
 
 const PROVIDERS_BY_LANGUAGE = new Map(LANGUAGE_PROVIDERS.map((provider) => [provider.languageId, provider]));
+const PROJECT_STANDARDS_FILE = path.join('.opencode', 'project-standards.json');
+
+type ProjectStandardsConfig = Record<string, string[]>;
 
 export function getRealityScannerLanguageProviders(): RealityScannerLanguageProvider[] {
   return [...LANGUAGE_PROVIDERS];
@@ -44,7 +48,53 @@ export function extractStructuralSymbolsForFile(relativeFile: string, content: s
   return provider.extractSymbols(relativeFile, content, worktree);
 }
 
-export function summarizeLanguageSupport(files: string[], symbols: StructuralSymbol[]): LanguageSupport[] {
+function loadProjectStandards(worktree?: string): ProjectStandardsConfig {
+  if (!worktree) {
+    return {};
+  }
+
+  const configPath = path.join(worktree, PROJECT_STANDARDS_FILE);
+  if (!fs.existsSync(configPath)) {
+    return {};
+  }
+
+  try {
+    const raw = fs.readFileSync(configPath, 'utf8');
+    const parsed = JSON.parse(raw) as { languages?: unknown };
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const languages = parsed.languages;
+    if (!languages || typeof languages !== 'object' || Array.isArray(languages)) {
+      return {};
+    }
+
+    const standards: ProjectStandardsConfig = {};
+    for (const [languageId, skills] of Object.entries(languages as Record<string, unknown>)) {
+      const normalizedLanguageId = languageId.trim();
+      if (!normalizedLanguageId || !Array.isArray(skills)) {
+        continue;
+      }
+
+      const normalizedSkills = [...new Set(skills.map((skill) => String(skill ?? '').trim()).filter(Boolean))];
+      if (normalizedSkills.length > 0) {
+        standards[normalizedLanguageId] = normalizedSkills;
+      }
+    }
+
+    return standards;
+  } catch {
+    return {};
+  }
+}
+
+function mergeRecommendedSkills(defaultSkills: string[], projectSkills: string[]): string[] {
+  return [...new Set([...defaultSkills, ...projectSkills])];
+}
+
+export function summarizeLanguageSupport(files: string[], symbols: StructuralSymbol[], worktree?: string): LanguageSupport[] {
+  const projectStandards = loadProjectStandards(worktree);
   const fileCountByLanguage = new Map<string, number>();
   for (const file of files) {
     const profile = findLanguageWorkflowProfile(file);
@@ -68,7 +118,7 @@ export function summarizeLanguageSupport(files: string[], symbols: StructuralSym
       extractionMode: PROVIDERS_BY_LANGUAGE.get(profile.languageId)?.extractionMode ?? 'regex',
       fileCount: fileCountByLanguage.get(profile.languageId) ?? 0,
       symbolCount: symbolCountByLanguage.get(profile.languageId) ?? 0,
-      recommendedSkills: profile.recommendedSkills,
+      recommendedSkills: mergeRecommendedSkills(profile.recommendedSkills, projectStandards[profile.languageId] ?? []),
       recommendedTools: profile.recommendedTools,
     }))
     .filter((item) => item.fileCount > 0)

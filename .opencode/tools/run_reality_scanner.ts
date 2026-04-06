@@ -482,7 +482,7 @@ export default tool({
     }
 
     const semanticTraces = buildSemanticTraces(structuralSymbols, semanticElements);
-    const languageSupport: LanguageSupport[] = summarizeLanguageSupport(files, structuralSymbols);
+    const languageSupport: LanguageSupport[] = summarizeLanguageSupport(files, structuralSymbols, context.worktree);
 
     const result: ScanResult = {
       fileCount: files.length,
