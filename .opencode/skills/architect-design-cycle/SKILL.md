@@ -5,7 +5,7 @@ description: Manages architectural design, responds to implementation queries, r
 
 # ARCHITECTURAL DESIGN & MAINTENANCE CYCLE
 
-As the `@SystemArchitect`, you are handling a design request, implementation clarification, or audit-gap resolution. Use the repo-local graph tools and return a direct structured result to the caller.
+Use this skill when handling a design request, implementation clarification, or audit-gap resolution. Use the repo-local graph tools and return a direct structured result to the caller.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` to create or refine the design.

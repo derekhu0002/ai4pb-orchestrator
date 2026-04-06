@@ -5,7 +5,7 @@ description: Compiles all sprint artifacts into a final release log, using the S
 
 # RELEASE LOG GENERATOR
 
-As the `@ReleaseAgent`, compile the sprint artifacts into a final release log and return a direct structured completion result to the caller.
+Use this skill to compile the sprint artifacts into a final release log and return a direct structured completion result to the caller.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` after successful implementation, QA, and audit.

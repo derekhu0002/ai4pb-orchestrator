@@ -5,7 +5,7 @@ description: The primary thinking and delegation loop for the master project orc
 
 # PROJECT ORCHESTRATION MAIN LOOP
 
-As the `@ProjectOrchestrator`, your job is to manage the full development lifecycle with native OpenCode primitives. Use Task-based subagent invocation, direct child-session returns, and the repo-local runtime state tools. Do not assume asynchronous mailboxes or fictional orchestration APIs.
+Use this skill to manage the full development lifecycle with native OpenCode primitives. Use Task-based subagent invocation, direct child-session returns, and the repo-local runtime state tools. Do not assume asynchronous mailboxes or fictional orchestration APIs.
 
 ## INPUT DATA
 - **Initial Invocation Goal**: The high-level requirement provided by the **human Product Manager** when you are first activated.

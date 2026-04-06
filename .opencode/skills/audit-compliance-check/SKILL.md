@@ -5,7 +5,7 @@ description: Performs an architecture-to-code compliance audit using the Shared 
 
 # ARCHITECTURAL COMPLIANCE AUDIT
 
-As the `@Audit` agent, perform an architecture-to-code compliance check using repo-local reality and intent tools, then return a direct structured result to the caller.
+Use this skill to perform an architecture-to-code compliance check using repo-local reality and intent tools, then return a direct structured result to the caller.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` to audit the latest implementation batch.

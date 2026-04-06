@@ -5,7 +5,7 @@ description: Manages the requirement analysis process, including human-in-the-lo
 
 # REQUIREMENT ANALYSIS & ELICITATION CYCLE
 
-As the `@AI_ProductManager`, your job is to turn raw, unstructured ideas into formal, actionable requirements that the `@SystemArchitect` can use.
+Use this skill to turn raw, unstructured ideas into formal, actionable requirements that downstream architecture work can use.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` containing the `Raw Requirement`.

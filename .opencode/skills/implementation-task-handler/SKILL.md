@@ -5,7 +5,7 @@ description: Executes assigned coding tasks, including new features, bug fixes, 
 
 # IMPLEMENTATION TASK HANDLER
 
-As the `@Implementation` agent, execute the assigned coding work and return a direct structured result to the caller. Use native Task delegation to `SystemArchitect` when blocked.
+Use this skill to execute the assigned coding work and return a direct structured result to the caller. Use native Task delegation to `SystemArchitect` when blocked.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` with one or more task IDs.

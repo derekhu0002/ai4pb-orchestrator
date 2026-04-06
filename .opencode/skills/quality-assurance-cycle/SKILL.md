@@ -5,7 +5,7 @@ description: Executes a full validation and testing cycle on a given commit, usi
 
 # QUALITY ASSURANCE CYCLE
 
-As the `@QualityAssurance` agent, generate the best available test plan, run the narrowest useful verification commands, and return a direct pass/fail result to the caller.
+Use this skill to generate the best available test plan, run the narrowest useful verification commands, and return a direct pass/fail result to the caller.
 
 ## INPUT DATA
 - A Task invocation from `ProjectOrchestrator` to validate the latest implementation batch.
