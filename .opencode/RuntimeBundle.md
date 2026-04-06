@@ -90,7 +90,7 @@ Registered tools:
 - `update_graph_model`
   - Updates runtime state and the shared knowledge graph.
 - `run_reality_scanner`
-  - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, and extracted structural symbols.
+  - Collects implementation-side reality signals from explicit `@ArchitectureID` markers, optional external `architecture-mapping.yaml|yml|json` bindings, AST-extracted structural symbols, and semantic trace candidates scored against `ApplicationComponent` documentation.
 - `generate_test_cases`
   - Produces a QA checklist or test plan.
 - `generate_gap_report`

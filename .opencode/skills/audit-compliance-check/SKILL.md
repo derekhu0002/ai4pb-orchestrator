@@ -24,7 +24,7 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
     - Resolve the single git commit ID being audited from the input or from completed runtime tasks.
     - If no single commit ID can be identified, fail the audit handoff as incomplete instead of auditing an ambiguous workspace state.
     - Use `bash` to inspect the reviewed commit with a narrow command such as `git show --stat --oneline <sha>` before running deeper reality analysis.
-    - Use `run_reality_scanner` to analyze the codebase and generate a "reality" model that includes explicit trace markers, external architecture mappings, and structural symbol evidence.
+    - Use `run_reality_scanner` to analyze the codebase and generate a "reality" model that includes explicit trace markers, external architecture mappings, AST-extracted structural symbols, and semantic trace candidates.
     - Read the reviewed tasks and collect any explicit `architectureElementId` values before deciding whether architecture trace evidence is mandatory.
 
 2.  **Compare Models**:
@@ -36,6 +36,7 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
     - If the reviewed implementation tasks contain one or more `architectureElementId` values, use `run_reality_scanner` output to confirm that the changed codebase exposes matching architecture trace evidence for those elements.
     - Accept trace evidence from any of these sources: matching `@ArchitectureID` markers, explicit entries in an external `architecture-mapping.yaml|yml|json` file, or mapping-symbol evidence that binds architecture IDs to extracted structural symbols.
     - Treat plain comment markers as only one form of evidence, not as the sole definition of architecture compliance.
+    - Use `semanticTraces` as implicit supplementary evidence, not as the sole basis for architectural conformance. High semantic similarity can justify deeper review, but it does not override explicit trace mismatches.
     - If no explicit trace evidence exists for a required `architectureElementId`, treat that as an implementation traceability gap even if the code otherwise appears plausible.
     - If the reviewed implementation tasks do not contain `architectureElementId`, report that handoff defect first instead of fabricating an ArchitectureID expectation from task titles alone.
     - Compare the "reality" model against the "intent" model to find any discrepancies (gaps), and keep the reviewed commit ID visible in the audit reasoning.
