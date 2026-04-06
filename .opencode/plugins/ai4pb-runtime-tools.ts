@@ -2,6 +2,7 @@ import analyzeLegacyModules from '../tools/analyze_legacy_modules';
 import decomposeGoal from '../tools/decompose_goal';
 import generateGapReport from '../tools/generate_gap_report';
 import generateTestCases from '../tools/generate_test_cases';
+import generateTestTemplate from '../tools/generate_test_template';
 import queryGraph from '../tools/query_graph';
 import readProjectStatus from '../tools/read_project_status';
 import runChromeSandbox from '../tools/run_chrome_sandbox';
@@ -17,6 +18,7 @@ export async function server() {
       decompose_goal: decomposeGoal,
       generate_gap_report: generateGapReport,
       generate_test_cases: generateTestCases,
+      generate_test_template: generateTestTemplate,
       query_graph: queryGraph,
       read_project_status: readProjectStatus,
       run_chrome_sandbox: runChromeSandbox,

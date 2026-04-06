@@ -17,6 +17,7 @@ Use this skill to generate the best available test plan, run the narrowest usefu
 - Access Level: `Read Only`.
 - Read scope: requirement and task definitions, acceptance criteria encoded in properties or documentation, and traceability links to relevant files, code constructs, and dependencies.
 - This agent uses `query_graph` to derive coverage expectations and `generate_test_cases` to create a concrete plan.
+- This agent uses `generate_test_template` to create AST-driven test boilerplate before filling in missing unit-test logic.
 - This agent may use `update_graph_model` only to record QA outcome metadata.
 
 ## BEHAVIORAL RULES
@@ -29,8 +30,18 @@ Use this skill to generate the best available test plan, run the narrowest usefu
     - Derive the review scope from the completed runtime tasks that share the reviewed `commitId`. Collect every non-empty `architectureElementId` in that batch as the required traceability scope for QA.
     - Use `generate_test_cases(commitId="<sha>")` to create a commit-scoped test plan that lists touched runtime tasks, architecture-linked modules, existing automated test evidence, and any missing unit-test coverage.
     - Treat missing automated test coverage for any touched architecture-linked module as a hard QA gap, not as a documentation note.
-    - If `generate_test_cases` reports a touched module with missing unit-test coverage, you MUST use `read` plus `write` to add targeted automated tests for that module first, before you run any `bash` verification command.
+    - If `generate_test_cases` reports a touched module with missing unit-test coverage, you MUST FIRST use `generate_test_template(sourceFile="<module path>", testFramework="jest|pytest")` on that source file.
+    - Take the output of `generate_test_template` and use the `write` tool to save it as a new test file (for example, `[filename].spec.ts` next to the source file or a file inside a `tests/` directory).
+    - Only AFTER the boilerplate is saved should you use `edit` or `write` to fill in the real test logic, fixtures, mocks, and assertions.
     - Name new tests according to the repo's existing conventions when possible, for example `*.spec.ts`, `*.test.ts`, or files under `tests/` / `__tests__/`.
+    - **Example — TypeScript module (jest)**:
+      1. Call `generate_test_template(sourceFile="src/utils/math.ts", testFramework="jest")`.
+      2. Call `write(path="src/utils/math.spec.ts", content=<output from step 1>)`.
+      3. Call `edit` or `write` on `src/utils/math.spec.ts` to replace the `expect(true).toBe(true)` stubs with real assertions.
+    - **Example — Python module (pytest)**:
+      1. Call `generate_test_template(sourceFile="src/utils/math.py", testFramework="pytest")`.
+      2. Call `write(path="tests/test_math.py", content=<output from step 1>)`.
+      3. Call `edit` or `write` on `tests/test_math.py` to fill in real assertions and any `monkeypatch` fixtures.
     - If the repository has no usable automated test harness for the touched language and you cannot add runnable targeted tests safely, fail QA as blocked. Do not mark QA passed based only on manual reasoning, smoke checks, or a broad build.
 
 2.  **Test Execution**:

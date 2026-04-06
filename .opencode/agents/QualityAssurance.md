@@ -12,6 +12,7 @@ tools:
   write: true
   bash: true
   generate_test_cases: true
+  generate_test_template: true
   query_graph: true
   update_graph_model: true
   skill: true
