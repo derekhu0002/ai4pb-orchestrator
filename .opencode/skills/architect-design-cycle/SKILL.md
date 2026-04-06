@@ -18,7 +18,7 @@ Use this skill when handling a design request, implementation clarification, or 
 ## SHARED KNOWLEDGE GRAPH SCOPE
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
 - Access Level: `Read + Write`.
-- Use `analyze_legacy_modules` first when you need to fit a new requirement into an existing brownfield codebase.
+- Use `analyze_legacy_modules` when you need to fit work into an existing implementation landscape and identify the best current ownership boundary.
 - Use `query_graph` to inspect current architecture data and workflow state.
 - Use `read` to inspect relevant legacy source files, package boundaries, and existing implementation seams when the repository already contains implementation code.
 - Use `update_graph_model` to record design summary, design decisions, task definitions, and other graph-backed workflow changes.
@@ -37,10 +37,11 @@ Use this skill when handling a design request, implementation clarification, or 
   - If `formal_requirement` is missing but `requirement_element_id` is present, use `query_graph(mode="architecture_element", id="...")` to recover the approved requirement content before designing.
   - If neither `formal_requirement` nor a resolvable `requirement_element_id` is available for a PM-originated workflow, report the handoff as incomplete instead of inventing requirement details from task titles.
   - Inspect existing architecture and runtime tasks with `query_graph(mode="summary")`, `query_graph(mode="tasks_by_status", status="todo")`, and `query_graph(mode="architecture_element", query="...")`.
-  - If the repository is a brownfield or legacy codebase, call `analyze_legacy_modules` first with the goal, formal requirement, software-unit idea, and any known `architectureElementId`.
+  - Do not rely on a subjective brownfield or legacy label before starting analysis. First inspect whether the repository already contains meaningful implementation assets, package boundaries, runtime conventions, or existing architecture constraints that the requested change must fit into.
+  - If meaningful existing implementation structure is present, call `analyze_legacy_modules` early with the goal, the best available requirement or issue statement, the tentative software-unit idea, and any known architecture element ID or affected element ID.
   - Use the `analyze_legacy_modules` result to shortlist candidate modules, then use `read` only on the top-ranked files, directories, or package manifests before finalizing the software-unit decomposition.
-  - Treat the legacy codebase as a design constraint, not as something `Implementation` should discover alone. `SystemArchitect` owns the decision about whether the requirement extends an existing module or requires a new software unit.
-  - Start architecture reasoning from the approved requirement, then map that requirement into strategy, business, application, and technology structures.
+  - Treat existing implementation structure as a design constraint, not as something `Implementation` should discover alone. `SystemArchitect` owns the decision about whether the change extends an existing module or requires a new software unit.
+  - Start architecture reasoning from the approved requirement or issue baseline, then map that baseline into strategy, business, application, and technology structures.
   - Treat the Shared Knowledge Graph as the authoritative intention model, not just a design-summary store.
   - Ensure the graph contains at least one core element in each of the strategy, business, application, and technology layers before implementation begins.
   - If `query_graph(mode="summary")` reports missing core layers, call `update_graph_model(action="ensure_architecture_baseline", content="...")` first to bootstrap the baseline.
@@ -55,12 +56,12 @@ Use this skill when handling a design request, implementation clarification, or 
   - For every architect-managed relationship, the `content` field must follow the same baseline-helper pattern: `<Relationship guidance sentence>. In this architecture, <source> ... <target> ...`.
   - Model the implementation scope through traceable cross-layer intent: strategy drives business, business is served by application, and application is supported by technology.
   - Before creating developer tasks, explicitly decompose the implementation scope into concrete software units. A software unit may be an application, service, module, component, package, adapter, or other developer-owned unit that can be implemented and reviewed.
-  - In brownfield work, prefer mapping the requirement to an existing software unit when the legacy structure already provides an appropriate ownership boundary. Only introduce a new software unit when no existing module can host the change cleanly.
+  - When meaningful implementation structure already exists, prefer mapping the change to an existing software unit when that structure already provides an appropriate ownership boundary. Only introduce a new software unit when no existing module can host the change cleanly.
   - For each software unit, define its responsibility, main interfaces or dependencies, the architecture element ID that represents it in the graph, and whether it is an existing legacy module, a refactored legacy seam, or a newly introduced unit.
   - When a software unit maps to an existing legacy module, identify the concrete file, directory, class, or package that makes it the best fit, and record that rationale as a design decision before creating implementation tasks.
   - Only after software units are explicit, derive implementation tasks from them. Avoid generic tasks like "implement requirement" that are not anchored to a software unit.
   - Each implementation task should map to one primary software unit and should carry `softwareUnitId`, `softwareUnitTitle`, and `architectureElementId` metadata whenever available.
-  - For brownfield work, task summaries should explicitly reference the selected legacy module or explain why a new unit is being introduced instead of extending one.
+  - When the change is anchored to existing implementation structure, task summaries should explicitly reference the selected module or explain why a new unit is being introduced instead of extending one.
   - Prefer a task structure like `[{"title":"Implement orchestration runtime task metadata","owner":"Implementation","kind":"implementation","softwareUnitId":"SU-RUNTIME-STATE","softwareUnitTitle":"Runtime State Manager","architectureElementId":"ELM-APP-RUNTIME-STATE","summary":"Add runtime task fields for software-unit traceability."}]`.
   - Use `update_graph_model(action="set_design_summary", content="...")` to store the design summary and `update_graph_model(action="record_decision", content="...")` for each major architectural decision, including why a legacy module was chosen or rejected.
   - Use `update_graph_model(action="bulk_add_tasks", tasksJson="[{\"title\":\"...\",\"owner\":\"Implementation\",\"kind\":\"implementation\",\"softwareUnitId\":\"...\",\"softwareUnitTitle\":\"...\",\"architectureElementId\":\"...\"}]")` when you need to create implementation tasks from the model.

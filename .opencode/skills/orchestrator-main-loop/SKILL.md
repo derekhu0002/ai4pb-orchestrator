@@ -41,10 +41,10 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered planning items.
     - Treat the persisted tasks from `decompose_goal` as planning seeds only. They are not yet valid developer tasks.
     - Then use the native Task tool to invoke `SystemArchitect` with the formalized goal, the full approved requirement, and the exact persisted planning list.
-    - If the repository already contains meaningful implementation code, treat the workflow as brownfield by default. Do not insert a new routing phase; instead, require `SystemArchitect` to analyze the legacy structure and decide whether the requirement should extend an existing module or introduce a new software unit.
+    - If the repository already contains meaningful implementation code, package structure, or established runtime conventions, require `SystemArchitect` to inspect that existing structure before decomposition and decide whether the change should extend an existing module or introduce a new software unit. Do not insert a separate brownfield-classification phase.
     - If the goal came from `ProductManager`, preserve the PM output separately instead of flattening it into a short goal string.
     - Pass the architect a concrete payload that includes `goal`, `formal_requirement`, `requirement_element_id`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "formal_requirement": "...full approved requirement...", "requirement_element_id": "ELM-REQ-001", "task_ids": ["TASK-001", "TASK-002"], "tasks":[{"id":"TASK-001","title":"...","status":"todo","kind":"planning"}] }`.
-    - Expect a direct result that includes a design summary, a software-unit decomposition, created or updated implementation task IDs, explicit confirmation that human architecture review is approved, and for brownfield work a statement of which legacy module(s) were selected or rejected.
+    - Expect a direct result that includes a design summary, a software-unit decomposition, created or updated implementation task IDs, explicit confirmation that human architecture review is approved, and when existing implementation structure was analyzed a statement of which candidate module(s) were selected or rejected.
     - If the architect reports revision requested or does not confirm approved human review, do not continue to implementation. Route back to `SystemArchitect` until the reviewed design is approved.
 
 3.  **Phase 3: Implementation Delegation**
@@ -54,7 +54,7 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - If any of `strategy`, `business`, `application`, or `technology` is missing, stop implementation routing and send the workflow back to `SystemArchitect` to complete the intention baseline.
     - Also inspect `intentionModel.isIntentModelSufficient`. If it is `false`, treat the design as underspecified even if the four layers nominally exist.
     - Require the architect result to identify concrete software units and task IDs derived from those software units.
-    - For brownfield work, require the architect result to show that each implementation task is anchored either to an existing legacy module chosen for extension or to a justified new software unit when no suitable legacy module exists.
+    - When existing implementation structure was analyzed, require the architect result to show that each implementation task is anchored either to an existing module chosen for extension or to a justified new software unit when no suitable module exists.
     - If the architect result does not reference concrete task IDs, or those tasks are missing software-unit metadata in persisted runtime state, stop and report that the architect handoff is incomplete.
     - Invoke `Implementation` through the native Task tool with those software-unit-scoped task IDs and the architect's summary.
     - Expect a direct result that includes completed tasks, blocked tasks, any clarification dependency that was resolved, work performed against the established intention baseline, and the git commit ID for the implementation batch.
