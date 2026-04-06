@@ -9,7 +9,7 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 
 ## INPUT DATA
 - **Initial Invocation Goal**: The high-level requirement provided by the **human Product Manager** when you are first activated.
-- **Runtime Inputs**: Structured child results returned by the `AI_ProductManager`, `SystemArchitect`, `Implementation`, `QualityAssurance`, `Audit`, and `ReleaseAgent` subagents.
+- **Runtime Inputs**: Structured child results returned by the `ProductManager`, `SystemArchitect`, `Implementation`, `QualityAssurance`, `Audit`, and `ReleaseAgent` subagents.
 
 ## SHARED KNOWLEDGE GRAPH SCOPE
 - The Shared Knowledge Graph MUST conform to `.opencode/schema/archimate3.1/archimate3.1-exchange-model.schema.json`.
@@ -23,19 +23,19 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 1.  **Phase 1: Requirement Triage & PM Delegation**
     - Upon activation, parse the **Initial Invocation Goal**.
     - Evaluate the goal: Is it a raw, ambiguous, unstructured idea (e.g., "build a shopping cart"), or is it already a highly structured, execution-ready formal specification with clear business rules and acceptance criteria?
-    - If the goal is raw or lacks detailed constraints, **do not decompose it yet**. Instead, invoke the `AI_ProductManager` subagent through the native Task tool with the raw goal.
-    - Expect a direct result from `AI_ProductManager` containing at least `status`, `formal_requirement`, and `element_id` for the approved requirement.
+    - If the goal is raw or lacks detailed constraints, **do not decompose it yet**. Instead, invoke the `ProductManager` subagent through the native Task tool with the raw goal.
+    - Expect a direct result from `ProductManager` containing at least `status`, `formal_requirement`, and `element_id` for the approved requirement.
     - Treat this returned formal requirement as the new baseline goal for the project. If the goal was already highly structured from the start, skip this phase and proceed to Phase 2.
 
 2.  **Phase 2: Goal Processing & Design Delegation**
-    - Using the finalized goal (either passed directly from the start or refined by `AI_ProductManager`), check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
+    - Using the finalized goal (either passed directly from the start or refined by `ProductManager`), check runtime state. If it is missing or ambiguous, call `read_project_status(section="overview")` first to bootstrap the repo-local runtime file before planning.
     - Use `decompose_goal` first to create a planning backlog in runtime state based on the formalized goal.
     - Immediately verify persistence with `read_project_status(section="tasks")`.
     - If persisted runtime state still has no tasks after `decompose_goal`, stop and report a runtime-tooling failure. Do not continue to `SystemArchitect` with inferred or remembered planning items.
     - Treat the persisted tasks from `decompose_goal` as planning seeds only. They are not yet valid developer tasks.
     - Then use the native Task tool to invoke `SystemArchitect` with the formalized goal, the full approved requirement, and the exact persisted planning list.
     - If the repository already contains meaningful implementation code, treat the workflow as brownfield by default. Do not insert a new routing phase; instead, require `SystemArchitect` to analyze the legacy structure and decide whether the requirement should extend an existing module or introduce a new software unit.
-    - If the goal came from `AI_ProductManager`, preserve the PM output separately instead of flattening it into a short goal string.
+    - If the goal came from `ProductManager`, preserve the PM output separately instead of flattening it into a short goal string.
     - Pass the architect a concrete payload that includes `goal`, `formal_requirement`, `requirement_element_id`, `task_ids`, and `tasks`. Example shape: `{ "goal": "...", "formal_requirement": "...full approved requirement...", "requirement_element_id": "ELM-REQ-001", "task_ids": ["TASK-001", "TASK-002"], "tasks":[{"id":"TASK-001","title":"...","status":"todo","kind":"planning"}] }`.
     - Expect a direct result that includes a design summary, a software-unit decomposition, created or updated implementation task IDs, explicit confirmation that human architecture review is approved, and for brownfield work a statement of which legacy module(s) were selected or rejected.
     - If the architect reports revision requested or does not confirm approved human review, do not continue to implementation. Route back to `SystemArchitect` until the reviewed design is approved.
