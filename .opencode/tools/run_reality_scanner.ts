@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { detectEnvironmentProfiles } from '../lib/realityScanner/environmentRegistry';
 import { extractStructuralSymbolsForFile, summarizeLanguageSupport } from '../lib/realityScanner/providers';
 import type { ArchitectureReference, LanguageSupport, MappingFileSummary, ScanResult, SemanticTrace, StructuralSymbol } from '../lib/realityScanner/types';
+import { buildTokenVector, cosineSimilarity } from '../lib/realityScanner/semanticUtils';
 import { asJson, collectReadableWorkspaceFiles, safeSnippet } from '../lib/runtimeState';
 import { loadCanonicalKnowledgeGraph } from '../lib/sharedKnowledgeGraph';
 
@@ -284,46 +285,7 @@ function getLangStringText(value: Array<{ value: string }> | undefined): string 
   return (value ?? []).map((item) => item.value).filter(Boolean).join(' ').trim();
 }
 
-function tokenizeSemanticText(value: string): string[] {
-  const normalized = value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
-  return normalized.match(/[\p{L}\p{N}_]+/gu)?.filter((token) => token.length > 1) ?? [];
-}
 
-function buildTokenVector(value: string): Map<string, number> {
-  const vector = new Map<string, number>();
-  for (const token of tokenizeSemanticText(value)) {
-    vector.set(token, (vector.get(token) ?? 0) + 1);
-  }
-  return vector;
-}
-
-function cosineSimilarity(left: Map<string, number>, right: Map<string, number>): number {
-  if (left.size === 0 || right.size === 0) {
-    return 0;
-  }
-
-  let dot = 0;
-  let leftNorm = 0;
-  let rightNorm = 0;
-
-  for (const value of left.values()) {
-    leftNorm += value * value;
-  }
-  for (const value of right.values()) {
-    rightNorm += value * value;
-  }
-
-  const [smaller, larger] = left.size <= right.size ? [left, right] : [right, left];
-  for (const [token, value] of smaller.entries()) {
-    dot += value * (larger.get(token) ?? 0);
-  }
-
-  if (leftNorm === 0 || rightNorm === 0) {
-    return 0;
-  }
-
-  return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm));
-}
 
 function loadSemanticElements(worktree: string): SemanticElement[] {
   const graph = loadCanonicalKnowledgeGraph(worktree);
@@ -492,77 +454,6 @@ export default tool({
       semanticTraces,
       languageSupport,
       detectedEnvironments,
-      mappingFiles,
-      mappingWarnings,
-      sampleFiles: files.slice(0, args.maxFiles ?? 80),
-    };
-
-    return asJson(result);
-  },
-});
-            source: 'comment',
-          });
-        }
-
-        const normalizedFile = normalizeWorkspacePath(relativeFile);
-        for (const entry of mappingEntries) {
-          if (entry.paths.includes(normalizedFile)) {
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: 1,
-              snippet: safeSnippet(`Mapped by ${entry.sourceFile} to ${normalizedFile}`),
-              source: 'mapping-path',
-              mappingFile: entry.sourceFile,
-            });
-          }
-
-          for (const glob of entry.globs) {
-            if (!globToRegex(glob).test(normalizedFile)) {
-              continue;
-            }
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: 1,
-              snippet: safeSnippet(`Mapped by ${entry.sourceFile} glob ${glob}`),
-              source: 'mapping-glob',
-              mappingFile: entry.sourceFile,
-            });
-          }
-
-          if (entry.symbols.length === 0) {
-            continue;
-          }
-
-          for (const symbol of fileSymbols) {
-            if (!entry.symbols.includes(symbol.name)) {
-              continue;
-            }
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: symbol.line,
-              snippet: symbol.snippet,
-              source: 'mapping-symbol',
-              symbolName: symbol.name,
-              mappingFile: entry.sourceFile,
-            });
-          }
-        }
-      } catch {
-        // Ignore unreadable files and continue scanning.
-      }
-    }
-
-    const semanticTraces = buildSemanticTraces(structuralSymbols, semanticElements);
-
-    const result: ScanResult = {
-      fileCount: files.length,
-      extensionCounts,
-      architectureReferences: architectureReferences.slice(0, MAX_ARCHITECTURE_REFERENCES),
-      structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
-      semanticTraces,
       mappingFiles,
       mappingWarnings,
       sampleFiles: files.slice(0, args.maxFiles ?? 80),

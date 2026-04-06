@@ -2,60 +2,38 @@ import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { extractStructuralSymbolsForFile } from '../lib/realityScanner/providers';
+import { buildTokenVector, cosineSimilarity } from '../lib/realityScanner/semanticUtils';
 import { asJson, collectReadableWorkspaceFiles, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
 
-const STOP_WORDS = new Set([
-  'about',
-  'after',
-  'agent',
-  'based',
-  'before',
-  'build',
-  'code',
-  'create',
-  'from',
-  'have',
-  'implementation',
-  'into',
-  'legacy',
-  'module',
-  'project',
-  'requirement',
-  'should',
-  'software',
-  'system',
-  'that',
-  'their',
-  'this',
-  'through',
-  'using',
-  'with',
-]);
 const MAX_FILE_BYTES = 200_000;
+const ARCHITECTURE_ID_BONUS = 30;
+const OTHER_ARCHITECTURE_ID_CAP = 3;
+const MAX_TOP_SYMBOLS_PER_MODULE = 5;
 
-type CandidateFile = {
+type ScoredSymbol = {
+  name: string;
+  kind: string;
   file: string;
+  line: number;
+  signature: string;
   score: number;
-  reasons: string[];
+};
+
+type FileAggregate = {
+  file: string;
+  symbolScore: number;
   architectureIds: string[];
+  architectureIdBonus: number;
+  symbols: ScoredSymbol[];
 };
 
-type CandidateAggregate = {
+type ModuleAggregate = {
   modulePath: string;
-  score: number;
-  matchedTerms: Set<string>;
-  reasons: Set<string>;
+  totalScore: number;
   architectureIds: Set<string>;
-  files: CandidateFile[];
+  files: Map<string, FileAggregate>;
 };
-
-function tokenize(value: string): string[] {
-  return value
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 4 && !STOP_WORDS.has(token));
-}
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
@@ -91,27 +69,42 @@ function collectArchitectureIds(content: string): string[] {
   );
 }
 
-function upsertCandidate(store: Map<string, CandidateAggregate>, modulePath: string): CandidateAggregate {
+function upsertModule(store: Map<string, ModuleAggregate>, modulePath: string): ModuleAggregate {
   const existing = store.get(modulePath);
   if (existing) {
     return existing;
   }
 
-  const created: CandidateAggregate = {
+  const created: ModuleAggregate = {
     modulePath,
-    score: 0,
-    matchedTerms: new Set<string>(),
-    reasons: new Set<string>(),
+    totalScore: 0,
     architectureIds: new Set<string>(),
-    files: [],
+    files: new Map<string, FileAggregate>(),
   };
   store.set(modulePath, created);
   return created;
 }
 
+function upsertFile(module: ModuleAggregate, relativeFile: string): FileAggregate {
+  const existing = module.files.get(relativeFile);
+  if (existing) {
+    return existing;
+  }
+
+  const created: FileAggregate = {
+    file: relativeFile,
+    symbolScore: 0,
+    architectureIds: [],
+    architectureIdBonus: 0,
+    symbols: [],
+  };
+  module.files.set(relativeFile, created);
+  return created;
+}
+
 export default tool({
   description:
-    'Analyze a brownfield repository and rank the best-fit existing modules, seams, or packages for implementing a requirement before software-unit decomposition using readable-text scanning and ArchitectureID evidence.',
+    'Analyze a brownfield repository and rank the best-fit existing modules using AST structural symbols, semantic token-vector similarity, and ArchitectureID evidence. Returns scored candidate modules with their top matching functions and classes.',
   args: {
     goal: tool.schema.string().optional().describe('High-level goal or requirement title.'),
     formalRequirement: tool.schema.string().optional().describe('Approved formal requirement text, if available.'),
@@ -125,11 +118,14 @@ export default tool({
     const requirement = args.formalRequirement?.trim() || '';
     const softwareUnitTitle = args.softwareUnitTitle?.trim() || '';
     const architectureElementId = args.architectureElementId?.trim() || '';
-    const queryTerms = unique(tokenize([goal, requirement, softwareUnitTitle, architectureElementId].filter(Boolean).join(' '))).slice(0, 24);
-    const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
 
-    const candidates = new Map<string, CandidateAggregate>();
+    const requirementText = [goal, requirement, softwareUnitTitle, architectureElementId].filter(Boolean).join(' ');
+    const requirementVector = buildTokenVector(requirementText);
+
+    const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
+    const modules = new Map<string, ModuleAggregate>();
     let analyzedFiles = 0;
+    let totalSymbolsScanned = 0;
 
     for (const relativeFile of files) {
       const absolute = path.join(context.worktree, relativeFile);
@@ -137,100 +133,119 @@ export default tool({
         const content = fs.readFileSync(absolute, 'utf8');
         analyzedFiles += 1;
 
-        const pathLower = relativeFile.toLowerCase();
-        const contentLower = content.toLowerCase();
         const architectureIds = collectArchitectureIds(content);
-        const reasons: string[] = [];
-        const matchedTerms: string[] = [];
-        let score = 0;
+        const symbols = extractStructuralSymbolsForFile(relativeFile, content, context.worktree);
+        totalSymbolsScanned += symbols.length;
 
-        for (const term of queryTerms) {
-          if (pathLower.includes(term)) {
-            score += 6;
-            matchedTerms.push(term);
-            reasons.push(`path matches term: ${term}`);
-            continue;
-          }
-
-          if (contentLower.includes(term)) {
-            score += 2;
-            matchedTerms.push(term);
-            reasons.push(`content matches term: ${term}`);
+        // Score each symbol against the requirement vector.
+        const scoredSymbols: ScoredSymbol[] = [];
+        for (const symbol of symbols) {
+          const symbolText = [symbol.name, symbol.signature, symbol.snippet].join(' ');
+          const symbolVector = buildTokenVector(symbolText);
+          const similarity = cosineSimilarity(requirementVector, symbolVector);
+          if (similarity > 0) {
+            scoredSymbols.push({
+              name: symbol.name,
+              kind: symbol.kind,
+              file: symbol.file,
+              line: symbol.line,
+              signature: symbol.signature,
+              score: Number(similarity.toFixed(4)),
+            });
           }
         }
 
+        // Compute file-level symbol score as the sum of its symbol similarities.
+        const fileSymbolScore = scoredSymbols.reduce((sum, s) => sum + s.score, 0);
+
+        // Compute architecture ID bonus.
+        let architectureIdBonus = 0;
         if (architectureElementId && architectureIds.includes(architectureElementId)) {
-          score += 30;
-          reasons.push(`contains exact @ArchitectureID: ${architectureElementId}`);
+          architectureIdBonus = ARCHITECTURE_ID_BONUS;
         } else if (architectureIds.length > 0) {
-          score += Math.min(architectureIds.length, 3);
-          reasons.push(`contains ArchitectureID markers: ${architectureIds.join(', ')}`);
+          architectureIdBonus = Math.min(architectureIds.length, OTHER_ARCHITECTURE_ID_CAP);
         }
 
-        if (score <= 0) {
+        const fileTotal = fileSymbolScore + architectureIdBonus;
+        if (fileTotal <= 0 && scoredSymbols.length === 0) {
           continue;
         }
 
         const modulePath = inferModulePath(relativeFile);
-        const candidate = upsertCandidate(candidates, modulePath);
-        candidate.score += score;
-        for (const term of matchedTerms) {
-          candidate.matchedTerms.add(term);
+        const module = upsertModule(modules, modulePath);
+        const fileAgg = upsertFile(module, relativeFile);
+        fileAgg.symbolScore = fileSymbolScore;
+        fileAgg.architectureIds = architectureIds;
+        fileAgg.architectureIdBonus = architectureIdBonus;
+        fileAgg.symbols = scoredSymbols.sort((a, b) => b.score - a.score);
+
+        module.totalScore += fileTotal;
+        for (const id of architectureIds) {
+          module.architectureIds.add(id);
         }
-        for (const reason of reasons) {
-          candidate.reasons.add(reason);
-        }
-        for (const architectureId of architectureIds) {
-          candidate.architectureIds.add(architectureId);
-        }
-        candidate.files.push({
-          file: relativeFile,
-          score,
-          reasons: unique(reasons).slice(0, 4),
-          architectureIds,
-        });
       } catch {
         // Ignore unreadable files and continue.
       }
     }
 
     const maxCandidates = args.maxCandidates ?? 5;
-    const ranked = [...candidates.values()]
-      .sort((left, right) => right.score - left.score || left.modulePath.localeCompare(right.modulePath))
+    const ranked = [...modules.values()]
+      .sort((left, right) => right.totalScore - left.totalScore || left.modulePath.localeCompare(right.modulePath))
       .slice(0, maxCandidates)
-      .map((candidate) => ({
-        modulePath: candidate.modulePath,
-        score: candidate.score,
-        matchedTerms: [...candidate.matchedTerms],
-        architectureIds: [...candidate.architectureIds],
-        reasons: [...candidate.reasons].slice(0, 6),
-        representativeFiles: candidate.files
-          .sort((left, right) => right.score - left.score || left.file.localeCompare(right.file))
-          .slice(0, 3)
-          .map((file) => ({
-            file: file.file,
-            score: file.score,
-            architectureIds: file.architectureIds,
-            reasons: file.reasons,
+      .map((module) => {
+        // Collect and rank all symbols across files in this module.
+        const allSymbols: ScoredSymbol[] = [];
+        for (const fileAgg of module.files.values()) {
+          allSymbols.push(...fileAgg.symbols);
+        }
+        allSymbols.sort((a, b) => b.score - a.score);
+
+        const sortedFiles = [...module.files.values()]
+          .sort((a, b) => (b.symbolScore + b.architectureIdBonus) - (a.symbolScore + a.architectureIdBonus) || a.file.localeCompare(b.file))
+          .slice(0, 3);
+
+        return {
+          modulePath: module.modulePath,
+          totalScore: Number(module.totalScore.toFixed(4)),
+          architectureIds: [...module.architectureIds],
+          topSymbols: allSymbols.slice(0, MAX_TOP_SYMBOLS_PER_MODULE).map((s) => ({
+            name: s.name,
+            kind: s.kind,
+            file: s.file,
+            line: s.line,
+            signature: safeSnippet(s.signature),
+            score: s.score,
           })),
-      }));
+          representativeFiles: sortedFiles.map((f) => ({
+            file: f.file,
+            symbolScore: Number(f.symbolScore.toFixed(4)),
+            architectureIdBonus: f.architectureIdBonus,
+            architectureIds: f.architectureIds,
+            topSymbols: f.symbols.slice(0, 3).map((s) => ({
+              name: s.name,
+              kind: s.kind,
+              score: s.score,
+            })),
+          })),
+        };
+      });
 
     return asJson({
       goal,
       architectureElementId: architectureElementId || null,
-      queryTerms,
       scannedFiles: files.length,
       analyzedFiles,
+      totalSymbolsScanned,
       candidateModules: ranked,
-      nextStep:
-        ranked.length > 0
-          ? 'Read the top candidate modules and decide whether the requirement should extend an existing module, split a legacy seam, or introduce a new software unit.'
-          : 'No strong legacy module candidates were found. Read the most relevant source areas manually before deciding whether a new software unit is justified.',
       summary: safeSnippet(
         ranked.length > 0
-          ? `Top legacy candidate: ${ranked[0]?.modulePath} with score ${ranked[0]?.score}.`
-          : 'No strong legacy candidate modules were identified by heuristic analysis.'
+          ? `Top legacy candidate: ${ranked[0]?.modulePath} (score ${ranked[0]?.totalScore}). Top symbol: ${ranked[0]?.topSymbols[0]?.name ?? 'none'} (${ranked[0]?.topSymbols[0]?.kind ?? ''}).`
+          : 'No strong legacy candidate modules were identified by semantic analysis.'
       ),
+      nextStep:
+        ranked.length > 0
+          ? 'Review the topSymbols in each candidate module. Determine whether the requirement should extend existing functions/classes, split a legacy seam, or introduce a new software unit.'
+          : 'No strong legacy module candidates were found. Read the most relevant source areas manually before deciding whether a new software unit is justified.',
     });
   },
 });
