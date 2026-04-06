@@ -127,15 +127,30 @@ const SUPPORTED_ELEMENT_TYPES = [
   'Equipment',
   'Facility',
   'DistributionNetwork',
+  'Material',
+  'Stakeholder',
+  'Driver',
+  'Assessment',
   'Goal',
   'Outcome',
+  'Principle',
+  'Constraint',
+  'Meaning',
+  'Value',
   'Resource',
   'Capability',
   'CourseOfAction',
   'ValueStream',
   'Requirement',
   'WorkPackage',
+  'Deliverable',
+  'ImplementationEvent',
+  'Plateau',
   'Gap',
+  'Grouping',
+  'Location',
+  'AndJunction',
+  'OrJunction',
 ] as const;
 
 const SUPPORTED_RELATIONSHIP_TYPES = [
@@ -194,15 +209,30 @@ const ELEMENT_DOCUMENTATION_GUIDANCE: Record<SupportedElementType, string> = {
   Equipment: 'Describe the element as equipment: a physical machine or tooling resource from the technology/physical domain that is used in operation or implementation.',
   Facility: 'Describe the element as a facility: a physical structure or environment that houses or supports technology and operational resources.',
   DistributionNetwork: 'Describe the element as a distribution network: a physical network used to transport energy, materials, or other physical resources between locations.',
+  Material: 'Describe the element as a material: a tangible physical matter or substance used, transformed, or transported in the architecture context.',
+  Stakeholder: 'Describe the element as a stakeholder: an individual or group with interests, concerns, or influence over the architecture outcomes.',
+  Driver: 'Describe the element as a driver: an internal or external condition that motivates change, goals, or architectural response.',
+  Assessment: 'Describe the element as an assessment: an evaluation of some driver, state, or outcome that informs architectural decisions.',
   Goal: 'Describe the element as a goal: a high-level end state or outcome that stakeholders intend to achieve.',
   Outcome: 'Describe the element as an outcome: an end result achieved by behavior or capabilities for stakeholders.',
+  Principle: 'Describe the element as a principle: a normative property or rule that guides design choices, behavior, and decision making in the architecture.',
+  Constraint: 'Describe the element as a constraint: a restriction or limitation that the architecture and implementation must respect.',
+  Meaning: 'Describe the element as a meaning: the knowledge, significance, or interpretation carried by a business object or representation.',
+  Value: 'Describe the element as a value: the relative worth, utility, or benefit delivered to a stakeholder.',
   Resource: 'Describe the element as a resource: an asset owned or controlled and used to realize capabilities.',
   Capability: 'Describe the element as a capability: an ability that an organization, person, or system possesses to achieve an outcome.',
   CourseOfAction: 'Describe the element as a course of action: an approach, directive, or plan for configuring capabilities and resources.',
   ValueStream: 'Describe the element as a value stream: a sequence of activities that creates value for a stakeholder.',
   Requirement: 'Describe the element as a requirement: a statement of need that must be realized by the architecture or implementation.',
   WorkPackage: 'Describe the element as a work package: a defined set of actions or deliverables used to implement change.',
+  Deliverable: 'Describe the element as a deliverable: a precisely defined outcome, package, or result produced by a work package.',
+  ImplementationEvent: 'Describe the element as an implementation event: a state change or milestone occurring during implementation or migration.',
+  Plateau: 'Describe the element as a plateau: a relatively stable state of the architecture that exists during transition or at a target stage.',
   Gap: 'Describe the element as a gap: a statement of missing capability, structure, or behavior between baseline and target architecture.',
+  Grouping: 'Describe the element as a grouping: a logical aggregation used to collect or organize related architecture concepts.',
+  Location: 'Describe the element as a location: a conceptual or physical place where behavior, structure, or resources are situated.',
+  AndJunction: 'Describe the element as an and junction: a junction requiring all incoming or outgoing paths to apply together in the modeled logic.',
+  OrJunction: 'Describe the element as an or junction: a junction allowing one or more alternative incoming or outgoing paths in the modeled logic.',
 };
 
 const RELATIONSHIP_DOCUMENTATION_GUIDANCE: Record<SupportedRelationshipType, string> = {
@@ -400,6 +430,11 @@ function toDocumentation(value?: string): LangString[] | undefined {
   return [{ value: value.trim() }];
 }
 
+function getFirstLangStringValue(values?: LangString[]): string | undefined {
+  const value = values?.map((item) => item.value).find((item) => item?.trim());
+  return value?.trim();
+}
+
 function toOptionalLabel(value?: string): LangString[] | undefined {
   if (!value || !value.trim()) {
     return undefined;
@@ -501,6 +536,82 @@ function createBaselineRelationshipDocumentation(type: string, context: string, 
   return buildBaselineDocumentation(getArchiMateRelationshipDocumentationGuidance(type), context, detail);
 }
 
+function isArchitectManaged(extensions?: Record<string, unknown>): boolean {
+  const ai4pb = (extensions?.ai4pb ?? {}) as Record<string, unknown>;
+  return ai4pb.managedBy === 'system-architect';
+}
+
+function needsDocumentationRepair(title: string | undefined, documentation: string | undefined): boolean {
+  const normalizedTitle = title?.trim().toLowerCase() ?? '';
+  const normalizedDocumentation = documentation?.trim() ?? '';
+
+  if (!normalizedDocumentation) {
+    return true;
+  }
+
+  if (normalizedDocumentation.length < 40) {
+    return true;
+  }
+
+  return Boolean(normalizedTitle && normalizedDocumentation.toLowerCase() === normalizedTitle);
+}
+
+function repairSystemArchitectManagedDocumentation(graph: SharedKnowledgeGraph): void {
+  const elements = graph.elements?.element ?? [];
+  const relationships = graph.relationships?.relationship ?? [];
+
+  for (const element of elements) {
+    element.type = normalizeElementType(element.type);
+
+    if (!isArchitectManaged(element.extensions)) {
+      continue;
+    }
+
+    const title = getFirstLangStringValue(element.name) ?? element.identifier;
+    const existingDocumentation = getFirstLangStringValue(element.documentation);
+
+    if (!needsDocumentationRepair(title, existingDocumentation)) {
+      continue;
+    }
+
+    const detail = existingDocumentation && existingDocumentation.toLowerCase() !== title.toLowerCase() ? existingDocumentation : undefined;
+    element.documentation = toDocumentation(
+      createBaselineElementDocumentation(
+        element.type,
+        `In this architecture, ${title} defines, constrains, or supports traceable solution intent within the managed model`,
+        detail
+      )
+    );
+  }
+
+  for (const relationship of relationships) {
+    relationship.type = normalizeRelationshipType(relationship.type);
+
+    if (!isArchitectManaged(relationship.extensions)) {
+      continue;
+    }
+
+    const title = getFirstLangStringValue(relationship.name) ?? relationship.identifier;
+    const existingDocumentation = getFirstLangStringValue(relationship.documentation);
+
+    if (!needsDocumentationRepair(title, existingDocumentation)) {
+      continue;
+    }
+
+    const sourceName = getFirstLangStringValue(findElement(graph, relationship.source)?.name) ?? relationship.source;
+    const targetName = getFirstLangStringValue(findElement(graph, relationship.target)?.name) ?? relationship.target;
+    const detail = existingDocumentation && existingDocumentation.toLowerCase() !== title.toLowerCase() ? existingDocumentation : undefined;
+
+    relationship.documentation = toDocumentation(
+      createBaselineRelationshipDocumentation(
+        relationship.type,
+        `In this architecture, ${sourceName} connects to ${targetName} through a traceable ${relationship.type} relation`,
+        detail
+      )
+    );
+  }
+}
+
 export function createDefaultSharedKnowledgeGraph(): SharedKnowledgeGraph {
   return {
     identifier: 'ai4pb-shared-knowledge-graph',
@@ -543,6 +654,7 @@ export function saveCanonicalKnowledgeGraph(worktree: string, graph: SharedKnowl
   const graphPath = getCanonicalKnowledgeGraphPath(worktree);
   fs.mkdirSync(path.dirname(graphPath), { recursive: true });
   cleanupEmptySections(graph);
+  repairSystemArchitectManagedDocumentation(graph);
   validateCanonicalKnowledgeGraph(graph);
   fs.writeFileSync(graphPath, JSON.stringify(graph, null, 2), 'utf8');
 }
@@ -570,25 +682,65 @@ export function normalizeElementType(value?: string): string {
     ArchiMate_BusinessActor: 'BusinessActor',
     ArchiMate_BusinessRole: 'BusinessRole',
     ArchiMate_BusinessCollaboration: 'BusinessCollaboration',
+    ArchiMate_BusinessInterface: 'BusinessInterface',
     ArchiMate_BusinessProcess: 'BusinessProcess',
     ArchiMate_BusinessFunction: 'BusinessFunction',
+    ArchiMate_BusinessInteraction: 'BusinessInteraction',
+    ArchiMate_BusinessEvent: 'BusinessEvent',
     ArchiMate_BusinessService: 'BusinessService',
     ArchiMate_BusinessObject: 'BusinessObject',
+    ArchiMate_Contract: 'Contract',
+    ArchiMate_Representation: 'Representation',
+    ArchiMate_Product: 'Product',
     ArchiMate_ApplicationComponent: 'ApplicationComponent',
+    ArchiMate_ApplicationCollaboration: 'ApplicationCollaboration',
+    ArchiMate_ApplicationInterface: 'ApplicationInterface',
+    ArchiMate_ApplicationFunction: 'ApplicationFunction',
+    ArchiMate_ApplicationInteraction: 'ApplicationInteraction',
     ArchiMate_ApplicationService: 'ApplicationService',
     ArchiMate_ApplicationProcess: 'ApplicationProcess',
+    ArchiMate_ApplicationEvent: 'ApplicationEvent',
     ArchiMate_DataObject: 'DataObject',
     ArchiMate_Node: 'Node',
+    ArchiMate_Device: 'Device',
+    ArchiMate_SystemSoftware: 'SystemSoftware',
+    ArchiMate_TechnologyCollaboration: 'TechnologyCollaboration',
+    ArchiMate_TechnologyInterface: 'TechnologyInterface',
+    ArchiMate_Path: 'Path',
+    ArchiMate_CommunicationNetwork: 'CommunicationNetwork',
+    ArchiMate_TechnologyFunction: 'TechnologyFunction',
+    ArchiMate_TechnologyProcess: 'TechnologyProcess',
+    ArchiMate_TechnologyInteraction: 'TechnologyInteraction',
+    ArchiMate_TechnologyEvent: 'TechnologyEvent',
+    ArchiMate_TechnologyService: 'TechnologyService',
     ArchiMate_Artifact: 'Artifact',
+    ArchiMate_Equipment: 'Equipment',
+    ArchiMate_Facility: 'Facility',
+    ArchiMate_DistributionNetwork: 'DistributionNetwork',
+    ArchiMate_Material: 'Material',
+    ArchiMate_Stakeholder: 'Stakeholder',
+    ArchiMate_Driver: 'Driver',
+    ArchiMate_Assessment: 'Assessment',
     ArchiMate_Goal: 'Goal',
     ArchiMate_Outcome: 'Outcome',
+    ArchiMate_Principle: 'Principle',
+    ArchiMate_Constraint: 'Constraint',
+    ArchiMate_Meaning: 'Meaning',
+    ArchiMate_Value: 'Value',
     ArchiMate_Resource: 'Resource',
     ArchiMate_Capability: 'Capability',
     ArchiMate_CourseOfAction: 'CourseOfAction',
     ArchiMate_ValueStream: 'ValueStream',
     ArchiMate_Requirement: 'Requirement',
     ArchiMate_WorkPackage: 'WorkPackage',
+    ArchiMate_Deliverable: 'Deliverable',
+    ArchiMate_ImplementationEvent: 'ImplementationEvent',
+    ArchiMate_Plateau: 'Plateau',
     ArchiMate_Gap: 'Gap',
+    ArchiMate_Grouping: 'Grouping',
+    ArchiMate_Location: 'Location',
+    ArchiMate_AndJunction: 'AndJunction',
+    ArchiMate_OrJunction: 'OrJunction',
   };
   return aliases[raw] ?? raw;
 }
