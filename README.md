@@ -1,400 +1,148 @@
-﻿# AI4PB Orchestrator
-
-AI4PB Orchestrator 是一个 VS Code 扩展，用来把企业架构模型、AI 编码执行、设计审计和迭代复盘串成一条可重复的交付流程。
-
-它面向的不是“随便让 AI 帮我写点代码”的场景，而是“让 AI 在架构约束下参与真实项目交付”的场景。
-
-## 这个项目解决什么问题
-
-很多团队开始用 AI 写代码后，会很快遇到几个问题：
-
-- AI 不知道系统设计边界，只能根据局部上下文生成代码
-- 架构图、任务、缺陷、代码和复盘分散在不同工具里
-- 代码可能能跑，但不一定符合原始设计职责
-- 迭代结束后，缺少可追踪的审计和总结产物
-
-AI4PB 的解决方式是：
-
-1. 在 Sparx EA 中维护架构、Task、Issue。
-2. 导出机器可读的架构上下文和任务文档。
-3. 在 VS Code 中通过工作流面板驱动 Coding Agent 执行。
-4. 在每轮 Sprint 中，按 规划 → 启动 → 执行 → 修复 → 审计 → 收尾 → 总结 → 汇报 的节奏推进，所有阶段均在 AI4PB 侧边栏一键触发。
-
-一句话概括：
-
-> 不是让 AI 自由发挥，而是让 AI 在你的架构和流程里工作。
-
-## 你可以用它做什么
-
-- 从 EA 模型导出当前迭代的 AI 输入
-- 让 Copilot/Opencode 基于架构任务启动开发，而不是靠临时提示词
-- 为具体任务生成执行说明并进入编码
-- 根据 Issue 继续多轮修复
-- 审计代码与架构是否偏离
-- 自动沉淀任务清单、审计报告、提交说明和周报
-
-## 用这个项目的收益
-
-- 更少跑偏：AI 输入来自架构和任务，不是零散聊天上下文
-- 更易协作：架构师、开发、测试、管理看到的是同一条流程
-- 更可追踪：从 Task 到代码，再到审计和复盘都有对应产物
-- 更易治理：每轮迭代都可以检查代码是否仍符合设计
-- 更快复用：常见 SCRUM 阶段已经封装成现成动作
-
-## 它是怎么工作的
-
-AI4PB 把工作分成两端：
-
-- 架构端：在 EA 中建模、挂载 Task/Issue、导出上下文
-- 执行端：在 VS Code 中驱动 AI 按流程执行（扩展同时兼容 GitHub Copilot 和 OpenCode，可在 `.aicodingconfig` 中按需切换，详见下方"快速开始"章节）
-
-核心闭环如下：
-
-1. 在 EA 中维护架构和任务
-2. 从 EA 导出 `design/KG/SystemArchitecture.json`
-3. 在 AI4PB 侧边栏点击 **计划与汇报流** -> **提取任务**，自动生成任务清单（`design/tasks/taskandissues_for_LLM.md`）
-4. 按 SCRUM 节奏完成后续迭代阶段：Init（启动）→ Task Support（执行）→ Iteration Issues（问题反馈与修复）
-5. 执行 Design Audit 做架构对齐检查
-6. 完成 Wrap-up、Iteration Summary、Weekly Report，收尾本轮迭代
-
-## 快速开始
-
-### 1. 准备环境
-
-- Sparx Enterprise Architect 15+
-- VS Code 1.95+
-- GitHub Copilot
-- AI4PB Orchestrator 扩展
-- OpenCode（可选，用于替代或补充 Copilot 引擎）：
-  - 在 WSL 中安装：`npm install -g opencode-ai`
-  - 在 WSL 中启动服务：`opencode serve`（默认监听 `http://127.0.0.1:4096`）
-  - 在项目的 `.aicodingconfig` 中配置地址与路由策略，示例如下：
-
-```json
-{
-  "AGENT_ROUTER_CONFIG": {
-    "default_agent": "opencode",
-    "opencode": {
-      "transport": "server",
-      "executionHost": "wsl",
-      "server": {
-        "baseUrl": "http://127.0.0.1:4096"
-      }
-    }
-  }
-}
-```
-
-### 2. 安装扩展
-
-如果你是使用者：
-
-- 从 Marketplace 安装，或
-- 本地构建 VSIX 后安装
-
-如果你是维护者，在仓库根目录执行：
-
-```bash
-npm install
-npm run compile
-npm run release:vsix:nobump
-```
-
-### 3. 初始化工作区
-
-打开 VS Code 后：
-
-1. 打开 AI4PB 侧边栏
-2. 在侧边栏中点击 **初始化 EA 模板** 按钮
-3. 在工作区中生成模板和流程基础文件
-
-### 4. 在 EA 中准备 AI 输入
-
-在架构元素上挂载 Task / Issue，建议遵循：
-
-- `Status = Active`
-- `Assigned To = llm`
-- `Name` 写成可执行任务说明
-
-然后从 EA 导出：
-
-- `design/KG/SystemArchitecture.json`
-
-任务清单（`design/tasks/taskandissues_for_LLM.md`）由扩展在执行 **提取任务** 步骤时自动生成，无需从 EA 手动导出。
-
-### 5. 在 VS Code 中驱动迭代
-
-当前 AI4PB 侧边栏中的主操作按钮如下，按钮名称与界面保持一致：
-
-| 区域 | 当前侧边栏动作名称 | 说明 |
-| -------- | ----------------------------------- | --------------------- |
-| 环境配置 | EA模板初始化 | 初始化 EA 模板与基础工作区结构 |
-| 环境配置 | 初始化AICodingAgent配置 | 将扩展内置的 `.github`、`.opencode`、`skills`、`.agents`、`.claude`、`rules` 初始化到当前工作区 |
-| 环境配置 | EA导出参数配置 | 配置 `.aicodingconfig` / `.aicodingconfig.json` 中的导出与维护参数 |
-| 环境配置 | 参数查询 | 查看当前导出参数摘要 |
-| 计划与汇报流程 | 提取任务 | 从 `design/KG/SystemArchitecture.json` 中提取维护任务并生成任务反馈输入 |
-| 计划与汇报流程 | 待办梳理 | 生成当前迭代待办清单 |
-| 计划与汇报流程 | 周报输出 | 生成管理层周报 |
-| 执行支持流程 | 执行支持 | 为任务生成执行说明并进入实现支持 |
-| SCRUM敏捷开发流程 | 待办梳理 | 回看当前 Sprint 的优先级与待办范围 |
-| SCRUM敏捷开发流程 | 迭代启动 | 为本轮迭代建立上下文、范围和目标 |
-| SCRUM敏捷开发流程 | 问题反馈 | 打开问题反馈编辑页，回填 ResolverNotes 并确认写入反馈 |
-| SCRUM敏捷开发流程 | 问题处理 | 根据 Issue 记录继续多轮缺陷修复 |
-| SCRUM敏捷开发流程 | 迭代收尾 | 对本轮交付范围做收尾检查 |
-| SCRUM敏捷开发流程 | 提交总结 | 生成提交总结与 Git Commit Message |
-| 设计审计流程 | 设计审计 | 执行代码与架构对齐审计并输出 `design/temp/audit.md` |
-
-**切换 AI 引擎（Copilot / OpenCode）**
-
-扩展默认使用 GitHub Copilot。若需切换为 OpenCode，在项目根目录 `.aicodingconfig` 中修改：
-
-```json
-{
-  "AGENT_ROUTER_CONFIG": {
-    "default_agent": "opencode"
-  }
-}
-```
-
-也可仅对特定阶段路由到 OpenCode，其余阶段保持 Copilot：
-
-```json
-{
-  "AGENT_ROUTER_CONFIG": {
-    "default_agent": "copilot",
-    "task_specific_agents": {
-      "task-list": "opencode"
-    }
-  }
-}
-```
-
-### 6. OpenCode 集成包与传输模式
-
-AI4PB 并不是只“调用一个外部 OpenCode 命令”这么简单。扩展本身内置了一套 `.opencode` 资产包，用于把 OpenCode 作为可初始化、可复制、可治理的执行环境接入工作区。
-
-这套内置资产至少包括：
-
-- OpenCode 插件包骨架与入口（`.opencode/package.json`、`.opencode/index.ts`）
-- ECC Hook 插件实现（`.opencode/plugins/*`）
-- 自定义工具包（`.opencode/tools/*`），包含 `run-tests`、`check-coverage`、`security-audit`、`format-code`、`lint-check`、`git-summary`
-- 与 OpenCode 对齐的技能镜像与配置文件（`.opencode/skills/*`、`.opencode/opencode.json`）
-
-扩展当前支持两种 OpenCode 传输模式，统一通过 `.aicodingconfig` 的 `AGENT_ROUTER_CONFIG.opencode` 配置：
-
-- `transport = "cli"`：直接调用本机或 WSL 中的 `opencode` 命令，适合本地命令式执行
-- `transport = "server"`：通过 `opencode serve` 暴露的 HTTP 服务进行会话创建、事件订阅与流式响应，适合常驻服务模式
-
-此外，扩展会根据 `executionHost`、`wslDistribution`、`server.directory`、`server.workspace` 等配置自动处理 Windows 与 WSL 路径归一化，保证 CLI 模式和 Server 模式都能在同一工作区路由规则下工作。
-
-## 核心使用方式：AI4PB 侧边栏
-
-安装扩展后，VS Code 左侧活动栏出现 **AI4PB DEV** 图标，点击后打开工作流面板。
-
-面板按 SCRUM 阶段排列，提供从架构初始化到迭代复盘的全套操作入口：
-
-- 点击任意阶段按钮，扩展自动将架构上下文和专属指令注入 AI 会话
-- 使用 GitHub Copilot 时：自动开启新 Chat 对话，架构 JSON 和角色 Prompt 随之注入
-- 使用 OpenCode 时：既可以走本地 CLI，也可以走 `opencode serve` 的 Server 模式；两种模式都会由扩展统一接管并在面板内展示执行反馈
-
-不需要手动复制 Prompt，不需要记忆命令，每个迭代阶段都有一键操作入口。
-
-## 主要产物
-
-业务交付物：
-
-- `implementation/task-list.md`
-- `implementation/taskhelpinfos/*.md`
-- `implementation/reports/*.md`
-
-过程工件：
-
-- `design/temp/audit.md`
-- `debug/iteration-commit-message.md`
-
-这意味着你得到的不只是代码，还有设计校验、过程记录和管理沟通材料。
-
-## 适合谁
-
-- 已经有 EA / ArchiMate 建模基础的团队
-- 想把架构设计和 AI 编码真正打通的团队
-- 需要可审计、可复盘、可追踪流程的企业项目
-- 希望把 Task / Issue 直接转成 AI 执行输入的团队
-
-如果你只是想要一个通用聊天型代码助手，这个项目会偏重。
-如果你要的是“架构驱动的 AI 研发流程”，这个项目就是为这个场景设计的。
-
-## 项目结构一览
-
-- `src/`：VS Code 扩展源码
-- `media/`：工作流 webview 前端资源
-- `skills/`：AI4PB Prompt Tools 和技能模板
-- `script/EA-jsscript/`：EA 导出与辅助脚本
-- `design/`：架构上下文、审计和设计过程文件
-- `implementation/`：任务说明、报告等交付物
-- `.opencode/`：内置 OpenCode 插件、工具包、技能镜像与运行配置
-
-## 深入文档
-
-- [快速上手总览](docs/getting-started/README.md)
-- [完整上手指南](docs/getting-started/00-getting-started-overview.md)
-- [环境准备](docs/getting-started/02-prerequisites.md)
-- [EA 建模与导出](docs/getting-started/03-modeling-and-export.md)
-- [扩展与工作流说明](docs/getting-started/04-orchestrator-extension.md)
-- [SCRUM 执行流程](docs/getting-started/05-scrum-workflow.md)
-- [最佳实践](docs/getting-started/06-best-practices.md)
-
-## 开发扩展
-
-仓库根目录常用命令：
-
-```bash
-npm install
-npm run compile
-npx tsc --noEmit
-npm run watch
-```
-
-构建 VSIX：
-
-```bash
-npm run release:vsix
-```
-
-说明：当前仓库没有配置正式的自动化测试套件，日常验证以 TypeScript 编译、手动检查扩展行为和流程产物为主。
-
-## 总结
-
-如果你要解决的是“怎么让 AI 更快写几段代码”，这不是最轻量的方案。
-
-如果你要解决的是：
-
-- 如何让 AI 基于架构执行
-- 如何把任务、缺陷、代码、审计、总结串成闭环
-- 如何让企业项目中的 AI 编码过程更可控、更可追踪
-
-那么 AI4PB Orchestrator 提供的是一套完整且可执行的答案。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+﻿# 🚀 AI4PB: Model Driven AI for Project Building
+
+**AI4PB** 是一个基于 **OpenCode 框架** 构建的企业级多智能体（Multi-Agent System, MAS）软件工程平台。
+
+传统 AI 编程助手依赖脆弱的“自然语言上下文”，极易在复杂项目中产生“架构幻觉”、代码腐化以及意图脱节。**AI4PB** 创造性地引入了 **ArchiMate 3.1 架构知识图谱** 作为智能体团队的“通信总线”与“单一事实来源 (Single Source of Truth)”。通过将人类的高维架构设计无损降维成 AI 可执行的结构化契约，实现了**“左手 AI 自动生成代码，右手人类把控 EA 架构”**的终极人机共驾愿景。
+
+---
+
+## ✨ 核心优势与特色 (Core Advantages)
+
+### 1. 📐 模型驱动工程 (Model-Driven MAS)
+抛弃了“小作坊式”的聊天流，系统内置了一支拥有明确职责边界的专业 AI 团队：
+*   **ProductManager**: 负责与人类拉扯、澄清需求，产出结构化 PRD。
+*   **SystemArchitect**: 负责四层架构（战略、业务、应用、技术）设计与 Software Unit 任务拆解。
+*   **Implementation**: 负责将架构契约转化为带有 `@ArchitectureID` 追踪标记的健壮代码。
+*   **QualityAssurance**: 负责基于架构基线推导测试用例，并执行 TDD 闭环。
+*   **Audit**: 核心特色守护者。负责严格比对“代码现实”与“架构意图”。
+
+### 2. 🔍 意图与现实对齐 (Intention vs. Reality Audit)
+系统内置强大的 `Reality Scanner`。它不仅仅通过正则表达式提取代码注释，更能利用 **Token 向量余弦相似度** 进行隐式语义追踪 (Semantic Tracing)，在无侵入的前提下，精准比对“代码实现符号”对“架构组件设计”的偏离度（ARCH_IMPL_GAP）。
+
+### 3. 🧩 即插即用的环境、规范与语言解析 (Plug-and-Play Extensibility)
+基于**开闭原则 (OCP)** 设计的动态多维扩展架构：
+*   **多语言解析引擎 (Extensible AST Providers)**：底层 `Reality Scanner` 支持拔插式的抽象语法树解析器。系统已内置基于 Tree-sitter (Java/Go/C#)、TS Compiler (TS/JS) 和原生进程 (Python AST) 的解析。要支持新语言，只需注入一个实现 `extractSymbols` 的 Provider，整个 AI 团队立刻具备该语言的结构透视能力。
+*   **运行环境感知**：自动识别项目类型（如 Chrome Extension, Android），动态为 Agent 加载专用的测试沙盒工具（如 `run_chrome_sandbox`），杜绝 AI 执行测试时的环境幻觉。
+*   **企业规范字典**：通过读取 `.opencode/project-standards.json`，动态给 AI 注入特定公司或项目的编码规范约束（Skill）。**上述所有能力扩展，均无需修改任何核心 Agent 的 Prompt。**
+
+### 4. 🔀 智能双轨路由 (Dual-Lane Routing)
+*   **Full-Model Lane（全模型重型车道）**：针对结构性需求，严格走完 `PM -> Architect -> Dev -> QA+Audit` 的架构基线推演流程。
+*   **Fast-Track Lane（敏捷快车道）**：针对 UI 微调、文案修改等局部任务，一键直达开发与测试，同时赋予 Agent “遇阻向上升级（Escalate）”的能力。
+
+### 5. 🤝 完美的人机视觉闭环 (Human-AI Co-Pilot via EA)
+支持与 **Sparx Enterprise Architect (EA)** 的双向同步。人类架构师可以一键导入 AI 生成的架构 JSON 并在 EA 中自动排版查看；也可以在 EA 中手动连线修改架构并导回 JSON。AI 团队会识别并绝对尊重带有 `human-architect` 标记的节点。
+
+---
+
+## 🚀 快速上手 (Get Started)
+
+### 环境要求
+*   [OpenCode 框架](https://opencode.ai/) (用于运行 Agent 引擎)
+*   Node.js (>= 18.x)
+*   Python (>= 3.9) (用于 Python AST 提取)
+*   Sparx Enterprise Architect (可选，用于图形化架构查阅与修改)
+
+### 安装与运行
+1. **克隆项目并初始化配置**：
+   将 AI4PB 的配置放入您的目标项目根目录中。
+   ```bash
+   git clone <ai4pb-repo-url>
+   cp -r ai4pb-orchestrator/.opencode <your-project-root>/
+   ```
+2. **(可选) 配置企业专属规范**：
+   在 `<your-project-root>/.opencode/project-standards.json` 中配置您团队的专属语言规范文件。
+3. **启动 Orchestrator**：
+   使用 OpenCode CLI 或宿主环境激活系统主脑。
+   ```bash
+   opencode start
+   ```
+4. **提交需求**：
+   在聊天窗口中输入您的原始需求（Raw Requirement），例如：“我们需要一个可以汇率转换的 Chrome 插件”。Orchestrator 将自动将其路由至 ProductManager 开始分析。
+
+### 与 EA 双向同步 (SYNC TO / FROM EA)
+*   **导入到 EA (SYNC TO EA)**：在 EA Project Browser 中选中一个 Package，运行 `script/EA-jsscript/import_archimate31_knowledge_graph.js`。系统将自动生成布局清晰的 ArchiMate 图纸。
+*   **导出回系统 (SYNC FROM EA)**：在 EA 中手动添加或修改节点/连线后，运行 `script/EA-jsscript/export_archimate31_knowledge_graph.js`。修改将被合并至知识图谱 JSON 中，并打上 `managedBy: "human-architect"` 标签，供 AI 团队读取。
+
+---
+
+## 📚 核心场景与系统交互文档 (System Workflow Scenarios)
+
+以下场景展示了 AI4PB 系统中多智能体（MAS）之间、以及人机之间是如何通过 Tool、Skill 和知识图谱进行精密协同的。
+
+### 场景 A：全新结构性特性的开发 (The "Full-Model" Path)
+**📝 场景描述**：人类产品所有者输入了一个宏大但模糊的需求：“我们需要一个网络安全新闻聚合门户”。系统需要走完整的架构驱动流程。
+
+**🔄 交互与流转过程**：
+1. **触发 (Human -> Orchestrator)**：人类发起需求。
+2. **需求澄清 (Orchestrator -> PM)**：Orchestrator 将请求判定为 `Requirement` 且归入 `full-model` 车道，委派给 **AI_ProductManager**。
+   * **[Skill/Tool]**: PM 使用 `product-manager-analysis-cycle` 技能，发现需求缺少“用户角色”和“数据源”，调用 `question` 工具在终端弹出选项，要求人类补充。
+   * **[图谱落库]**: 达成共识后，PM 调用 `update_graph_model` 将正式 PRD 写入知识图谱。
+3. **架构设计 (Orchestrator -> Architect)**：Orchestrator 将目标传递给 **SystemArchitect**。
+   * **[Skill/Tool]**: Architect 调用 `analyze_legacy_modules`（基于 AST 语义向量），评估老代码库中是否有合适的模块。发现没有，于是决定新建 `Software Unit`。
+   * **[图谱落库]**: Architect 调用 `update_graph_model` 创建四层架构基线，派发开发任务。调用 `question` 让人类审查架构文档。
+4. **代码实现 (Orchestrator -> Implementation)**：
+   * **[Skill/Tool]**: Implementation 读取图谱进行开发，并在代码头上标注 `@ArchitectureID: ELM-APP-NEWS` 进行物理追踪。
+5. **双轨验证 (Orchestrator -> QA & Audit)**：
+   * **[QA 侧]**: QA 发现缺少单元测试，调用 `generate_test_template` 生成测试骨架，补全测试逻辑后运行。
+   * **[Audit 侧]**: Audit 调用 `run_reality_scanner` 扫描代码库，比对图谱意图，验证架构合规性。
+6. **发布 (ReleaseAgent)**：生成 Release Log。
+
+---
+
+### 场景 B：紧急局部 Bug 修复 (The "Fast-Track" Hotfix)
+**📝 场景描述**：线上出现紧急问题，用户提交 Issue：“登录按钮在移动端重叠了，改一下 margin”。
+
+**🔄 交互与流转过程**：
+1. **触发 (Human -> Orchestrator)**：人类发起 Issue。
+2. **智能分流 (Orchestrator)**：Orchestrator 判定这是 `Issue`，且影响极小，归入 `fast-track` (快车道)。
+   * **[Tool]**: 直接调用 `decompose_goal(maxTasks=1)` 在图谱中生成一个轻量级任务。
+3. **极速修复 (Orchestrator -> Implementation)**：
+   * **[Skill]**: Implementation 接收到 `lane: "fast-track"` 指令。直接定位文件修改 CSS，提交代码上报 Done。不需要强行走架构设计。
+4. **轻量验证与异常升级 (Escalation)**：
+   * Orchestrator **跳过 Audit 审计**，只让 QA 验证。
+   * **⚠️ 升级机制**：如果 Implementation 发现改 CSS 会破坏底层公用组件结构，必须停止快车道向 Orchestrator 报错，系统将自动切换为 `full-model` 车道，拉起 Architect 介入重构。
+
+---
+
+### 场景 C：公司专属环境与规范的无缝注入 (Plug-and-Play Discovery)
+**📝 场景描述**：接手一个具有特殊环境（如 Chrome Extension）并要求执行 Acme 公司严格 Python 规范的外包项目。
+
+**🔄 交互与流转过程**：
+1. **自动侦测 (Reality Scanner)**：
+   * 系统在根目录发现 `manifest.json` 和 `.opencode/project-standards.json` 配置。
+2. **动态装载 (Orchestrator -> Dev/QA)**：
+   * Scanner 向 Orchestrator 返回 `environment: chrome-extension` 以及推荐的技能 `['acme-python-guidelines', 'chrome-extension-testing']` 和测试工具 `['run_chrome_sandbox']`。
+   * Orchestrator 充当“上下文路由器”，将这些数组透传给 Dev 和 QA。
+3. **被约束的执行 (Implementation / QA)**：
+   * **[Skill 强制规则]**: Dev 和 QA 收到数组后，必须强制调用 `skill` 工具加载这些文档。
+   * **[效果]**: LLM 在写代码时自动遵循 Acme 规范写类型提示；在 QA 时，不再幻觉去敲 `npm test`，而是聪明地调用了专供 Chrome 插件的 `run_chrome_sandbox` 测试引擎。系统核心代码 0 修改。
+
+---
+
+### 场景 D：架构死锁与人机共驾 (Circuit Breaker & EA Co-Pilot)
+**📝 场景描述**：Architect 设计了一个存在循环依赖的架构，代码始终无法通过 Audit 的合规检查。
+
+**🔄 交互与流转过程**：
+1. **死锁产生 (Audit <-> Implementation)**：Audit 连续打回重作的代码超过 3 次。
+2. **触发熔断 (Orchestrator -> Human)**：
+   * **[Skill 机制]**: Orchestrator 拦截到 `retryCount > 3`，触发 **Circuit Breaker** 熔断，弹窗请求人类介入，提供三个选项：`[已修复代码] / [架构需重构] / [忽略偏差]`。
+3. **人类 EA 介入 (Human -> EA Tool)**：
+   * 人类在 Sparx EA 中点击 **SYNC TO EA**，自动排版显示糟糕的死循环架构。
+   * 人类在图形界面中重构节点和连线，点击 **SYNC FROM EA**。
+   * **[Tool 响应]**: `export_...js` 脚本采用增量合并，将新画的节点打上 `managedBy: "human-architect"` 标签保存回 JSON。
+4. **闭环恢复 (Human -> Orchestrator -> Architect)**：
+   * 人类选择 `[架构需重构]`。
+   * **[Skill 强制规则]**: Architect 重新唤醒并读取图谱。它的 Prompt 严格禁止其删除带有 `human-architect` 的节点。于是它乖乖地基于人类重构好的图谱网络，重新派发任务，成功解除死锁。
+
+---
+
+### 场景 E：多语言解析架构的动态扩展 (Extending AST Parsers)
+**📝 场景描述**：公司决定使用 **Rust** 重构一个高性能模块。系统原本不具备 Rust 的深层语义解析能力，导致 Architect 和 Audit 无法进行有效的 AST 分析和 TDD。
+
+**🔄 交互与流转过程**：
+1. **引擎扩展 (DevOps Engineer)**: 开发人员只需在 `lib/realityScanner/providers` 中实现一个基于 Tree-sitter 的 `RustLanguageProvider`。
+2. **注册生效 (Registry)**: 在 `languageRegistry.ts` 中将 `.rs` 后缀绑定至新解析器。
+3. **智能分析 (Scanner & QA)**:
+   * **Audit** 再次扫描时，底层自动调用 Rust 解析器，精准提取 `struct`, `impl`, `fn` 的结构与签名。
+   * **QA** 发现缺测试，调用 `generate_test_template`。该工具根据提取的 AST，自动生成完美的 Rust `#[cfg(test)]` 测试骨架。
+4. **[零成本适配]**: 从始至终，Orchestrator, SystemArchitect, Implementation, QA 的 Prompt 和主流程逻辑未修改一行代码，彻底践行 OCP（开闭原则）。
