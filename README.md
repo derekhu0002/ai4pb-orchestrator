@@ -95,7 +95,19 @@ AI4PB 之所以能超越传统的 Auto-Coding 工具，根本原因在于它**�
 
 ---
 
-## 📚 核心场景与系统交互 (System Workflow Scenarios)
+## � 扩展指南 (Extension Guides)
+
+以下指南详细说明了如何在不修改任何核心 Agent Prompt 的前提下，扩展 AI4PB 的三大可插拔能力：
+
+| 指南 | 说明 |
+|------|------|
+| [如何扩展抽象语法树提取](docs/guide-extending-ast-providers.md) | 为 Reality Scanner 添加新语言的 AST 解析器，使整个 AI 团队获得该语言的结构透视能力 |
+| [如何扩展编码规范](docs/guide-extending-coding-standards.md) | 通过 `project-standards.json` + Skill 文件注入企业或项目专属的编码规范 |
+| [如何扩展测试工具](docs/guide-extending-testing-tools.md) | 添加新测试框架支持、自定义测试沙盒环境、配置覆盖率验证规则 |
+
+---
+
+## �📚 核心场景与系统交互 (System Workflow Scenarios)
 
 以下场景展示了 AI4PB 系统中多智能体（MAS）之间、以及人机之间是如何通过 Tool、Skill 和知识图谱进行精密协同的。
 
