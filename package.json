@@ -223,8 +223,6 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
     "release:vsix": "powershell -ExecutionPolicy Bypass -File ./script/post-tools/release-vsix.ps1 -Bump patch",
     "release:vsix:minor": "powershell -ExecutionPolicy Bypass -File ./script/post-tools/release-vsix.ps1 -Bump minor",
     "release:vsix:major": "powershell -ExecutionPolicy Bypass -File ./script/post-tools/release-vsix.ps1 -Bump major",
