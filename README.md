@@ -65,84 +65,70 @@
 
 ---
 
-## 📚 核心场景与系统交互文档 (System Workflow Scenarios)
+## 📚 核心场景与系统交互 (System Workflow Scenarios)
 
 以下场景展示了 AI4PB 系统中多智能体（MAS）之间、以及人机之间是如何通过 Tool、Skill 和知识图谱进行精密协同的。
 
-### 场景 A：全新结构性特性的开发 (The "Full-Model" Path)
-**📝 场景描述**：人类产品所有者输入了一个宏大但模糊的需求：“我们需要一个网络安全新闻聚合门户”。系统需要走完整的架构驱动流程。
+### 场景 A：需求澄清与初始架构的“人机接力” (The "Full-Model" Path)
+**📝 场景描述**：产品经理输入了一个宏大但模糊的需求：“我们需要一个网络安全新闻聚合门户”。系统不仅需要自动推演，还需要人类在关键节点进行拍板。
 
 **🔄 交互与流转过程**：
-1. **触发 (Human -> Orchestrator)**：人类发起需求。
-2. **需求澄清 (Orchestrator -> PM)**：Orchestrator 将请求判定为 `Requirement` 且归入 `full-model` 车道，委派给 **AI_ProductManager**。
-   * **[Skill/Tool]**: PM 使用 `product-manager-analysis-cycle` 技能，发现需求缺少“用户角色”和“数据源”，调用 `question` 工具在终端弹出选项，要求人类补充。
-   * **[图谱落库]**: 达成共识后，PM 调用 `update_graph_model` 将正式 PRD 写入知识图谱。
-3. **架构设计 (Orchestrator -> Architect)**：Orchestrator 将目标传递给 **SystemArchitect**。
-   * **[Skill/Tool]**: Architect 调用 `analyze_legacy_modules`（基于 AST 语义向量），评估老代码库中是否有合适的模块。发现没有，于是决定新建 `Software Unit`。
-   * **[图谱落库]**: Architect 调用 `update_graph_model` 创建四层架构基线，派发开发任务。调用 `question` 让人类审查架构文档。
-4. **代码实现 (Orchestrator -> Implementation)**：
-   * **[Skill/Tool]**: Implementation 读取图谱进行开发，并在代码头上标注 `@ArchitectureID: ELM-APP-NEWS` 进行物理追踪。
-5. **双轨验证 (Orchestrator -> QA & Audit)**：
-   * **[QA 侧]**: QA 发现缺少单元测试，调用 `generate_test_template` 生成测试骨架，补全测试逻辑后运行。
-   * **[Audit 侧]**: Audit 调用 `run_reality_scanner` 扫描代码库，比对图谱意图，验证架构合规性。
-6. **发布 (ReleaseAgent)**：生成 Release Log。
+1. **[Human 触发]**：人类向 `Orchestrator` 提交需求。
+2. **需求澄清 (Orchestrator -> PM -> Human)**：
+   * **AI_ProductManager** 发现需求缺少“数据源”定义，调用 `question` 工具在聊天窗口弹出表单。
+   * **[Human 决策]**：人类在表单中勾选“使用 RSS 订阅源”，并点击 `Approved` 同意生成的 PRD。PM 随即将正式需求写入 JSON 图谱。
+3. **架构初稿与视觉审查 (Architect -> Human via EA)**：
+   * **SystemArchitect** 根据 PRD 在图谱中生成了初始的四层架构基线，并派发了初步的开发任务（如 `TASK-001: 抓取服务`）。随后弹出 `question` 等待人类审查。
+   * **[Human EA 介入]**：人类觉得纯看 Markdown 架构描述不直观。于是打开 Sparx EA，运行 `SYNC TO EA` 脚本。EA 界面中瞬间生成了一张自动排版好的 ArchiMate 架构图。
+   * **[Human EA 修改]**：人类在图中发现 AI 漏掉了一个“新闻缓存层”。人类直接在 EA 画布上拖出一个新的 `ApplicationComponent (Redis Cache)`，并拉了一条 `Serving` 连线指向 `新闻聚合服务`。
+   * **[Human 同步]**：人类在 EA 运行 `SYNC FROM EA`。底层脚本对比增量，将新节点打上 `managedBy: "human-architect"` 标签写入 JSON。
+4. **架构师顺从与重新拆解 (Human -> Architect -> Implementation)**：
+   * 人类在聊天窗口回复：`Needs Revision. 我在 EA 中增加了缓存节点，请重新评估`。
+   * **SystemArchitect** 重新读取图谱，看到了人类创建的 `Redis Cache` 节点。因为该节点带有 `human-architect` 标记，AI 架构师的 Skill 严格禁止其覆盖该节点。
+   * 于是，AI 架构师**顺着人类的思路**，新增派发了 `TASK-002: 实现 Redis 缓存逻辑`。
+5. **后续开发与审计**：代码交由 Implementation 编写，QA 生成测试框架验证，Audit 扫描代码确认代码里确实写了 `@ArchitectureID: Redis Cache`，最终交付。
 
 ---
 
-### 场景 B：紧急局部 Bug 修复 (The "Fast-Track" Hotfix)
-**📝 场景描述**：线上出现紧急问题，用户提交 Issue：“登录按钮在移动端重叠了，改一下 margin”。
+### 场景 B：紧急局部 Bug 的极速放行 (The "Fast-Track" Hotfix)
+**📝 场景描述**：线上出现紧急问题：“登录按钮在移动端重叠了，改一下 margin”。
 
 **🔄 交互与流转过程**：
-1. **触发 (Human -> Orchestrator)**：人类发起 Issue。
-2. **智能分流 (Orchestrator)**：Orchestrator 判定这是 `Issue`，且影响极小，归入 `fast-track` (快车道)。
-   * **[Tool]**: 直接调用 `decompose_goal(maxTasks=1)` 在图谱中生成一个轻量级任务。
-3. **极速修复 (Orchestrator -> Implementation)**：
-   * **[Skill]**: Implementation 接收到 `lane: "fast-track"` 指令。直接定位文件修改 CSS，提交代码上报 Done。不需要强行走架构设计。
-4. **轻量验证与异常升级 (Escalation)**：
-   * Orchestrator **跳过 Audit 审计**，只让 QA 验证。
-   * **⚠️ 升级机制**：如果 Implementation 发现改 CSS 会破坏底层公用组件结构，必须停止快车道向 Orchestrator 报错，系统将自动切换为 `full-model` 车道，拉起 Architect 介入重构。
+1. **[Human 触发]**：人类向 Orchestrator 发送极短的指令：“修复按钮重叠”。
+2. **智能分流 (Orchestrator)**：判定为微小 Issue，将其放入 `fast-track` (快车道)。不再呼叫 PM 澄清，也不呼叫 Architect 画图谱，直接把单行任务丢给 Implementation。
+3. **极速修复与异常升级 (Dev -> QA)**：
+   * Implementation 直接修改 CSS 并 Commit。
+   * QA 进行回归测试。
+   * **⚠️ 异常升级边界 (Human Fallback)**：如果在改 CSS 时，Implementation 发现必须重构底层的全局 UI 组件库，它会主动放弃 `fast-track`，告知 Orchestrator：“影响面过大，请求切回全架构车道”。此时，系统将重新唤醒 Architect，并可能需要人类在 EA 中重新评估组件依赖。
 
 ---
 
-### 场景 C：公司专属环境与规范的无缝注入 (Plug-and-Play Discovery)
-**📝 场景描述**：接手一个具有特殊环境（如 Chrome Extension）并要求执行 Acme 公司严格 Python 规范的外包项目。
-
-**🔄 交互与流转过程**：
-1. **自动侦测 (Reality Scanner)**：
-   * 系统在根目录发现 `manifest.json` 和 `.opencode/project-standards.json` 配置。
-2. **动态装载 (Orchestrator -> Dev/QA)**：
-   * Scanner 向 Orchestrator 返回 `environment: chrome-extension` 以及推荐的技能 `['acme-python-guidelines', 'chrome-extension-testing']` 和测试工具 `['run_chrome_sandbox']`。
-   * Orchestrator 充当“上下文路由器”，将这些数组透传给 Dev 和 QA。
-3. **被约束的执行 (Implementation / QA)**：
-   * **[Skill 强制规则]**: Dev 和 QA 收到数组后，必须强制调用 `skill` 工具加载这些文档。
-   * **[效果]**: LLM 在写代码时自动遵循 Acme 规范写类型提示；在 QA 时，不再幻觉去敲 `npm test`，而是聪明地调用了专供 Chrome 插件的 `run_chrome_sandbox` 测试引擎。系统核心代码 0 修改。
-
----
-
-### 场景 D：架构死锁与人机共驾 (Circuit Breaker & EA Co-Pilot)
-**📝 场景描述**：Architect 设计了一个存在循环依赖的架构，代码始终无法通过 Audit 的合规检查。
+### 场景 C：复杂死锁下的架构重构 (Circuit Breaker & EA Co-Pilot)
+**📝 场景描述**：Architect 设计了一个存在循环依赖的模块，Implementation 怎么写代码都无法通过 Audit 的合规扫描。
 
 **🔄 交互与流转过程**：
 1. **死锁产生 (Audit <-> Implementation)**：Audit 连续打回重作的代码超过 3 次。
 2. **触发熔断 (Orchestrator -> Human)**：
-   * **[Skill 机制]**: Orchestrator 拦截到 `retryCount > 3`，触发 **Circuit Breaker** 熔断，弹窗请求人类介入，提供三个选项：`[已修复代码] / [架构需重构] / [忽略偏差]`。
-3. **人类 EA 介入 (Human -> EA Tool)**：
-   * 人类在 Sparx EA 中点击 **SYNC TO EA**，自动排版显示糟糕的死循环架构。
-   * 人类在图形界面中重构节点和连线，点击 **SYNC FROM EA**。
-   * **[Tool 响应]**: `export_...js` 脚本采用增量合并，将新画的节点打上 `managedBy: "human-architect"` 标签保存回 JSON。
+   * Orchestrator 拦截到 `retryCount > 3`，触发 **Circuit Breaker** 熔断。在终端向人类发出红色警报：“审计连续失败，任务阻塞，请选择恢复方案：`[已修复代码] / [架构需重构] / [忽略偏差]`”。
+3. **[Human EA 破局]**：
+   * 人类工程师知道大模型陷入了逻辑死胡同。打开 EA，点击 `SYNC TO EA`，看着混乱的连线，大刀阔斧地删除了错误的循环依赖，并手动引入了一个“事件消息总线 (Event Bus)”组件来解耦。
+   * 连线完毕后，点击 `SYNC FROM EA`。
 4. **闭环恢复 (Human -> Orchestrator -> Architect)**：
-   * 人类选择 `[架构需重构]`。
-   * **[Skill 强制规则]**: Architect 重新唤醒并读取图谱。它的 Prompt 严格禁止其删除带有 `human-architect` 的节点。于是它乖乖地基于人类重构好的图谱网络，重新派发任务，成功解除死锁。
+   * 人类在聊天窗口点击 `[架构需重构]` 选项。
+   * Orchestrator 收到指令，清空受影响 Task 的 Block 状态，将执行权交回给 Architect。
+   * Architect 看到人类新画的事件总线，立刻丢弃了之前的循环依赖方案，重新向 Implementation 下发基于消息队列的开发任务。死锁解除。
 
 ---
 
-### 场景 E：多语言解析架构的动态扩展 (Extending AST Parsers)
-**📝 场景描述**：公司决定使用 **Rust** 重构一个高性能模块。系统原本不具备 Rust 的深层语义解析能力，导致 Architect 和 Audit 无法进行有效的 AST 分析和 TDD。
+### 场景 D：公司专属环境与规范的无感注入 (Plug-and-Play Discovery)
+**📝 场景描述**：人类开发者在一个要求极高（必须全写类型推断、必须符合 Acme 公司标准）的 Python 爬虫项目中启动了 AI4PB。
 
 **🔄 交互与流转过程**：
-1. **引擎扩展 (DevOps Engineer)**: 开发人员只需在 `lib/realityScanner/providers` 中实现一个基于 Tree-sitter 的 `RustLanguageProvider`。
-2. **注册生效 (Registry)**: 在 `languageRegistry.ts` 中将 `.rs` 后缀绑定至新解析器。
-3. **智能分析 (Scanner & QA)**:
-   * **Audit** 再次扫描时，底层自动调用 Rust 解析器，精准提取 `struct`, `impl`, `fn` 的结构与签名。
-   * **QA** 发现缺测试，调用 `generate_test_template`。该工具根据提取的 AST，自动生成完美的 Rust `#[cfg(test)]` 测试骨架。
-4. **[零成本适配]**: 从始至终，Orchestrator, SystemArchitect, Implementation, QA 的 Prompt 和主流程逻辑未修改一行代码，彻底践行 OCP（开闭原则）。
+1. **[Human 预置]**：人类开发者只需在项目根目录丢入一个 `.opencode/project-standards.json` 文件，注明 `python` 使用 `acme-python-guidelines`。
+2. **底层扫描与挂载 (Reality Scanner)**：
+   * Orchestrator 启动时，底层的 `run_reality_scanner` 扫描到 `.py` 文件，并读取了配置文件。
+   * Scanner 在发给下游 Agent 的 Payload 中，默默塞入了 `recommendedSkills: ['acme-python-guidelines']`。
+3. **Agent 服从规范 (Implementation / QA)**：
+   * Implementation 收到 Payload，其 Prompt 强制它先去读取这篇指南。
+   * 结果：大模型在写爬虫代码时，仿佛被“夺舍”了一样，自动为每一个函数加上了 Google-style 的注释和严谨的 type hints。
+   * **价值**：人类不需要每次在输入框里对着 AI 咆哮“注意代码规范！！”，一切皆由底层自动调度。
