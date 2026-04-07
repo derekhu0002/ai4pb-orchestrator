@@ -1,6 +1,4 @@
-import CSharp from 'tree-sitter-c-sharp';
-import Go from 'tree-sitter-go';
-import Java from 'tree-sitter-java';
+import { createRequire } from 'node:module';
 
 import {
   classLikeMatcher,
@@ -12,6 +10,11 @@ import {
   propertyMatcher,
   variableMatcher,
 } from './treeSitter';
+
+const require = createRequire(import.meta.url);
+const CSharp = require('tree-sitter-c-sharp');
+const Go = require('tree-sitter-go');
+const Java = require('tree-sitter-java');
 
 export const javaLanguageProvider = createTreeSitterLanguageProvider({
   languageId: 'java',

@@ -1,7 +1,13 @@
-import Parser from 'tree-sitter';
+import { createRequire } from 'node:module';
+// Type-only import for Parser namespace (erased at runtime)
+import type Parser from 'tree-sitter';
 
 import type { StructuralSymbol } from '../types';
 import type { RealityScannerLanguageProvider } from './types';
+
+// Runtime import — tree-sitter is CJS native, needs createRequire in ESM context
+const _require = createRequire(import.meta.url);
+const TreeSitter: typeof Parser = _require('tree-sitter');
 
 type SymbolKind =
   | 'class'
@@ -30,7 +36,8 @@ type NodeMatcher = {
 
 type TreeSitterProviderConfig = {
   languageId: string;
-  language: Parser.Language;
+  // tree-sitter grammar object (e.g. tree-sitter-java, tree-sitter-go)
+  language: unknown;
   matchers: NodeMatcher[];
 };
 
@@ -229,7 +236,7 @@ export function createTreeSitterLanguageProvider(config: TreeSitterProviderConfi
     languageId: config.languageId,
     extractionMode: 'ast',
     extractSymbols(relativeFile, content) {
-      const parser = new Parser();
+      const parser = new TreeSitter();
       parser.setLanguage(config.language);
       const tree = parser.parse(content);
       const symbols: StructuralSymbol[] = [];
