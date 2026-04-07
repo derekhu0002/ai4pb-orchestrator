@@ -1,13 +1,11 @@
-import { createRequire } from 'node:module';
 // Type-only import for Parser namespace (erased at runtime)
 import type Parser from 'tree-sitter';
 
 import type { StructuralSymbol } from '../types';
 import type { RealityScannerLanguageProvider } from './types';
 
-// Runtime import — tree-sitter is CJS native, needs createRequire in ESM context
-const _require = createRequire(import.meta.url);
-const TreeSitter: typeof Parser = _require('tree-sitter');
+// Runtime import — tree-sitter is CJS native, needs dynamic import() in ESM context
+const { default: TreeSitter } = await import('tree-sitter') as { default: typeof Parser };
 
 type SymbolKind =
   | 'class'

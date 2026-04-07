@@ -1,5 +1,3 @@
-import { createRequire } from 'node:module';
-
 import {
   classLikeMatcher,
   createTreeSitterLanguageProvider,
@@ -11,10 +9,10 @@ import {
   variableMatcher,
 } from './treeSitter';
 
-const require = createRequire(import.meta.url);
-const CSharp = require('tree-sitter-c-sharp');
-const Go = require('tree-sitter-go');
-const Java = require('tree-sitter-java');
+// Runtime imports — tree-sitter grammars are CJS native, need dynamic import() in ESM context
+const { default: CSharp } = await import('tree-sitter-c-sharp');
+const { default: Go } = await import('tree-sitter-go');
+const { default: Java } = await import('tree-sitter-java');
 
 export const javaLanguageProvider = createTreeSitterLanguageProvider({
   languageId: 'java',
