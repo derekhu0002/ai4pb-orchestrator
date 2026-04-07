@@ -64,6 +64,12 @@ function main() {
     var importedCount = importElements(importPkg, importDiagram, graph.elements, propertyDefinitionMap, elementMap);
     var relationshipCount = importRelationships(importDiagram, graph.relationships, propertyDefinitionMap, elementMap);
 
+    if (importDiagram != null) {
+      importDiagram.Update();
+      Repository.ReloadDiagram(importDiagram.DiagramID);
+      autoLayoutDiagram(importDiagram);
+    }
+
     Repository.RefreshModelView(parentPkg.PackageID);
     if (importDiagram != null) {
       Repository.OpenDiagram(importDiagram.DiagramID);
@@ -225,7 +231,7 @@ function createImportPackage(parentPkg, graph) {
   if (version !== '') {
     packageName += ' v' + version;
   }
-  packageName += ' Import';
+  packageName += ' Import ' + formatTimestamp(new Date());
 
   var pkg = parentPkg.Packages.AddNew(packageName, 'Package');
   pkg.Notes = buildPackageNotes(graph);
@@ -813,6 +819,12 @@ function applyConceptTags(tagCollection, concept, propertyDefinitionMap) {
   putTag(tagCollection, 'kg_identifier', safeString(concept.identifier));
   putTag(tagCollection, 'kg_type', safeString(concept.type));
 
+  // Store raw documentation for lossless round-trip
+  var docText = joinLangValues(concept.documentation);
+  if (docText !== '') {
+    putTag(tagCollection, 'kg_documentation', truncateTagValue(docText));
+  }
+
   if (concept.properties && concept.properties.property) {
     for (var i = 0; i < concept.properties.property.length; i++) {
       var property = concept.properties.property[i];
@@ -826,7 +838,7 @@ function applyConceptTags(tagCollection, concept, propertyDefinitionMap) {
   }
 
   if (concept.extensions) {
-    putTag(tagCollection, 'extensions_json', truncateTagValue(stringifyCompact(concept.extensions)));
+    putTag(tagCollection, 'extensions_json', stringifyCompact(concept.extensions));
   }
 }
 
@@ -835,6 +847,12 @@ function applyRelationshipTags(connector, relation, propertyDefinitionMap) {
   putTag(connector.TaggedValues, 'kg_type', safeString(relation.type));
   putTag(connector.TaggedValues, 'kg_source', safeString(relation.source));
   putTag(connector.TaggedValues, 'kg_target', safeString(relation.target));
+
+  // Store raw documentation for lossless round-trip
+  var docText = joinLangValues(relation.documentation);
+  if (docText !== '') {
+    putTag(connector.TaggedValues, 'kg_documentation', truncateTagValue(docText));
+  }
 
   if (isNonEmptyString(relation.accessType)) {
     putTag(connector.TaggedValues, 'accessType', relation.accessType);
@@ -859,7 +877,7 @@ function applyRelationshipTags(connector, relation, propertyDefinitionMap) {
   }
 
   if (relation.extensions) {
-    putTag(connector.TaggedValues, 'extensions_json', truncateTagValue(stringifyCompact(relation.extensions)));
+    putTag(connector.TaggedValues, 'extensions_json', stringifyCompact(relation.extensions));
   }
 }
 
@@ -950,6 +968,25 @@ function errorMessage(e) {
     return '' + e.message;
   }
   return '' + e;
+}
+
+function formatTimestamp(d) {
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+    '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+}
+
+function autoLayoutDiagram(diagram) {
+  try {
+    var projectInterface = Repository.GetProjectInterface();
+    // LayoutDiagramEx params: DiagramGUID, LayoutStyle(0=default), iterations(4), padding(20,20), SaveToDB(false)
+    projectInterface.LayoutDiagramEx(diagram.DiagramGUID, 0, 4, 20, 20, false);
+    diagram.Update();
+    Repository.ReloadDiagram(diagram.DiagramID);
+    Session.Output('Auto-layout applied to diagram: ' + diagram.Name);
+  } catch (e) {
+    Session.Output('WARNING: Auto-layout failed (non-fatal): ' + errorMessage(e));
+  }
 }
 
 function fail(message) {

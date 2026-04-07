@@ -3,7 +3,7 @@
 .obsidian/
 node_modules/
 .trash/
-TEMP/
+design/temp
 debug/
 .aicodingconfig
 # Environment files
@@ -13,7 +13,7 @@ debug/
 .env.development
 .env.test
 .env.production
-
+/TEMP
 # API keys and secrets
 *.key
 *.pem
