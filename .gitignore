@@ -92,4 +92,4 @@ tmp/
 .opencode/package-lock.json
 .opencode/node_modules/
 .venv
-.vscode
+.vscode/
