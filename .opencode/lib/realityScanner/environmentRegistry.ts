@@ -16,6 +16,13 @@ export const ENVIRONMENT_PROFILE_REGISTRY: EnvironmentProfile[] = [
     recommendedSkills: ['chrome-extension-testing'],
     recommendedTools: ['run_chrome_sandbox'],
   },
+  {
+    profileId: 'android-app',
+    displayName: 'Android Application',
+    detectionSignatures: ['AndroidManifest.xml', 'build.gradle.kts', 'build.gradle'],
+    recommendedSkills: ['android-qa-debugging-loop'],
+    recommendedTools: ['run_reality_scanner', 'generate_test_template'],
+  },
 ];
 
 function normalizeWorkspacePath(value: string): string {

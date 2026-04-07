@@ -9,9 +9,12 @@
   "dependencies": {
     "@opencode-ai/plugin": "1.3.15",
     "tree-sitter": "^0.21.1",
+    "tree-sitter-c": "^0.21.4",
     "tree-sitter-c-sharp": "^0.21.3",
+    "tree-sitter-cpp": "^0.22.3",
     "tree-sitter-go": "^0.23.4",
     "tree-sitter-java": "^0.23.5",
+    "tree-sitter-kotlin": "npm:@tree-sitter-grammars/tree-sitter-kotlin@^1.1.0",
     "typescript": "^5.9.3"
   }
 }
