@@ -33,6 +33,36 @@
 支持与 **Sparx Enterprise Architect (EA)** 的双向同步。人类架构师可以一键导入 AI 生成的架构 JSON 并在 EA 中自动排版查看；也可以在 EA 中手动连线修改架构并导回 JSON。AI 团队会识别并绝对尊重带有 `human-architect` 标记的节点。
 
 ---
+## 🧠 核心引擎：ArchiMate 3.1 架构知识图谱 (The Knowledge Graph Engine)
+
+AI4PB 之所以能超越传统的 Auto-Coding 工具，根本原因在于它**彻底抛弃了“用长文本 Prompt 传递项目上下文”的脆弱做法**。取而代之的是一个严格遵循 **The Open Group ArchiMate 3.1 Exchange Model** 标准的 JSON 知识图谱（`SharedKnowledgeGraph.archimate3.1.json`）。
+
+这个图谱是整个 MAS 系统的**中枢神经**和**唯一事实来源 (Single Source of Truth)**。
+
+### 1. 严谨的本体论设计 (Ontology & Schema)
+图谱不仅仅是简单的 Key-Value 存储，它是一个具备严密语义约束的有向图：
+*   **四层架构基线**：强制要求包含 `Strategy` (如 Goal, Capability)、`Business` (如 BusinessProcess, BusinessActor)、`Application` (如 ApplicationComponent, DataObject) 和 `Technology` (如 Node, Artifact) 四个维度的节点。
+*   **语义化连线**：节点之间必须使用 ArchiMate 标准的连线类型（如 `Realization`, `Serving`, `Access`, `Flow`），清晰表达组件间的控制流与数据流。
+*   **MAS 专属扩展 (Extensions)**：在标准的 ArchiMate Schema 基础上，我们通过 `extensions.ai4pb` 字段，将多智能体运行时的状态（如 `Task`, `Issue`, `ReleaseLog`, `retryCount`, `managedBy`）无缝挂载到架构节点上。
+
+### 2. 智能体协作的“通信总线” (The Communication Bus)
+在 AI4PB 中，Agent 之间**极少直接对话**。它们通过读写图谱来完成协作：
+*   **PM Agent** 将需求转化为 `Requirement` 节点写入图谱。
+*   **Architect Agent** 读取 `Requirement`，生成 `ApplicationComponent`，并派生出挂载在组件上的 `WorkPackage` (Task) 节点。
+*   **Implementation Agent** 认领状态为 `ToDo` 的 Task 节点，阅读其关联的架构上下文，写完代码后将 Task 状态更新为 `Done`，并附上 Git Commit ID。
+*   **QA / Audit Agent** 扫描图谱中 `Done` 状态的 Task，提取其关联的 `ApplicationComponent`，进行精准的局部验证。
+
+### 3. 物理级的“意图与现实对齐” (Traceability)
+知识图谱是“意图 (Intention)”，代码仓是“现实 (Reality)”。
+*   **正向约束**：开发者（或 AI）在编写代码时，必须在核心类/函数上添加 `@ArchitectureID: ELM-APP-NEWS` 注释，或者在 `architecture-mapping.yaml` 中声明映射。
+*   **逆向扫描**：`Reality Scanner` 会解析代码的 AST，提取出所有的物理符号（类名、函数签名），并与图谱中的 `ApplicationComponent` 进行比对。如果发现代码中存在未在图谱中定义的越权调用，或者图谱中定义的组件在代码中找不到对应实现，系统将立即抛出 `ARCH_IMPL_GAP` 异常。
+
+### 4. 捍卫人类主权 (Defending Human Sovereignty)
+图谱是人机共驾的终极桥梁。
+*   当人类在 Sparx EA 中手动修改架构并导出 JSON 时，脚本会自动为这些节点打上 `managedBy: "human-architect"` 的标签。
+*   **SystemArchitect Agent** 的底层 Skill 被严格限制：**绝对禁止覆盖、删除或篡改带有 `human-architect` 标记的节点**。AI 只能在人类画好的骨架上进行填空和派发任务。这确保了在极其复杂的企业级项目中，人类架构师始终拥有最高控制权。
+
+---
 
 ## 🚀 快速上手 (Get Started)
 
@@ -132,3 +162,74 @@
    * Implementation 收到 Payload，其 Prompt 强制它先去读取这篇指南。
    * 结果：大模型在写爬虫代码时，仿佛被“夺舍”了一样，自动为每一个函数加上了 Google-style 的注释和严谨的 type hints。
    * **价值**：人类不需要每次在输入框里对着 AI 咆哮“注意代码规范！！”，一切皆由底层自动调度。
+
+
+### 场景 E：异构多端项目的多环境沙盒联调 (Polyglot & Multi-Environment Sandbox)
+**📝 场景描述**：一个全栈项目包含了一个 Node.js 的管理后台（TypeScript）和一个用于前端采集的 Chrome 插件（JavaScript）。人类要求：“在插件里加个一键把页面数据发给后台的功能”。
+
+**🔄 交互与流转过程**：
+1. **智能环境侦测 (Reality Scanner)**：
+   * Orchestrator 接收需求后，调用 `run_reality_scanner`。Scanner 遍历文件树，同时发现了 `package.json`（含 Express）和 `manifest.json`（含 V3 声明）。
+   * Scanner 返回了两个环境配置：`languageSupport: ['typescript', 'javascript']`，以及 `detectedEnvironments: ['chrome-extension']`。
+2. **多端架构切分 (Architect)**：
+   * SystemArchitect 读取需求和环境后，在图谱中创建了两个 `ApplicationComponent`：一个标记为 Backend API，一个标记为 Chrome Content Script，并建立了一条 `Flow` 连线。
+   * Architect 派发了两个独立的任务：`TASK-01 (Backend)` 和 `TASK-02 (Extension)`。
+3. **环境隔离测试 (QA)**：
+   * QA Agent 拿到 `TASK-01` 时，识别到它是纯 TS 后端任务，调用 `generate_test_template` 生成了 `jest` 测试骨架，并在普通 Node 环境中运行 `npm test`。
+   * QA Agent 拿到 `TASK-02` 时，识别到它属于 `chrome-extension` 环境，其 Prompt 强制它加载了 `chrome-extension-testing` 技能。QA 放弃了 `npm test`，转而调用 `run_chrome_sandbox` 工具。
+   * **[效果]**：沙盒自动 Mock 了 `chrome.runtime.sendMessage` API。大模型在沙盒里成功验证了前端发信逻辑，完美避免了“大模型不知道怎么在命令行里测浏览器插件”的死穴。
+
+---
+
+### 场景 F：老旧祖传代码的重构与解耦 (Brownfield Semantic Refactoring)
+**📝 场景描述**：人类接手了一个 5 年前写的巨大单体 Java 项目，代码里全是几千行的 God Class（上帝类）。人类下达指令：“把用户扣费逻辑从 `OrderManager.java` 里抽出来，做成独立的结算模块”。
+
+**🔄 交互与流转过程**：
+1. **语义追踪与锚点定位 (Architect -> Scanner)**：
+   * SystemArchitect 并不急于写代码，它调用了强化后的 `analyze_legacy_modules`。
+   * 工具底层调用 AST 解析器，将 `OrderManager.java` 拆解成了几十个 `StructuralSymbol`（方法签名），并将人类的意图（“用户扣费”）转化为 Token 向量。
+   * 工具通过余弦相似度（Cosine Similarity），精准计算出 `OrderManager.calculateTax()` 和 `OrderManager.deductBalance()` 这两个方法的得分最高。
+2. **手术刀式的任务拆解 (Architect)**：
+   * Architect 在图谱中新建了一个 `ApplicationComponent`（`Billing Module`），并生成了 `TASK-101: Extract deductBalance to Billing Module`。
+   * 任务描述中精准附带了目标文件的路径和高分函数签名。
+3. **[Human EA 审查]**：
+   * 人类在 EA 中点开同步后的图谱，看到 Architect 将 `Billing Module` 连向了 `Payment Gateway`。人类审查后觉得逻辑非常清晰，点击 `[Approved]` 放行。
+4. **受限的实现与审计 (Implementation -> Audit)**：
+   * Implementation 根据精确的函数签名进行代码搬运，并在新类上打好 `@ArchitectureID`。
+   * Audit Agent 扫描新代码，确认老的 God Class 变瘦了，新模块和架构图完美对应。一次无痛的深水区重构完成。
+
+---
+
+### 场景 G：人类偷懒导致的代码与架构脱节 (The "Reality Drift" Correction)
+**📝 场景描述**：半夜服务器报警，人类程序员为了赶时间，直接在 IDE 里改了代码：把原本应该走 `RedisCache` 的数据，直接用硬编码连到了 `MySQLDatabase`，并且直接 `git push` 上线了，完全没改 EA 架构图。
+
+**🔄 交互与流转过程**：
+1. **自动审计拦截 (Orchestrator -> Audit)**：
+   * 第二天早上，CI/CD 流水线触发了 AI4PB 的日常审查（或者 Orchestrator 被定时唤醒执行 Sprint 总结）。
+   * Audit Agent 调用 `run_reality_scanner` 对比最新的 Git Commit 和当前的 JSON 知识图谱。
+2. **发现架构偏移 (ARCH_IMPL_GAP)**：
+   * Scanner 的 AST 分析显示，代码中出现了从 `UserQueryService` 直接到 `MySQLConnection` 的调用符号（Semantic Trace 或代码依赖分析），而图谱中这两者之间本应该隔着一个 `RedisCache` 节点。
+   * 并且，新代码上没有找到任何合法的 `@ArchitectureID` 追踪标记。
+3. **警报与逆向修复 (Audit -> Architect -> Human)**：
+   * Audit 在图谱中生成了一个严重级别的 `ArchitectureGap` Issue，并将状态抛给 Orchestrator。
+   * Orchestrator 将 Issue 路由给 SystemArchitect。
+   * Architect 分析后发现代码已经被提交成了“既定事实”。它向人类发出 `question`：“发现未授权的越级数据库访问。方案 A：回滚代码并重新派发开发任务；方案 B：认可该临时修复，我将修改图谱以匹配代码现实”。
+4. **[Human 决策]**：
+   * 人类心虚地选择了“方案 B”。
+   * Architect 随即调用 `update_graph_model`，在图谱中补上了一条 `UserQueryService -> MySQL` 的 `Bypass` 连线，使得“意图”向“现实”妥协，系统恢复一致性。
+
+---
+
+### 场景 H：测试驱动开发 (TDD) 的全自动闭环 (The TDD Zero-to-Hero)
+**📝 场景描述**：一个刚转入 TypeScript 栈的新手开发者（或 AI Agent 自己）写完了一个极度复杂的数学算法模块 `src/utils/mathMatrix.ts`，但根本不知道怎么配置 Jest 来写单元测试，直接提交了代码。
+
+**🔄 交互与流转过程**：
+1. **覆盖率红线拦截 (QA)**：
+   * QA Agent 接收到验证任务，调用 `generate_test_cases` 检查覆盖率。
+   * 工具依据“只要是 `@ArchitectureID` 绑定的核心模块，必须有 `.spec.ts` 对应”的硬性规则，抛出阻断异常：“Coverage missing for `mathMatrix.ts`”。
+2. **骨架生成 (QA -> Tool)**：
+   * QA Agent 没有像无头苍蝇一样自己瞎编测试文件，而是强制调用了 `generate_test_template(sourceFile="src/utils/mathMatrix.ts", testFramework="jest")` 工具。
+   * 工具在底层用 TS Compiler 解析了该文件，提取出了导出的 `class Matrix` 和 `function inverse()`，并瞬间返回了一个完美的 Jest 代码骨架（包含正确的 `import` 路径、`describe` 块和带 `// TODO: Mock` 的空测试例）。
+3. **填空与跑通 (QA)**：
+   * QA Agent 用 `write` 工具把骨架保存为 `mathMatrix.spec.ts`。
+   * 随后，QA Agent 的大模型能力
