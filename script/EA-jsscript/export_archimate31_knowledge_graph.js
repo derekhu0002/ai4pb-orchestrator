@@ -97,12 +97,13 @@ function collectElements(pkg, elementGuidMap) {
     elementGuidMap[el.ElementGUID] = identifier;
     elementGuidMap[el.ElementID] = identifier;
 
+    var doc = getTagValue(el, 'kg_documentation') || extractDocFromNotes(el.Notes);
     result.push({
       identifier: identifier,
       eaElement: el,
       type: resolveArchimateElementType(el),
       name: safeString(el.Name),
-      documentation: getTagValue(el, 'kg_documentation') || extractDocFromNotes(el.Notes),
+      documentation: doc !== '' ? doc : '(no documentation)',
       extensions: resolveExtensions(el),
       properties: extractProperties(el)
     });
@@ -136,13 +137,14 @@ function collectRelationships(pkg, elementGuidMap) {
       var fullConn = Repository.GetConnectorByID(conn.ConnectorID);
 
       var identifier = getTagValue(fullConn, 'kg_identifier') || safeString(fullConn.Alias) || fullConn.ConnectorGUID;
+      var connDoc = getTagValue(fullConn, 'kg_documentation') || extractDocFromNotes(fullConn.Notes);
       var data = {
         identifier: identifier,
         type: resolveArchimateRelationshipType(fullConn),
         source: sourceId,
         target: targetId,
         name: safeString(fullConn.Name),
-        documentation: getTagValue(fullConn, 'kg_documentation') || extractDocFromNotes(fullConn.Notes),
+        documentation: connDoc !== '' ? connDoc : '(no documentation)',
         extensions: resolveConnectorExtensions(fullConn),
         properties: extractConnectorProperties(fullConn)
       };
@@ -172,6 +174,11 @@ function mergeGraph(baseline, pkg, eaElements, eaRelationships) {
 
   // Preserve every root-level field from the baseline
   var graph = shallowCopy(baseline);
+
+  // Ensure graph-level documentation is never empty
+  if (!graph.documentation || graph.documentation.length === 0) {
+    graph.documentation = [{ 'value': '(no documentation)', 'lang': 'en' }];
+  }
 
   // --- Merge elements ---
   // Walk BASELINE order first to preserve the original sequence in JSON output.
@@ -288,15 +295,23 @@ function patchElement(base, ea) {
 
   // name – only patch if EA changed
   if (firstLangValue(base.name, '') !== ea.name) {
-    out.name = makeLangArray(ea.name, base.name);
+    out.name = makeLangArray(ea.name !== '' ? ea.name : '(unnamed)', base.name);
   }
 
   // documentation – only patch if EA changed (ignore truncation artifacts)
   var basDoc = firstLangValue(base.documentation, '');
   if (!isDocTruncationMatch(ea.documentation, basDoc)) {
     if (ea.documentation !== basDoc) {
-      out.documentation = ea.documentation !== '' ? makeLangArray(ea.documentation, base.documentation) : [];
+      out.documentation = ea.documentation !== '' ? makeLangArray(ea.documentation, base.documentation) : [{ 'value': '(no documentation)', 'lang': 'en' }];
     }
+  }
+
+  // Ensure documentation and name are never empty
+  if (!out.documentation || out.documentation.length === 0) {
+    out.documentation = [{ 'value': '(no documentation)', 'lang': 'en' }];
+  }
+  if (!out.name || out.name.length === 0 || !out.name[0] || out.name[0].value === '') {
+    out.name = [{ 'value': '(unnamed)', 'lang': 'en' }];
   }
 
   // extensions – only patch if EA explicitly provided a value (non-null)
@@ -334,14 +349,22 @@ function patchRelationship(base, ea) {
   out.target = ea.target;
 
   if (firstLangValue(base.name, '') !== ea.name) {
-    out.name = makeLangArray(ea.name, base.name);
+    out.name = makeLangArray(ea.name !== '' ? ea.name : '(unnamed)', base.name);
   }
 
   var basDoc = firstLangValue(base.documentation, '');
   if (!isDocTruncationMatch(ea.documentation, basDoc)) {
     if (ea.documentation !== basDoc) {
-      out.documentation = ea.documentation !== '' ? makeLangArray(ea.documentation, base.documentation) : [];
+      out.documentation = ea.documentation !== '' ? makeLangArray(ea.documentation, base.documentation) : [{ 'value': '(no documentation)', 'lang': 'en' }];
     }
+  }
+
+  // Ensure documentation and name are never empty
+  if (!out.documentation || out.documentation.length === 0) {
+    out.documentation = [{ 'value': '(no documentation)', 'lang': 'en' }];
+  }
+  if (!out.name || out.name.length === 0 || !out.name[0] || out.name[0].value === '') {
+    out.name = [{ 'value': '(unnamed)', 'lang': 'en' }];
   }
 
   if (ea.extensions !== null) {
@@ -411,8 +434,8 @@ function buildNewElement(ea) {
   var el = {
     identifier: ea.identifier,
     type: ea.type,
-    name: [{ 'value': ea.name, 'lang': 'en' }],
-    documentation: ea.documentation !== '' ? [{ 'value': ea.documentation, 'lang': 'en' }] : [],
+    name: [{ 'value': ea.name !== '' ? ea.name : '(unnamed)', 'lang': 'en' }],
+    documentation: ea.documentation !== '' ? [{ 'value': ea.documentation, 'lang': 'en' }] : [{ 'value': '(no documentation)', 'lang': 'en' }],
     extensions: ea.extensions || { ai4pb: { managedBy: 'human-architect' } }
   };
   if (ea.properties !== null) { el.properties = ea.properties; }
@@ -425,8 +448,8 @@ function buildNewRelationship(ea) {
     type: ea.type,
     source: ea.source,
     target: ea.target,
-    name: [{ 'value': ea.name, 'lang': 'en' }],
-    documentation: ea.documentation !== '' ? [{ 'value': ea.documentation, 'lang': 'en' }] : [],
+    name: [{ 'value': ea.name !== '' ? ea.name : '(unnamed)', 'lang': 'en' }],
+    documentation: ea.documentation !== '' ? [{ 'value': ea.documentation, 'lang': 'en' }] : [{ 'value': '(no documentation)', 'lang': 'en' }],
     extensions: ea.extensions || { ai4pb: { managedBy: 'human-architect' } }
   };
   if (ea.properties !== null) { rel.properties = ea.properties; }
@@ -441,8 +464,8 @@ function buildFreshGraph(pkg, eaElements, eaRelationships) {
   var pkgName = safeString(pkg.Name).replace(/ Import.*$/, '');
   var graph = {
     identifier: getTagValue(pkg.Element, 'kg_identifier') || ('pkg-' + pkg.PackageGUID),
-    name: [{ 'value': pkgName, 'lang': 'en' }],
-    documentation: [],
+    name: [{ 'value': pkgName !== '' ? pkgName : '(unnamed)', 'lang': 'en' }],
+    documentation: [{ 'value': '(no documentation)', 'lang': 'en' }],
     metadata: {
       schema: 'https://www.opengroup.org/xsd/archimate/3.1/',
       schemaversion: '3.1'
