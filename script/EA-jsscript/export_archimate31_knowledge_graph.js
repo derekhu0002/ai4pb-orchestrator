@@ -471,6 +471,7 @@ function resolveArchimateElementType(element) {
   if (tagType != '') { return tagType; }
   var stereotype = safeString(element.StereotypeEx);
   var mapped = mapEaStereotypeToArchimateType(stereotype);
+  Session.Output('Element ' + element.Name + ' stereotype: ' + stereotype + ' mapped to type: ' + mapped);  
   if (mapped != '') { return mapped; }
   return safeString(element.Type);
 }
@@ -485,8 +486,13 @@ function resolveArchimateRelationshipType(connector) {
 }
 
 function mapEaStereotypeToArchimateType(stereotype) {
-  var prefix = 'Archimate_';
+  var prefix = 'ArchiMate_';
+  Session.Output('stereotype.substring(0, prefix.length): ' + stereotype.substring(0, prefix.length));
+  Session.Output('stereotype.substring(prefix.length): ' + stereotype.substring(prefix.length));
+  Session.Output('stereotype.length: ' + stereotype.length + ' prefix.length: ' + prefix.length);
+  Session.Output('stereotype.substring(0, prefix.length) === prefix: ' + (stereotype.substring(0, prefix.length) === prefix));
   if (stereotype.length > prefix.length && stereotype.substring(0, prefix.length) === prefix) {
+    Session.Output('Mapping EA stereotype ' + stereotype + ' to ArchiMate type ' + stereotype.substring(prefix.length));
     return stereotype.substring(prefix.length);
   }
   return '';
