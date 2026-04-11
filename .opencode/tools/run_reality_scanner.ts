@@ -1,6 +1,6 @@
 import { tool } from '@opencode-ai/plugin';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { detectEnvironmentProfiles } from '../lib/realityScanner/environmentRegistry';
 import { extractStructuralSymbolsForFile, summarizeLanguageSupport } from '../lib/realityScanner/providers';
