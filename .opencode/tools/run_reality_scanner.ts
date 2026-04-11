@@ -369,122 +369,124 @@ export default tool({
     maxFiles: tool.schema.number().int().min(10).max(500).optional().describe('Maximum number of sample files to report.'),
   },
   async execute(args, context) {
-    const files = collectReadableWorkspaceFiles(context.worktree, MAX_FILE_BYTES);
-    const { entries: mappingEntries, mappingFiles, warnings: mappingWarnings } = loadArchitectureMappings(context.worktree);
-    const semanticElements = loadSemanticElements(context.worktree);
-    const detectedEnvironments = detectEnvironmentProfiles(files);
+    return asJson(scanReality(context.worktree, args.maxFiles ?? 80));
+  },
+});
 
-    const extensionCounts: Record<string, number> = {};
-    const architectureReferences: ArchitectureReference[] = [];
-    const verifiedIntentIds = new Set<string>();
-    const structuralSymbols: StructuralSymbol[] = [];
-    const seenReferences = new Set<string>();
+export function scanReality(worktree: string, maxFiles = 80): ScanResult {
+  const files = collectReadableWorkspaceFiles(worktree, MAX_FILE_BYTES);
+  const { entries: mappingEntries, mappingFiles, warnings: mappingWarnings } = loadArchitectureMappings(worktree);
+  const semanticElements = loadSemanticElements(worktree);
+  const detectedEnvironments = detectEnvironmentProfiles(files);
 
-    for (const relativeFile of files) {
-      const extension = path.extname(relativeFile) || '<none>';
-      extensionCounts[extension] = (extensionCounts[extension] ?? 0) + 1;
+  const extensionCounts: Record<string, number> = {};
+  const architectureReferences: ArchitectureReference[] = [];
+  const verifiedIntentIds = new Set<string>();
+  const structuralSymbols: StructuralSymbol[] = [];
+  const seenReferences = new Set<string>();
 
-      const absolute = path.join(context.worktree, relativeFile);
-      try {
-        const content = fs.readFileSync(absolute, 'utf8');
-        if (isTestFile(relativeFile)) {
-          for (const intentId of collectTaggedIntentIds(content)) {
-            verifiedIntentIds.add(intentId);
-          }
+  for (const relativeFile of files) {
+    const extension = path.extname(relativeFile) || '<none>';
+    extensionCounts[extension] = (extensionCounts[extension] ?? 0) + 1;
+
+    const absolute = path.join(worktree, relativeFile);
+    try {
+      const content = fs.readFileSync(absolute, 'utf8');
+      if (isTestFile(relativeFile)) {
+        for (const intentId of collectTaggedIntentIds(content)) {
+          verifiedIntentIds.add(intentId);
+        }
+      }
+
+      const fileSymbols = extractStructuralSymbolsForFile(relativeFile, content, worktree).map((symbol) => ({
+        ...symbol,
+        snippet: safeSnippet(symbol.snippet),
+      }));
+      structuralSymbols.push(...fileSymbols);
+
+      const matches = content.matchAll(ARCHITECTURE_ID_PATTERN);
+      for (const match of matches) {
+        const architectureId = match[1]?.trim();
+        if (!architectureId) {
+          continue;
         }
 
-        const fileSymbols = extractStructuralSymbolsForFile(relativeFile, content, context.worktree).map((symbol) => ({
-          ...symbol,
-          snippet: safeSnippet(symbol.snippet),
-        }));
-        structuralSymbols.push(...fileSymbols);
+        addArchitectureReference(architectureReferences, seenReferences, {
+          file: relativeFile,
+          architectureId,
+          line: getLineNumber(content, match.index ?? 0),
+          snippet: safeSnippet(match[0]),
+          source: 'comment',
+        });
+      }
 
-        const matches = content.matchAll(ARCHITECTURE_ID_PATTERN);
-        for (const match of matches) {
-          const architectureId = match[1]?.trim();
-          if (!architectureId) {
+      const normalizedFile = normalizeWorkspacePath(relativeFile);
+      for (const entry of mappingEntries) {
+        if (entry.paths.includes(normalizedFile)) {
+          addArchitectureReference(architectureReferences, seenReferences, {
+            file: relativeFile,
+            architectureId: entry.architectureId,
+            line: 1,
+            snippet: safeSnippet(`Mapped by ${entry.sourceFile} to ${normalizedFile}`),
+            source: 'mapping-path',
+            mappingFile: entry.sourceFile,
+          });
+        }
+
+        for (const glob of entry.globs) {
+          if (!globToRegex(glob).test(normalizedFile)) {
             continue;
           }
 
           addArchitectureReference(architectureReferences, seenReferences, {
             file: relativeFile,
-            architectureId,
-            line: getLineNumber(content, match.index ?? 0),
-            snippet: safeSnippet(match[0]),
-            source: 'comment',
+            architectureId: entry.architectureId,
+            line: 1,
+            snippet: safeSnippet(`Mapped by ${entry.sourceFile} glob ${glob}`),
+            source: 'mapping-glob',
+            mappingFile: entry.sourceFile,
           });
         }
 
-        const normalizedFile = normalizeWorkspacePath(relativeFile);
-        for (const entry of mappingEntries) {
-          if (entry.paths.includes(normalizedFile)) {
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: 1,
-              snippet: safeSnippet(`Mapped by ${entry.sourceFile} to ${normalizedFile}`),
-              source: 'mapping-path',
-              mappingFile: entry.sourceFile,
-            });
-          }
+        if (entry.symbols.length === 0) {
+          continue;
+        }
 
-          for (const glob of entry.globs) {
-            if (!globToRegex(glob).test(normalizedFile)) {
-              continue;
-            }
-
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: 1,
-              snippet: safeSnippet(`Mapped by ${entry.sourceFile} glob ${glob}`),
-              source: 'mapping-glob',
-              mappingFile: entry.sourceFile,
-            });
-          }
-
-          if (entry.symbols.length === 0) {
+        for (const symbol of fileSymbols) {
+          if (!entry.symbols.includes(symbol.name)) {
             continue;
           }
 
-          for (const symbol of fileSymbols) {
-            if (!entry.symbols.includes(symbol.name)) {
-              continue;
-            }
-
-            addArchitectureReference(architectureReferences, seenReferences, {
-              file: relativeFile,
-              architectureId: entry.architectureId,
-              line: symbol.line,
-              snippet: symbol.snippet,
-              source: 'mapping-symbol',
-              symbolName: symbol.name,
-              mappingFile: entry.sourceFile,
-            });
-          }
+          addArchitectureReference(architectureReferences, seenReferences, {
+            file: relativeFile,
+            architectureId: entry.architectureId,
+            line: symbol.line,
+            snippet: symbol.snippet,
+            source: 'mapping-symbol',
+            symbolName: symbol.name,
+            mappingFile: entry.sourceFile,
+          });
         }
-      } catch {
-        // Ignore unreadable files and continue scanning.
       }
+    } catch {
+      // Ignore unreadable files and continue scanning.
     }
+  }
 
-    const semanticTraces = buildSemanticTraces(structuralSymbols, semanticElements);
-    const languageSupport: LanguageSupport[] = summarizeLanguageSupport(files, structuralSymbols, context.worktree);
+  const semanticTraces = buildSemanticTraces(structuralSymbols, semanticElements);
+  const languageSupport: LanguageSupport[] = summarizeLanguageSupport(files, structuralSymbols, worktree);
 
-    const result: ScanResult = {
-      fileCount: files.length,
-      extensionCounts,
-      architectureReferences: architectureReferences.slice(0, MAX_ARCHITECTURE_REFERENCES),
-      verifiedIntentIds: [...verifiedIntentIds].sort(),
-      structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
-      semanticTraces,
-      languageSupport,
-      detectedEnvironments,
-      mappingFiles,
-      mappingWarnings,
-      sampleFiles: files.slice(0, args.maxFiles ?? 80),
-    };
-
-    return asJson(result);
-  },
-});
+  return {
+    fileCount: files.length,
+    extensionCounts,
+    architectureReferences: architectureReferences.slice(0, MAX_ARCHITECTURE_REFERENCES),
+    verifiedIntentIds: [...verifiedIntentIds].sort(),
+    structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
+    semanticTraces,
+    languageSupport,
+    detectedEnvironments,
+    mappingFiles,
+    mappingWarnings,
+    sampleFiles: files.slice(0, maxFiles),
+  };
+}
