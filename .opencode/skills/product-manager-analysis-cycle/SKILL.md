@@ -54,9 +54,13 @@ Use this skill to turn raw, unstructured ideas into formal, actionable requireme
 
 2. **Phase 2: Formalization & Human Approval (Mandatory)**
    - Draft a structured requirement specification (User Stories, Acceptance Criteria, Business Constraints).
+   - The formal requirement MUST reflect the outcome of the Phase 1 impact and conflict analysis. If historical constraints, prior requirements, or business processes were found, carry their resolution forward explicitly into the PRD.
+   - Include a dedicated backward-compatibility and conflict-resolution section so `SystemArchitect` can see whether the new requirement preserves, overrides, branches, or retires historical rules.
    - You MUST first present the complete PRD to the human as a normal conversational response in the main dialog area.
    - You MUST NOT ask for approval, call `question`, or return a final PM result before the full PRD has been displayed in normal conversation content.
-   - The displayed PRD must be substantive, not a short summary. At minimum it must include clearly labeled sections for: `Goal`, `Scope`, `User Stories or Usage Scenarios`, `Acceptance Criteria`, `Constraints`, and `Open Questions or Assumptions` when applicable.
+   - The displayed PRD must be substantive, not a short summary. At minimum it must include clearly labeled sections for: `Goal`, `Scope`, `Backward Compatibility & Resolved Conflicts`, `User Stories / Usage Scenarios`, `Acceptance Criteria (Mandatory)`, `Constraints & Non-functional Requirements`, and `Open Questions / Assumptions` when applicable.
+   - In `Backward Compatibility & Resolved Conflicts`, explicitly state how the new requirement interacts with existing rules, requirements, constraints, or business processes discovered during Phase 1. If none were found, say that no conflicting historical context was detected.
+   - Acceptance criteria MUST be clear, testable, and unambiguous. Prefer Given/When/Then format unless another structure is materially clearer for the requirement.
    - Preferred presentation shape for the conversational PRD display:
      ```md
      # Formal Requirement Draft
@@ -67,13 +71,18 @@ Use this skill to turn raw, unstructured ideas into formal, actionable requireme
      ## Scope
      ...
 
+     ## Backward Compatibility & Resolved Conflicts
+     *(Explicitly state how this requirement interacts with or overrides specific existing rules/requirements)*
+     ...
+
      ## User Stories / Usage Scenarios
      ...
 
-     ## Acceptance Criteria
+     ## Acceptance Criteria (Mandatory)
+     *(Must be clear, testable, and unambiguous. Preferably in Given/When/Then format)*
      ...
 
-     ## Constraints
+     ## Constraints & Non-functional Requirements
      ...
 
      ## Open Questions / Assumptions
