@@ -36,6 +36,11 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
     - If the reviewed implementation tasks contain one or more `architectureElementId` values, use `run_reality_scanner` output to confirm that the changed codebase exposes matching architecture trace evidence for those elements.
     - Accept trace evidence from any of these sources: matching `@ArchitectureID` markers, explicit entries in an external `architecture-mapping.yaml|yml|json` file, or mapping-symbol evidence that binds architecture IDs to extracted structural symbols.
     - Treat plain comment markers as only one form of evidence, not as the sole definition of architecture compliance.
+    - In addition to architecture trace evidence, perform an intent-verification pass for automated tests. Treat the intended scope as the union of `Requirement` IDs and `Architecture` IDs linked to the current sprint tasks or otherwise required by the reviewed batch.
+    - Use the graph and reviewed runtime tasks to enumerate the intended IDs that must be verified. This includes the approved requirement element IDs and the linked architecture element IDs for the current implementation scope.
+    - Treat `run_reality_scanner().verifiedIntentIds` as the verified reality for automated intent coverage. These IDs come only from traceability tags physically embedded in test files.
+    - Apply the strict execution gate mathematically: `Intended IDs ⊆ verifiedIntentIds` MUST hold for the audit to pass.
+    - If any intended `Requirement` ID or `Architecture` ID is absent from `verifiedIntentIds`, fail the compliance check even if the code compiles, broad tests pass, or non-tagged tests exist.
     - Use `semanticTraces` as implicit supplementary evidence, not as the sole basis for architectural conformance. High semantic similarity can justify deeper review, but it does not override explicit trace mismatches.
     - Inspect `languageSupport` to understand whether changed files were analyzed through AST-backed providers or fallback extraction. If a changed language has only fallback coverage, lower audit confidence accordingly and state that limitation explicitly.
     - If no explicit trace evidence exists for a required `architectureElementId`, treat that as an implementation traceability gap even if the code otherwise appears plausible.
@@ -45,6 +50,7 @@ Use this skill to perform an architecture-to-code compliance check using repo-lo
 3.  **Report Findings**:
     - If gaps are found, use `generate_gap_report(intentSummary="...", realitySummary="...", gaps="...", recommendedActions="...")` to produce a structured report.
     - Use `update_graph_model(action="record_validation", kind="audit", status="passed|failed", commitId="<sha>", content="...")` to store audit status.
-    - If gaps are important enough to track, use `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")`.
+    - If any intended ID lacks automated test verification, you MUST treat it as a blocking audit failure, block release, and use `update_graph_model(action="log_issue", kind="ArchitectureGap", title="...", content="...")` to record an `IntentNotVerified` gap that explicitly lists every missing `Requirement` ID and `Architecture` ID.
+    - For intent-verification failures, describe the gap as `IntentNotVerified` in both the issue content and the returned audit result, and state that QA must add tagged automated tests before release can continue.
     - If audit fails, return the exact existing runtime task IDs that are implicated by the gap whenever they can be determined from the reviewed batch. Only recommend new task IDs when the architect must create genuinely new work.
     - Return JSON-like prose with `status`, `reviewed_commit_id`, `gaps`, `resolution_hint`, and `recommended_task_ids` when rework is needed.

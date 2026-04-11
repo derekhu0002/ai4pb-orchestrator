@@ -15,6 +15,7 @@ const MAX_STRUCTURAL_SYMBOLS = 300;
 const MAX_SEMANTIC_TRACES = 200;
 const MAX_SEMANTIC_CANDIDATES = 3;
 const MIN_SEMANTIC_SCORE = 0.12;
+const TEST_FILE_PATTERN = /(^|\/)(test|tests|__tests__)(\/|$)|\.(spec|test)\.[^/]+$/i;
 
 type MappingEntry = {
   architectureId: string;
@@ -33,6 +34,7 @@ type SemanticElement = {
 };
 
 const ARCHITECTURE_ID_PATTERN = /@ArchitectureID:\s*([^\r\n]+)/g;
+const REQUIREMENT_ID_PATTERN = /@RequirementID:\s*([^\r\n]+)/g;
 
 const MAPPING_FILE_CANDIDATES = [
   'architecture-mapping.yaml',
@@ -48,6 +50,22 @@ const MAPPING_FILE_CANDIDATES = [
 
 function getLineNumber(content: string, index: number): number {
   return content.slice(0, index).split(/\r?\n/).length;
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function isTestFile(relativePath: string): boolean {
+  return TEST_FILE_PATTERN.test(relativePath);
+}
+
+function collectTaggedIntentIds(content: string): string[] {
+  return unique(
+    [...content.matchAll(REQUIREMENT_ID_PATTERN), ...content.matchAll(ARCHITECTURE_ID_PATTERN)]
+      .map((match) => match[1]?.trim())
+      .filter((value): value is string => Boolean(value))
+  );
 }
 
 function normalizeWorkspacePath(value: string): string {
@@ -346,7 +364,7 @@ function buildSemanticTraces(symbols: StructuralSymbol[], semanticElements: Sema
 }
 
 export default tool({
-  description: 'Scan the repository for implementation reality using ArchitectureID markers, external mappings, pluggable language providers, environment profile detection, and semantic tracing against ApplicationComponent documentation.',
+  description: 'Scan the repository for implementation reality using ArchitectureID and RequirementID markers, explicit test intent verification tags, external mappings, pluggable language providers, environment profile detection, and semantic tracing against ApplicationComponent documentation.',
   args: {
     maxFiles: tool.schema.number().int().min(10).max(500).optional().describe('Maximum number of sample files to report.'),
   },
@@ -358,6 +376,7 @@ export default tool({
 
     const extensionCounts: Record<string, number> = {};
     const architectureReferences: ArchitectureReference[] = [];
+    const verifiedIntentIds = new Set<string>();
     const structuralSymbols: StructuralSymbol[] = [];
     const seenReferences = new Set<string>();
 
@@ -368,6 +387,12 @@ export default tool({
       const absolute = path.join(context.worktree, relativeFile);
       try {
         const content = fs.readFileSync(absolute, 'utf8');
+        if (isTestFile(relativeFile)) {
+          for (const intentId of collectTaggedIntentIds(content)) {
+            verifiedIntentIds.add(intentId);
+          }
+        }
+
         const fileSymbols = extractStructuralSymbolsForFile(relativeFile, content, context.worktree).map((symbol) => ({
           ...symbol,
           snippet: safeSnippet(symbol.snippet),
@@ -450,6 +475,7 @@ export default tool({
       fileCount: files.length,
       extensionCounts,
       architectureReferences: architectureReferences.slice(0, MAX_ARCHITECTURE_REFERENCES),
+      verifiedIntentIds: [...verifiedIntentIds].sort(),
       structuralSymbols: structuralSymbols.slice(0, MAX_STRUCTURAL_SYMBOLS),
       semanticTraces,
       languageSupport,

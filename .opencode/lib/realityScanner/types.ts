@@ -64,6 +64,7 @@ export type ScanResult = {
   fileCount: number;
   extensionCounts: Record<string, number>;
   architectureReferences: ArchitectureReference[];
+  verifiedIntentIds: string[];
   structuralSymbols: StructuralSymbol[];
   semanticTraces: SemanticTrace[];
   languageSupport: LanguageSupport[];

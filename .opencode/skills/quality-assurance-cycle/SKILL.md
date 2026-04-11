@@ -28,20 +28,25 @@ Use this skill to generate the best available test plan, run the narrowest usefu
     - Use `query_graph(mode="summary")` and `query_graph(mode="tasks_by_status", status="done")` to find requirements, acceptance criteria, and the git commit ID for the latest implementation batch.
     - If the input does not provide a commit ID and the completed runtime tasks do not converge on a single commit ID, fail the QA handoff as incomplete instead of validating an ambiguous working tree state.
     - Derive the review scope from the completed runtime tasks that share the reviewed `commitId`. Collect every non-empty `architectureElementId` in that batch as the required traceability scope for QA.
+    - Shift QA from generic code coverage to intent coverage. For the current runtime tasks, you MUST query the graph for the linked `Requirement` and `ApplicationComponent` elements and extract the acceptance criteria or equivalent intent statements from their documentation, properties, or other graph-backed fields.
+    - Build the test scope from those requirement and architecture acceptance criteria first, then map that scope to test files and commands. The goal is to prove that intended behavior is verified, not merely that touched code executed.
     - Use `generate_test_cases(commitId="<sha>")` to create a commit-scoped test plan that lists touched runtime tasks, architecture-linked modules, existing automated test evidence, and any missing unit-test coverage.
-    - Treat missing automated test coverage for any touched architecture-linked module as a hard QA gap, not as a documentation note.
+    - Treat missing automated test coverage for any touched requirement or architecture-linked intent as a hard QA gap, not as a documentation note.
     - If `generate_test_cases` reports a touched module with missing unit-test coverage, you MUST FIRST use `generate_test_template(sourceFile="<module path>", testFramework="jest|pytest")` on that source file.
     - Take the output of `generate_test_template` and use the `write` tool to save it as a new test file (for example, `[filename].spec.ts` next to the source file or a file inside a `tests/` directory).
-    - Only AFTER the boilerplate is saved should you use `edit` or `write` to fill in the real test logic, fixtures, mocks, and assertions.
+    - When writing or updating any test file, you MUST inject explicit traceability tags above the relevant test case or describe block, such as `// @RequirementID: REQ-001` and `// @ArchitectureID: APP-002` or the language-appropriate comment equivalent.
+    - A test only counts as valid intent coverage if the physical test file contains the relevant traceability tags. Untagged tests may still be useful regression checks, but they do NOT satisfy the intent coverage loop.
+    - If a single test verifies multiple acceptance criteria or multiple architecture-linked responsibilities, include all relevant `@RequirementID` and `@ArchitectureID` tags immediately above that test scope.
+    - Only AFTER the boilerplate is saved should you use `write` to fill in the real test logic, fixtures, mocks, assertions, and required traceability tags.
     - Name new tests according to the repo's existing conventions when possible, for example `*.spec.ts`, `*.test.ts`, or files under `tests/` / `__tests__/`.
     - **Example — TypeScript module (jest)**:
       1. Call `generate_test_template(sourceFile="src/utils/math.ts", testFramework="jest")`.
       2. Call `write(path="src/utils/math.spec.ts", content=<output from step 1>)`.
-      3. Call `edit` or `write` on `src/utils/math.spec.ts` to replace the `expect(true).toBe(true)` stubs with real assertions.
+      3. Call `write` on `src/utils/math.spec.ts` to add `// @RequirementID: ...` and `// @ArchitectureID: ...` above the relevant test cases, replacing the `expect(true).toBe(true)` stubs with real assertions.
     - **Example — Python module (pytest)**:
       1. Call `generate_test_template(sourceFile="src/utils/math.py", testFramework="pytest")`.
       2. Call `write(path="tests/test_math.py", content=<output from step 1>)`.
-      3. Call `edit` or `write` on `tests/test_math.py` to fill in real assertions and any `monkeypatch` fixtures.
+      3. Call `write` on `tests/test_math.py` to add `# @RequirementID: ...` and `# @ArchitectureID: ...` above the relevant test cases, then fill in real assertions and any `monkeypatch` fixtures.
     - If the repository has no usable automated test harness for the touched language and you cannot add runnable targeted tests safely, fail QA as blocked. Do not mark QA passed based only on manual reasoning, smoke checks, or a broad build.
 
 2.  **Test Execution**:
@@ -56,4 +61,5 @@ Use this skill to generate the best available test plan, run the narrowest usefu
     - Use `update_graph_model(action="record_validation", kind="qa", status="passed|failed", commitId="<sha>", content="...")` to record QA status.
     - If the implementation is blocked by a defect, use `update_graph_model(action="log_issue", kind="BugReport", title="...", content="...")`.
     - If QA fails, identify the exact runtime task IDs impacted by the defect. Reuse existing task IDs from the reviewed implementation batch; do not invent replacement IDs for the same logical work.
+    - In your QA notes and final result, explicitly name which `Requirement` IDs and `Architecture` IDs were covered by tagged automated tests and which intended IDs remain unverified.
     - Return JSON-like prose with `status`, `reviewed_commit_id`, `commands_run`, `tests_added_or_updated`, `coverage_gaps`, `failures`, `affected_task_ids`, and `recommended_rework`.
