@@ -179,7 +179,7 @@ export default tool({
 
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai4pb-chrome-sandbox-'));
     const bootstrapPath = createChromeSandboxBootstrap(tempDir);
-    const execution = spawnSync(process.execPath, ['-r', bootstrapPath, scriptPath], {
+    const execution = spawnSync('node', ['-r', bootstrapPath, scriptPath], {
       cwd: context.worktree,
       encoding: 'utf8',
       env: {
@@ -194,7 +194,7 @@ export default tool({
 
     const result = {
       status: execution.status === 0 ? 'passed' : 'failed',
-      command: [process.execPath, '-r', bootstrapPath, scriptPath],
+      command: ['node', '-r', bootstrapPath, scriptPath],
       testScriptFile: path.relative(context.worktree, scriptPath).replace(/\\/g, '/'),
       exitCode: execution.status ?? -1,
       stdout: execution.stdout?.trim() ?? '',
