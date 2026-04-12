@@ -99,6 +99,15 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
 
 4.  **Phase 4: Parallel Validation**
     - Invoke `QualityAssurance` only if persisted runtime state shows at least one active task, at least one task with status `done`, and a recoverable implementation commit ID for that batch.
+    - Before invoking `QualityAssurance`, inspect the current validation batch task titles, descriptions, acceptance criteria, and any implementation or architect notes for signals that QA would require a live runtime dependency. Treat this gate as mandatory when the batch includes E2E testing, Real Contract Validation, or any explicit dependency on external network endpoints, localhost servers, databases, or Docker/containerized services.
+    - If the batch requires live runtime dependencies, the orchestrator MUST call `question` before QA using this exact contract:
+        - Title: `E2E 环境就绪确认 (Environment Readiness Check)`
+        - Body: `QA 即将执行依赖真实运行环境的测试 (E2E / Real Contract)。请确认本地测试环境 (如 Docker 容器、数据库、目标 Server) 已经启动且健康。`
+        - Options: `["[环境已就绪] 开始测试", "[跳过] 仅做本地 Mock/AST 验证", "[中止] 稍后重试"]`
+    - Interpret the environment-readiness `question` result as a workflow control gate rather than normal chat.
+    - Only when the human selects `[环境已就绪] 开始测试` may the orchestrator invoke `QualityAssurance` with `live_environment_ready: true` in the handoff payload.
+    - If the human selects `[跳过] 仅做本地 Mock/AST 验证`, the orchestrator may still invoke `QualityAssurance`, but it MUST omit `live_environment_ready: true` and explicitly instruct QA to run only local Mock, AST, sandbox, unit-test, build, or other non-live validation.
+    - If the human selects `[中止] 稍后重试`, stop validation routing for that batch, report that live-environment validation was deferred by the human, and do not invoke `QualityAssurance` until a later retry.
     - For `full-model` work, also invoke `Audit`.
     - For `fast-track` work, skip `Audit` by default.
     - Re-check `intentionModel.isIntentModelSufficient` before starting `Audit`. If the intention model is still weak, route back to `SystemArchitect` instead of auditing.
@@ -106,6 +115,7 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - When validation setup needs repository execution context, call `run_reality_scanner` and inspect both `languageSupport` and `detectedEnvironments`.
     - Extract every `recommendedSkills` and `recommendedTools` entry from both `languageSupport` and `detectedEnvironments`, consolidate and de-duplicate them, and pass those consolidated arrays explicitly in the native Task handoff payload to `QualityAssurance`.
     - Pass the implementation `commit_id` explicitly to `QualityAssurance` in all lanes, and to `Audit` when `full-model` validation is required.
+    - When the environment-readiness gate was triggered, include the human decision in the `QualityAssurance` handoff notes so QA can distinguish approved live validation from local-only fallback.
     - Require `QualityAssurance` and `Audit` to return concrete affected task IDs whenever they fail so retry accounting can be persisted without inference.
     - If a supposedly `fast-track` change is reported by `Implementation` or `QualityAssurance` as structurally impactful, traceability-sensitive, or no longer clearly non-architectural, escalate it into the `full-model` lane and invoke `SystemArchitect` before any release step.
     - Evaluate all child results that are relevant to the active lane before deciding the next step.
