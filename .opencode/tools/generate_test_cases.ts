@@ -50,6 +50,13 @@ type ModuleCandidate = {
   sourceFiles: string[];
 };
 
+type IpoContract = {
+  input?: string;
+  processing?: string;
+  output?: string;
+  acceptanceCriteria?: string;
+};
+
 function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
@@ -105,6 +112,35 @@ function buildSuggestedTestPath(sourceFile: string): string {
   }
 
   return `${sourceFile.slice(0, -extname.length)}.spec${extname}`;
+}
+
+function extractContractSection(source: string, label: string): string | undefined {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(
+    String.raw`(?:^|\n)\s*(?:[-*]\s*)?(?:\*\*)?\[${escapedLabel}\](?:\*\*)?\s*:\s*([\s\S]*?)(?=\n\s*(?:[-*]\s*)?(?:\*\*)?\[(?:Input|Processing|Output|Acceptance Criteria)\](?:\*\*)?\s*:|$)`,
+    'i'
+  );
+  const match = source.match(pattern);
+  const value = match?.[1]?.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  return value.replace(/\n{2,}/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function extractIpoContract(task: { details?: string; summary?: string }): IpoContract {
+  const contractSource = [task.details, task.summary].filter(Boolean).join('\n');
+  if (!contractSource) {
+    return {};
+  }
+
+  return {
+    input: extractContractSection(contractSource, 'Input'),
+    processing: extractContractSection(contractSource, 'Processing'),
+    output: extractContractSection(contractSource, 'Output'),
+    acceptanceCriteria: extractContractSection(contractSource, 'Acceptance Criteria'),
+  };
 }
 
 function collectFileRecords(worktree: string): FileRecord[] {
@@ -262,6 +298,8 @@ export default tool({
     }
 
     for (const task of tasks) {
+      const contract = extractIpoContract(task);
+
       lines.push(`## ${task.id} ${task.title}`);
       if (task.architectureElementId) {
         lines.push(`- Architecture ID: ${task.architectureElementId}`);
@@ -269,10 +307,16 @@ export default tool({
       if (task.softwareUnitTitle) {
         lines.push(`- Software unit: ${task.softwareUnitTitle}`);
       }
-      lines.push(`- Positive path: confirm the intended behavior for ${task.title}.`);
-      lines.push(`- Negative path: verify invalid or missing input does not break ${task.title}.`);
-      lines.push(`- Regression: ensure adjacent behavior still works after ${task.id}.`);
-      lines.push('- Execution gate: do not count this task as verified until a targeted automated test exists or has been extended for the touched module.');
+      lines.push(`- **[Input]**: ${contract.input ?? 'Missing from task details/summary. Treat this as a contract gap and escalate before declaring the task fully testable.'}`);
+      lines.push(`- **[Processing]**: ${contract.processing ?? 'Missing from task details/summary. Do not infer hidden business rules without graph-backed architectural guidance.'}`);
+      lines.push(`- **[Output]**: ${contract.output ?? 'Missing from task details/summary. Do not treat vague success conditions as sufficient output assertions.'}`);
+      lines.push(`- **[Acceptance Criteria]**: ${contract.acceptanceCriteria ?? 'Missing from task details/summary. QA should require explicit, testable acceptance statements.'}`);
+      lines.push(`- **Contract Adherence**: Extract the IPO (Input/Processing/Output) and Acceptance Criteria from this task's graph data.`);
+      lines.push(`- **Input Boundary Tests**: You MUST generate boundary value and edge-case inputs based strictly on the [Input] definition.`);
+      lines.push(`- **Processing Assertions**: You MUST validate the business rules, state transitions, and constraint handling defined in the [Processing] contract.`);
+      lines.push(`- **Output Assertions**: You MUST strictly assert the exact state or return values defined in the [Output] definition.`);
+      lines.push(`- **Acceptance Criteria Verification**: Create a dedicated test case for EVERY acceptance criterion. Use the criterion text as the test description.`);
+      lines.push('- **Execution gate**: Do not count this task as verified until all IPO boundaries and Acceptance Criteria are covered by executed automated tests.');
       lines.push('');
     }
 
