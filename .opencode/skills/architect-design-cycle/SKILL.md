@@ -76,29 +76,31 @@ Use this skill when handling a design request, implementation clarification, or 
   - Model the implementation scope through traceable cross-layer intent: strategy drives business, business is served by application, and application is supported by technology.
   - When adding or refining graph elements, make the ArchiMate layer and aspect legible in the description, element choice, and relationships so the model remains standards-grounded instead of tool-shaped.
   - Before recording software units, verify that the L2 boundary contracts are already clear enough that each software unit can be explained as an internal decomposition of an approved boundary rather than as a premature implementation guess.
-  - Before creating developer tasks, explicitly decompose the implementation scope into concrete software units. A software unit may be an application, service, module, component, package, adapter, or other developer-owned unit that can be implemented and reviewed.
+  - Before creating developer tasks, explicitly decompose the implementation scope into concrete software units. A software unit is the physical or logical module boundary and MUST first be modeled as an `ApplicationComponent` or `Artifact`.
   - When meaningful implementation structure already exists, prefer mapping the change to an existing software unit when that structure already provides an appropriate ownership boundary. Only introduce a new software unit when no existing module can host the change cleanly.
-  - Software Units MUST be explicitly added to the Shared Knowledge Graph as `Artifact` elements, or as `ApplicationComponent` elements only when the unit is predominantly behavioral rather than implementation-packaging oriented.
+  - Software Units MUST be explicitly added to the Shared Knowledge Graph as `ApplicationComponent` elements or `Artifact` elements.
   - You MUST explicitly create a `Realization` relationship from each Software Unit element to the L2 architectural intent element it fulfills.
   - ONLY Software Units that directly realize an intent element should be added to the graph.
   - For each software unit, define its responsibility, main interfaces or dependencies, the architecture element ID that represents it in the graph, the L2 intent element it realizes, and whether it is an existing legacy module, a refactored legacy seam, or a newly introduced unit.
+  - After defining the Software Unit, decompose it into one or more `ApplicationFunction` elements to represent the behavioral contract carried by that unit.
+  - **Rule:** An `ApplicationFunction` belongs to exactly one Software Unit. You MUST connect them using an `Assignment` relationship from the Software Unit to the `ApplicationFunction`.
+  - Every `ApplicationFunction` you create MUST carry the strict IPO contract in its `content` field using this exact Markdown shape:
+    ```markdown
+    - **[Input]**: (Exact data structures or events)
+    - **[Processing]**: (Core business rules and constraints)
+    - **[Output]**: (Expected return values or state changes)
+    - **[Acceptance Criteria]**: (Clear, testable rules)
+    ```
+  - The `update_graph_model` tool will crash if you try to create an `ApplicationFunction` without this exact structure.
   - When a software unit maps to an existing legacy module, identify the concrete file, directory, class, or package that makes it the best fit, and record that rationale as a design decision before creating implementation tasks.
   - Keep L3 decomposition scoped to what the current sprint or issue actually changes. Avoid speculative decomposition of future modules, schemas, or infrastructure details that are outside the approved execution scope.
-  - Only after software units are explicit, derive implementation tasks from them. Avoid generic tasks like "implement requirement" that are not anchored to a software unit.
-  - Each implementation task's `details` field, or the Software Unit documentation when task storage is constrained, MUST contain a strict structured IPO contract using this Markdown shape:
-    ```markdown
-    - **[Input]**: (Exact data structures, API params, or events triggering this unit)
-    - **[Processing]**: (Core business rules, state changes, and logic constraints)
-    - **[Output]**: (Expected return values, database writes, or emitted events)
-    - **[Acceptance Criteria]**: (Clear, testable rules based strictly on the IPO bounds)
-    ```
-  - This structured IPO contract replaces vague natural language and serves as the strict blueprint for the `Implementation` agent.
-  - Each implementation task should map to one primary software unit and should carry `softwareUnitId`, `softwareUnitTitle`, and `architectureElementId` metadata whenever available.
+  - Only after the relevant `ApplicationFunction` elements are explicit, derive implementation tasks from them. Avoid generic tasks like "implement requirement" that are not anchored to a granular function-level contract.
+  - Each implementation task should map to one primary Software Unit and MUST trace directly to the specific `ApplicationFunction` it implements through the `architectureElementId` field. Do not link the task only to the broad Software Unit.
   - When the change is anchored to existing implementation structure, task summaries should explicitly reference the selected module or explain why a new unit is being introduced instead of extending one.
-  - Prefer a task structure like `[{"title":"Implement orchestration runtime task metadata","owner":"Implementation","kind":"implementation","softwareUnitId":"SU-RUNTIME-STATE","softwareUnitTitle":"Runtime State Manager","architectureElementId":"ELM-APP-RUNTIME-STATE","input":"Runtime task payloads, persisted task IDs, and architecture traceability metadata.","processing":"Validate required task fields, attach software-unit references, and preserve status-transition invariants.","output":"Updated runtime task records with software-unit traceability fields persisted.","acceptanceCriteria":"Runtime tasks persist software-unit metadata, invalid payloads are rejected, and downstream agents can query the new fields deterministically."}]`.
+  - Prefer a task structure like `[{"title":"Implement runtime metadata validation function","owner":"Implementation","kind":"implementation","softwareUnitId":"SU-RUNTIME-STATE","softwareUnitTitle":"Runtime State Manager","architectureElementId":"ELM-APP-FUNC-RUNTIME-VALIDATION","summary":"Implement the ApplicationFunction assigned to Runtime State Manager for runtime metadata validation."}]`.
   - Use `update_graph_model(action="set_design_summary", content="...")` to store the design summary and `update_graph_model(action="record_decision", content="...")` for each major architectural decision, including why a legacy module was chosen or rejected.
   - Record architecture decisions in a way that makes trade-offs explicit, especially when choosing ArchiMate layer boundaries, boundary contracts, decoupling seams, or the point where progressive disclosure stops for the current sprint.
-  - When generating implementation tasks, you MUST use `update_graph_model(action="bulk_add_tasks", tasksJson="...")`. Your JSON objects in `tasksJson` **MUST explicitly include** the following discrete fields: `title`, `owner`, `kind`, `softwareUnitId`, `softwareUnitTitle`, `architectureElementId`, `input`, `processing`, `output`, and `acceptanceCriteria`. Do not stuff them all into a single `details` or `summary` string. The tool will strictly validate the presence of these fields and will crash if you omit them.
+  - When generating implementation tasks, you MUST use `update_graph_model(action="bulk_add_tasks", tasksJson="...")`. The task must preserve `softwareUnitId`, `softwareUnitTitle`, and the function-level `architectureElementId` so `Implementation` can resolve the exact `ApplicationFunction` contract from the graph.
   - Before returning a final design result, first present the architecture design to the human in normal conversation content.
   - You MUST NOT call `question`, request approval, or return a final architect result before the full architecture design has been shown in normal conversation content.
   - The displayed architecture design must be substantive, not only a short summary. It must reflect ArchiMate 3.1 grounding, separation of concerns, and progressive disclosure. At minimum it must include clearly labeled sections for: `L1: Context, Motivation & Ecosystem`, `L2: System Boundaries & Contracts`, `L3: Zoom-in: Software Unit Decomposition`, `Implementation Task Mapping`, and `Key Architecture Decisions (ADRs)`.

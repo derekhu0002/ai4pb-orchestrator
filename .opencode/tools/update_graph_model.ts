@@ -151,28 +151,6 @@ function optionalText(value: unknown): string | undefined {
   return normalized ? normalized : undefined;
 }
 
-function requireTaskContractField(value: unknown): string | undefined {
-  return optionalText(value);
-}
-
-function formatTaskContractMarkdown(record: Record<string, unknown>): string {
-  const input = requireTaskContractField(record.input);
-  const processing = requireTaskContractField(record.processing);
-  const output = requireTaskContractField(record.output);
-  const acceptanceCriteria = requireTaskContractField(record.acceptanceCriteria);
-
-  if (!input || !processing || !output || !acceptanceCriteria) {
-    throw new Error('bulk_add_tasks is invalid: Each task MUST explicitly provide "input", "processing", "output", and "acceptanceCriteria" fields. Do not use generic summaries.');
-  }
-
-  return [
-    `- **[Input]**: ${input}`,
-    `- **[Processing]**: ${processing}`,
-    `- **[Output]**: ${output}`,
-    `- **[Acceptance Criteria]**: ${acceptanceCriteria}`,
-  ].join('\n');
-}
-
 function stripCodeFences(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed.startsWith('```')) {
@@ -250,27 +228,16 @@ function parseTasksJson(raw?: string, fallbackContent?: string): Array<Record<st
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         throw new Error(`tasksJson[${index}] is invalid: each task must be a JSON object with at least a title, name, summary, or content field.`);
       }
-
-      const record = item as Record<string, unknown>;
-      if (
-        !requireTaskContractField(record.input) ||
-        !requireTaskContractField(record.processing) ||
-        !requireTaskContractField(record.output) ||
-        !requireTaskContractField(record.acceptanceCriteria)
-      ) {
-        throw new Error('bulk_add_tasks is invalid: Each task MUST explicitly provide "input", "processing", "output", and "acceptanceCriteria" fields. Do not use generic summaries.');
-      }
-
       return item as Record<string, unknown>;
     });
   }
 
   const titles = parseTaskTitles(fallbackContent);
   if (titles.length === 0) {
-    throw new Error('bulk_add_tasks requires tasksJson containing task objects with strict IPO fields.');
+    throw new Error('bulk_add_tasks requires tasksJson or content containing at least one task title.');
   }
 
-  throw new Error('bulk_add_tasks is invalid: Each task MUST explicitly provide "input", "processing", "output", and "acceptanceCriteria" fields. Do not use generic summaries.');
+  return titles.map((title) => ({ title }));
 }
 
 function requireNonEmptyText(value: string | undefined, fieldName: string, action: string): string {
@@ -330,6 +297,20 @@ function validateRelationshipDocumentationQuality(
   }
 }
 
+function validateApplicationFunctionContract(elementType: string, documentation: string | undefined): void {
+  if (elementType !== 'ApplicationFunction') {
+    return;
+  }
+
+  const content = documentation ?? '';
+  const requiredTags = ['[Input]:', '[Processing]:', '[Output]:', '[Acceptance Criteria]:'];
+  const hasAllTags = requiredTags.every((tag) => content.toLowerCase().includes(tag.toLowerCase()));
+
+  if (!hasAllTags) {
+    throw new Error('Architectural Validation Failed: An ApplicationFunction MUST define a strict contract. The content must explicitly include "[Input]:", "[Processing]:", "[Output]:", and "[Acceptance Criteria]:".');
+  }
+}
+
 export default tool({
   description: 'Record design, task, validation, issue, and release updates for the OpenCode orchestration runtime.',
   args: {
@@ -347,7 +328,7 @@ export default tool({
     owner: tool.schema.string().optional().describe('Owner for a new task.'),
     kind: tool.schema.string().optional().describe('Validation or issue kind, such as qa, audit, or ArchitectureGap.'),
     issueId: tool.schema.string().optional().describe('Issue ID for resolve_issue operations.'),
-    tasksJson: tool.schema.string().optional().describe('Optional JSON array of task objects for bulk_add_tasks. Each task object MUST contain "title", "input", "processing", "output", and "acceptanceCriteria".'),
+    tasksJson: tool.schema.string().optional().describe('Optional JSON array of task objects for bulk_add_tasks or upsert_task.'),
     softwareUnitId: tool.schema.string().optional().describe('Primary software unit identifier for a task.'),
     softwareUnitTitle: tool.schema.string().optional().describe('Primary software unit title for a task.'),
     architectureElementId: tool.schema.string().optional().describe('Architecture element identifier that the task implements or changes.'),
@@ -415,7 +396,6 @@ export default tool({
           if (!title) {
             throw new Error('bulk_add_tasks is invalid: each task must provide a non-empty title, name, summary, or content field.');
           }
-          const details = formatTaskContractMarkdown(record);
           return {
             id: nextTaskId(state),
             title,
@@ -424,7 +404,7 @@ export default tool({
             kind: normalizeTaskKind(record.kind ?? args.taskKind),
             owner: String(record.owner ?? args.owner ?? 'Implementation'),
             summary: String(record.summary ?? record.content ?? ''),
-            details,
+            details: String(record.details ?? record.content ?? ''),
             commitId: optionalText(record.commitId ?? args.commitId),
             softwareUnitId: optionalText(record.softwareUnitId ?? args.softwareUnitId),
             softwareUnitTitle: optionalText(record.softwareUnitTitle ?? args.softwareUnitTitle),
@@ -615,6 +595,7 @@ export default tool({
         if (!elementTypeCheck.isSupported) {
           throw new Error(formatSupportedTypeHint('elementType', args.elementType ?? elementTypeCheck.normalized, elementTypeCheck.suggestions));
         }
+        validateApplicationFunctionContract(elementTypeCheck.normalized, args.content);
         validateElementDocumentationQuality(
           normalizedAction,
           elementTypeCheck.normalized,

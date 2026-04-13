@@ -39,8 +39,8 @@ Use this skill to execute the assigned coding work and return a direct structure
 1.  **Task Execution Loop**:
     - For each assigned task ID, use `query_graph(mode="task_by_id", id="TASK-...")` to read its full specification.
     - For normal implementation work, use the intention model, not only the free-text task summary, as the implementation contract.
-    - You MUST NOT implement from a vague task title alone. For each normal implementation task, use `query_graph` to locate the linked `Software Unit` node and extract its structured contract, including `Input`, `Processing`, `Output`, and `Acceptance Criteria`, before writing code.
-    - Treat the linked `Software Unit` node, not the task title, as the primary implementation contract whenever both are present.
+    - You MUST NOT work from a vague task title. Use `query_graph` to look up the `architectureElementId` associated with your assigned Task. This ID will point to an `ApplicationFunction` element in the knowledge graph.
+    - You MUST extract the `[Input]`, `[Processing]`, `[Output]`, and `[Acceptance Criteria]` directly from the documentation of that `ApplicationFunction`. This function-level contract is your strict baseline for coding.
     - **Strict IPO Adherence**: Your implementation MUST strictly satisfy the Input/Processing/Output boundaries defined by the `SystemArchitect`. Do not invent new inputs or outputs that are not in the contract. If the IPO contract is flawed or missing, you MUST NOT guess; you MUST escalate to `SystemArchitect` via the native Task tool for an architectural amendment.
     - For an explicit `fast-track` handoff, use the narrow user request, the orchestrator's fast-track rationale, and the persisted runtime task summary as the implementation contract.
     - If a specification is ambiguous, or the required architecture baseline is incomplete, invoke `SystemArchitect` through the native Task tool, then resume the task with the returned clarification.
