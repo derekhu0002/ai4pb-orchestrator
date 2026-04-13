@@ -4,16 +4,15 @@ mode: subagent
 model: github-copilot/gpt-5.4
 temperature: 0.1
 permission:
-  edit: deny
-  bash: deny
   skill:
     "*": deny
     "architecture-recovery-cycle": allow
 tools:
   scan_legacy_topology: true
   update_graph_model: true
-  write: true
   read: true
+  write: true
+  bash: true
   query_graph: true
   skill: true
 ---
