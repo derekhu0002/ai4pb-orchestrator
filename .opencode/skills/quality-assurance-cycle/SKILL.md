@@ -29,8 +29,9 @@ Use this skill to generate the best available test plan, run the narrowest usefu
     - Use `query_graph(mode="summary")` and `query_graph(mode="tasks_by_status", status="done")` to find requirements, acceptance criteria, and the git commit ID for the latest implementation batch.
     - If the input does not provide a commit ID and the completed runtime tasks do not converge on a single commit ID, fail the QA handoff as incomplete instead of validating an ambiguous working tree state.
     - Derive the review scope from the completed runtime tasks that share the reviewed `commitId`. Collect every non-empty `architectureElementId` in that batch as the required traceability scope for QA.
-    - Shift QA from generic code coverage to intent coverage. For the current runtime tasks, you MUST query the graph for the linked `Requirement` and `ApplicationComponent` elements and extract the acceptance criteria or equivalent intent statements from their documentation, properties, or other graph-backed fields.
-    - Build the test scope from those requirement and architecture acceptance criteria first, then map that scope to test files and commands. The goal is to prove that intended behavior is verified, not merely that touched code executed.
+    - Shift QA from generic code coverage to strict intent coverage. For the current runtime tasks, you MUST use `query_graph` to precisely extract the linked task contract and associated architecture-node contract, including the structured `Input`, `Processing`, `Output`, and `[Acceptance Criteria]` fields from the relevant `Software Unit`, `Requirement`, and architecture elements.
+    - Treat the IPO contract plus `[Acceptance Criteria]` as the primary test-design source of truth. Do not derive tests from a vague task title, a short summary, or touched files alone when a graph-backed contract exists.
+    - Build the test scope from those graph-backed IPO boundaries and acceptance criteria first, then map that scope to test files and commands. The goal is to prove that intended behavior is verified, not merely that touched code executed.
     - Use `generate_test_cases(commitId="<sha>")` to create a commit-scoped test plan that lists touched runtime tasks, architecture-linked modules, existing automated test evidence, and any missing unit-test coverage.
     - Treat missing automated test coverage for any touched requirement or architecture-linked intent as a hard QA gap, not as a documentation note.
     - If `generate_test_cases` reports a touched module with missing unit-test coverage, you MUST FIRST use `generate_test_template(sourceFile="<module path>", testFramework="jest|pytest")` on that source file.
@@ -39,15 +40,19 @@ Use this skill to generate the best available test plan, run the narrowest usefu
     - A test only counts as valid intent coverage if the physical test file contains the relevant traceability tags. Untagged tests may still be useful regression checks, but they do NOT satisfy the intent coverage loop.
     - If a single test verifies multiple acceptance criteria or multiple architecture-linked responsibilities, include all relevant `@RequirementID` and `@ArchitectureID` tags immediately above that test scope.
     - Only AFTER the boilerplate is saved should you use `write` to fill in the real test logic, fixtures, mocks, assertions, and required traceability tags.
+    - **Strict IPO-Driven Test Generation**: When writing or filling in test logic, you MUST NOT write generic or `happy-path only` tests. You MUST parse the `[Input]` contract to generate explicit boundary-value and equivalence-class tests, including cases such as `null`, empty arrays, missing fields, `MAX_INT`, minimum values, and edge-case strings whenever those classes are relevant to the declared contract. You MUST parse the `[Processing]` and `[Output]` contracts to write strict assertions on behavior, state transitions, and emitted results.
+    - Every `[Acceptance Criteria]` must have at least one dedicated test block (`it` or `test` function). Inject the exact text of the Acceptance Criteria as a comment directly above the assertion line to prove intent coverage.
+    - Never leave `expect(true).toBe(true)` placeholders, empty stubs, or boilerplate-only tests in the final QA result.
+    - If the IPO contract is missing, underspecified, or ambiguous enough that boundary cases and assertions cannot be derived confidently, do not guess the test cases. Use `update_graph_model(action="log_issue", kind="BugReport", title="Architectural contract lacks testable IPO boundaries", content="...")` and route the gap back to `SystemArchitect` as a contract defect rather than fabricating tests.
     - Name new tests according to the repo's existing conventions when possible, for example `*.spec.ts`, `*.test.ts`, or files under `tests/` / `__tests__/`.
     - **Example — TypeScript module (jest)**:
       1. Call `generate_test_template(sourceFile="src/utils/math.ts", testFramework="jest")`.
       2. Call `write(path="src/utils/math.spec.ts", content=<output from step 1>)`.
-      3. Call `write` on `src/utils/math.spec.ts` to add `// @RequirementID: ...` and `// @ArchitectureID: ...` above the relevant test cases, replacing the `expect(true).toBe(true)` stubs with real assertions.
+      3. Call `write` on `src/utils/math.spec.ts` to add `// @RequirementID: ...` and `// @ArchitectureID: ...` above the relevant test cases, replace the `expect(true).toBe(true)` stubs with boundary-driven assertions, and copy each exact Acceptance Criteria sentence into a comment immediately above the corresponding assertion block.
     - **Example — Python module (pytest)**:
       1. Call `generate_test_template(sourceFile="src/utils/math.py", testFramework="pytest")`.
       2. Call `write(path="tests/test_math.py", content=<output from step 1>)`.
-      3. Call `write` on `tests/test_math.py` to add `# @RequirementID: ...` and `# @ArchitectureID: ...` above the relevant test cases, then fill in real assertions and any `monkeypatch` fixtures.
+      3. Call `write` on `tests/test_math.py` to add `# @RequirementID: ...` and `# @ArchitectureID: ...` above the relevant test cases, derive boundary and equivalence-class cases from the IPO contract, and copy each exact Acceptance Criteria sentence into a comment immediately above the corresponding assertion block.
     - If the repository has no usable automated test harness for the touched language and you cannot add runnable targeted tests safely, fail QA as blocked. Do not mark QA passed based only on manual reasoning, smoke checks, or a broad build.
 
 2.  **Test Execution**:
