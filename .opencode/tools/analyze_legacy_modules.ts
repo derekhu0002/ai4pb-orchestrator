@@ -2,6 +2,7 @@ import { tool } from '@opencode-ai/plugin';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { inferModulePath } from '../lib/realityScanner/moduleTopology';
 import { extractStructuralSymbolsForFile } from '../lib/realityScanner/providers';
 import { buildTokenVector, cosineSimilarity } from '../lib/realityScanner/semanticUtils';
 import { asJson, collectReadableWorkspaceFiles, loadRuntimeState, safeSnippet } from '../lib/runtimeState';
@@ -37,28 +38,6 @@ type ModuleAggregate = {
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)];
-}
-
-function inferModulePath(relativeFile: string): string {
-  const directory = path.posix.dirname(relativeFile);
-  if (!directory || directory === '.') {
-    return relativeFile;
-  }
-
-  const parts = directory.split('/').filter(Boolean);
-  if (parts.length === 1) {
-    return parts[0];
-  }
-
-  if (parts[0] === 'src' && parts.length >= 2) {
-    return `${parts[0]}/${parts[1]}`;
-  }
-
-  if (['app', 'lib', 'packages', 'services', 'implementation'].includes(parts[0])) {
-    return `${parts[0]}/${parts[1]}`;
-  }
-
-  return `${parts[0]}/${parts[1]}`;
 }
 
 function collectArchitectureIds(content: string): string[] {
