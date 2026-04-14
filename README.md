@@ -1,13 +1,13 @@
-﻿# 🚀 ARGO (AI4PB): Model-Driven AI for Project Building
+﻿# 🚀 Argo (AI4PB): Model-Driven AI for Project Building
 
-**ARGO (原名 AI4PB)** 是一个基于 **[OpenCode 框架](https://opencode.ai/)** 构建的企业级多智能体软件工程协同平台。
+**Argo (原名 AI4PB)** 是一个基于 **[OpenCode 框架](https://opencode.ai/)** 构建的企业级多智能体软件工程协同平台。
 
 在 2026 年的今天，代码生成与多智能体并行开发（如 Copilot `/fleet` 或 Claude Agent Teams）已经成为行业基建。开发者面临的最大挑战不再是“如何让 AI 写出一段功能代码”，而是 **“如何驾驭由 AI 高速生成的庞大系统，防止架构腐化与意图失控”**。
 
-**ARGO 专为 AI 时代的复杂软件工程而生，提供从「原始需求分析」到「最终代码交付」的端到端全生命周期闭环覆盖。** 
+**Argo 专为 AI 时代的复杂软件工程而生，提供从「原始需求分析」到「最终代码交付」的端到端全生命周期闭环覆盖。** 
 它突破了仅停留在“编码与改 BUG”阶段的传统 AI 编程助手局限，构建了一条包含 `需求澄清 ➔ 四层架构设计 ➔ 契约化编码 ➔ TDD 驱动验收 ➔ 物理级架构审计 ➔ 产物发布交付` 的完整 AI 软件工程流水线。
 
-ARGO 没有在“自然语言闲聊”上内卷，而是创造性地引入了国际标准 **ArchiMate 3.1 架构知识图谱** 作为整个 AI 团队的“通信总线”与“唯一事实来源”。它让现代开发者和架构师得以从黑盒般的 AI 代码泥潭中抽身，将精力升维至业务价值与顶层设计，实现 **“左手 AI 流水线全自动交付，右手人类把控 EA 顶层架构”** 的终极人机共驾。
+Argo 没有在“自然语言闲聊”上内卷，而是创造性地引入了国际标准 **ArchiMate 3.1 架构知识图谱** 作为整个 AI 团队的“通信总线”与“唯一事实来源”。它让现代开发者和架构师得以从黑盒般的 AI 代码泥潭中抽身，将精力升维至业务价值与顶层设计，实现 **“左手 AI 流水线全自动交付，右手人类把控 EA 顶层架构”** 的终极人机共驾。
 
 ---
 
@@ -15,7 +15,7 @@ ARGO 没有在“自然语言闲聊”上内卷，而是创造性地引入了国
 
 在高度成熟的 AI 编程时代，ARGO 与主流多智能体平台的差异不在于“能否写代码”，而在于“生命周期覆盖度”与“如何管理系统复杂度”：
 
-| 维度特征 | 👨‍💻 GitHub Copilot (Agent Mode / Fleet) | 💬 Claude Code (Ultra / Agent Teams) | 🛸 **ARGO (AI4PB)** |
+| 维度特征 | 👨‍💻 GitHub Copilot (Agent Mode / Fleet) | 💬 Claude Code (Ultra / Agent Teams) | 🛸 **Argo (AI4PB)** |
 | :--- | :--- | :--- | :--- |
 | **核心定位** | 极速的代码自动化与并行修改引擎 | 终端原生的深度推理与多角色执行团队 | **端到端的全生命周期架构与工程操作系统** |
 | **生命周期覆盖** | 聚焦开发编码阶段 | 聚焦开发与局部测试验证 | **全覆盖**：PRD ➔ 架构 ➔ 编码 ➔ 验收 ➔ 审计 ➔ 交付 |
@@ -23,7 +23,7 @@ ARGO 没有在“自然语言闲聊”上内卷，而是创造性地引入了国
 | **系统架构感知** | 隐式感知（依赖 Vector 搜索与 Workspace 扫描） | 涌现式架构（依赖 Architect Agent 写出的纯文本规划文档） | **显式建模**（强约束 L1 战略至 L4 技术的四层架构映射） |
 | **质量与防腐机制** | 依赖人类 Review PR 或外部 MCP 工具链集成 | 内置 Critic Agent 进行自然语言层面的“交叉审查” | **物理级宪兵 (Audit)**，通过 AST 解析与向量比对，精准测算代码现实对图谱意图的偏离度 (`ARCH_IMPL_GAP`) |
 | **人类把控力接口** | Chat 界面、Terminal 指令、Pull Request | Terminal 终端干预、共享文本修改 | **无缝双向同步 Sparx Enterprise Architect (EA)**，人类通过图形化连线实施最高统帅权 |
-| **遗留系统接管 (Brownfield)** | 依赖自然语言提问逐步摸索 codebase | 能够通过 bash 和搜索工具自主探索并建立心理模型 | 内置 `argo-init`，直接通过 AST 扫描**逆向生成**物理拓扑图谱与 IPO 契约，供人类缝合 |
+| **遗留系统接管 (Brownfield)** | 依赖自然语言提问逐步摸索 codebase | 能够通过 bash 和搜索工具自主探索并建立心理模型 | 内置 `Argo-init`，直接通过 AST 扫描**逆向生成**物理拓扑图谱与 IPO 契约，供人类缝合 |
 
 > *注：对比数据基于 2026 年行业公开特性。*
 
@@ -31,7 +31,7 @@ ARGO 没有在“自然语言闲聊”上内卷，而是创造性地引入了国
 
 ## ✨ 核心系统价值与工程理念 (Core System Value)
 
-ARGO 的设计哲学是：**把 AI 当作流水线上的专业工人，把图谱作为车间的履带，而人类开发者是这家软件公司的唯一 CEO 兼总架构师。**
+Argo 的设计哲学是：**把 AI 当作流水线上的专业工人，把图谱作为车间的履带，而人类开发者是这家软件公司的唯一 CEO 兼总架构师。**
 
 ### 1. 🌍 支撑从“零”到“交付”的全生命周期运转
 开发者只需要在起点输入原始需求（Raw Requirement），ARGO 将自动拉起整条流水线：`ProductManager` 澄清业务边界 ➔ `SystemArchitect` 产出包含严格 IPO（输入/处理/输出）的架构节点 ➔ `Implementation` 编写代码 ➔ `QualityAssurance` 提取图谱契约进行 TDD 测试 ➔ `ReleaseAgent` 输出带有意图验证的追溯矩阵。**您无需微操每一行代码，只需在关键的业务与架构节点进行决策拍板。**
@@ -43,13 +43,13 @@ ARGO 的设计哲学是：**把 AI 当作流水线上的专业工人，把图谱
 *   **任何未经图谱批准的越权调用、依赖污染，都会立即被 `Audit` 智能体熔断拦截。**
 
 ### 3. 🤝 降维打击的图形化架构共驾 (EA Co-Pilot)
-大模型无法直观呈现错综复杂的系统拓扑，但 ARGO 可以。
+大模型无法直观呈现错综复杂的系统拓扑，但 Argo 可以。
 作为系统架构师，您只需点击 `SYNC TO EA`，ARGO 的图谱就会在 **Sparx Enterprise Architect** 中化作精美的可视化模型。
 如果您觉得 AI 设计的依赖不合理，直接在 EA 画布上**删除连线、拖入新的中间件节点**，点击 `SYNC FROM EA`。ARGO 的图谱会瞬间更新，并打上 `human-architect` 绝对指令印记。底层的所有 AI 智能体将立刻调整战术，围绕您画出的新蓝图重新施工。
 
 ### 4. 🔙 旧城改造的“手术刀” (Brownfield Reverse Engineering)
 当团队需要接管一个毫无文档、历史包袱沉重的陌生项目时，ARGO 是破局利器。
-执行 `argo-init`，逆向工程智能体（`ReverseEngineer`）会利用底层 AST 引擎扫描整个代码库的物理拓扑，**反推并生成所有核心组件的架构节点与 IPO 契约**。原本一团乱麻的代码库，瞬间变成图谱中清晰的控制流，让您可以迅速切入核心业务层进行手术刀式的精准改造。
+执行 `Argo-init`，逆向工程智能体（`ReverseEngineer`）会利用底层 AST 引擎扫描整个代码库的物理拓扑，**反推并生成所有核心组件的架构节点与 IPO 契约**。原本一团乱麻的代码库，瞬间变成图谱中清晰的控制流，让您可以迅速切入核心业务层进行手术刀式的精准改造。
 
 ### 5. 🔀 智能双轨与硬核熔断 (Smart Routing & Circuit Breaker)
 *   **双轨制**：牵一发而动全身的需求，自动走 `Full-Model` 重型架构推演；改个按钮颜色的需求，自动走 `Fast-Track` 快车道直达开发。
@@ -66,15 +66,15 @@ ARGO 的设计哲学是：**把 AI 当作流水线上的专业工人，把图谱
 *   Sparx Enterprise Architect (可选，用于图形化架构共驾)
 
 ### 安装与运行
-1. **注入 ARGO 灵魂**：将 ARGO 配置放入您的目标项目根目录。
+1. **注入 Argo 灵魂**：将 Argo 配置放入您的目标项目根目录。
    ```bash
    git clone <ai4pb-repo-url>
    cp -r ai4pb-orchestrator/.opencode <your-project-root>/
    ```
 2. **初始化遗留项目 (接管陌生代码) `[✨NEW]`**：
-   如果您接手了一个历史项目，请先执行 ARGO 逆向初始化：
+   如果您接手了一个历史项目，请先执行 Argo 逆向初始化：
    ```bash
-   opencode run argo-init
+   opencode run Argo-init
    ```
    *`ReverseEngineer` 将自动提取 AST，生成架构图谱，并在终端与您核对业务意图，完成项目接管。*
 3. **启动主脑 Orchestrator**：
@@ -91,7 +91,7 @@ ARGO 的设计哲学是：**把 AI 当作流水线上的专业工人，把图谱
 业务方抛出一个宏大构想。`ProductManager` 识别出约束冲突，弹出表单请求人类决策。随后 `SystemArchitect` 生成四层架构基线。人类觉得终端文字不直观，通过 `SYNC TO EA` 脚本将架构导入 Sparx EA 查看。人类在 EA 画布上拖出一个新的“Redis缓存节点”并同步回图谱。AI 架构师发现 `human-architect` 标签，立即放弃原有方案，顺从人类思路，向下方的开发兵重新派发任务。
 
 ### 战役 B：老旧祖传代码的降维接管 (Brownfield Reverse Engineering)
-面对一个 5 年历史、数万行代码的单体项目，开发者运行 `argo-init`。
+面对一个 5 年历史、数万行代码的单体项目，开发者运行 `Argo-init`。
 `ReverseEngineer` 启动底层引擎，通过 AST 提取出所有的物理类和函数，自动在图谱中生成 `ApplicationComponent`，并反向推导出包含严格 IPO（Input/Processing/Output）的契约。人类在终端确认推测的业务流后，系统生成架构映射文件，将“混沌的代码”与“清晰的图谱”强行锚定。后续重构如履平地。
 
 ### 战役 C：架构腐化的自动拦截 (The "Reality Drift" Correction)
