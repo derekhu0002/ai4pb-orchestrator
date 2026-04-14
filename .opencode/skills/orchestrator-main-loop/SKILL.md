@@ -122,11 +122,13 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Pass the implementation `commit_id` explicitly to `QualityAssurance` in all lanes, and to `Audit` when `full-model` validation is required.
     - When the environment-readiness gate was triggered, include the human decision in the `QualityAssurance` handoff notes so QA can distinguish approved live validation from local-only fallback.
     - Require `QualityAssurance` and `Audit` to return concrete affected task IDs whenever they fail so retry accounting can be persisted without inference.
+    - When a rework batch passes both `QualityAssurance` and `Audit`, the Orchestrator MUST inspect previously open issues by calling `query_graph(mode="issues")` before moving to release.
     - If a supposedly `fast-track` change is reported by `Implementation` or `QualityAssurance` as structurally impactful, traceability-sensitive, or no longer clearly non-architectural, escalate it into the `full-model` lane and invoke `SystemArchitect` before any release step.
     - Evaluate all child results that are relevant to the active lane before deciding the next step.
 
 5.  **Phase 5: Decision and Rework**
-    - **IF** `full-model` QA and Audit both pass, invoke `ReleaseAgent`.
+    - **IF** `full-model` QA and Audit both pass, first inspect open issues through `query_graph(mode="issues")`. If a `BugReport` or `ArchGap` issue was the trigger for the just-completed rework batch, the Orchestrator MUST invoke `update_graph_model(action="resolve_issue", issueId="<issue-id>", content="Resolved by successful rework commit <commit-id>")` BEFORE invoking `ReleaseAgent`.
+    - **IF** `full-model` QA and Audit both pass and no matching open rework-trigger issue remains unresolved, invoke `ReleaseAgent`.
     - **IF** `fast-track` QA passes and no escalation back to architecture was requested, invoke `ReleaseAgent`.
     - **IF** QA fails, require `affected_task_ids` in the QA result, increment `retryCount` for each affected task, and only invoke `Implementation` again when every affected task still has `retryCount <= 3`.
     - **IF** Audit fails, require `recommended_task_ids` in the audit result, increment `retryCount` for each affected task, and only invoke `SystemArchitect` when every affected task still has `retryCount <= 3`.

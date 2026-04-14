@@ -58,6 +58,7 @@ Use this skill to execute the assigned coding work and return a direct structure
 
 2.  **Commit Completion**:
     - Before returning success, inspect the git worktree with non-interactive git commands and make sure the assigned implementation work is the only content being committed.
+    - Before committing, you MUST grep the changed files and verify that every assigned `architectureElementId` appears in code as a `@ArchitectureID: <id>` comment whenever the file format supports comments. If the required traceability marker is missing, fix the source tags before staging or committing.
     - Stage only the files that belong to the assigned implementation work. Do not mix unrelated user changes into the commit.
     - Create a non-interactive git commit after the implementation is complete. The commit message should reference the completed task IDs and summarize the software-unit-scoped work.
     - Capture the resulting commit ID with a git command and persist it on every completed task by calling `update_graph_model(action="set_task_status", taskId="TASK-...", status="done", commitId="<sha>", content="...")`.
