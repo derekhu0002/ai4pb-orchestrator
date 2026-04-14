@@ -42,6 +42,16 @@ def class_signature(node: ast.ClassDef) -> str:
     return f"class {node.name}({', '.join(ast.unparse(base) for base in node.bases)})"
 
 
+def decorators_for_node(node: ast.AST) -> List[str]:
+    decorators: List[str] = []
+    for decorator in getattr(node, 'decorator_list', []):
+        try:
+            decorators.append(f'@{ast.unparse(decorator)}')
+        except Exception:
+            continue
+    return decorators
+
+
 def line_snippet(lines: List[str], line_number: int) -> str:
     if line_number <= 0 or line_number > len(lines):
         return ''
@@ -62,6 +72,7 @@ class SymbolCollector(ast.NodeVisitor):
             'kind': 'class',
             'name': node.name,
             'signature': class_signature(node),
+            'decorators': decorators_for_node(node),
             'snippet': line_snippet(self.lines, node.lineno),
             'source': 'ast',
             'languageId': 'python',
@@ -91,6 +102,7 @@ class SymbolCollector(ast.NodeVisitor):
             'kind': kind,
             'name': name,
             'signature': signature_for_function(node),
+            'decorators': decorators_for_node(node),
             'snippet': line_snippet(self.lines, node.lineno),
             'source': 'ast',
             'languageId': 'python',

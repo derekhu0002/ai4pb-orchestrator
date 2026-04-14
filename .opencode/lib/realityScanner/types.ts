@@ -20,6 +20,7 @@ export type StructuralSymbol = {
   kind: string;
   name: string;
   signature: string;
+  decorators?: string[];
   snippet: string;
   source: StructuralSource;
   languageId: string;
