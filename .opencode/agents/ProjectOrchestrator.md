@@ -15,6 +15,7 @@ permission:
     "Audit": allow
     "ReleaseAgent": allow
     "ReverseEngineer": allow
+    "IncrementalReverseEngineer": allow
   skill:
     "*": deny
     "orchestrator-main-loop": allow

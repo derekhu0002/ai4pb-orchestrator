@@ -44,10 +44,12 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Upon activation, classify the **Initial Invocation Goal** along two axes: `input_type` and `execution_lane`.
     - Set `input_type` to `requirement` for new features, change requests, business requirements, user stories, capability requests, and scope proposals.
     - Set `input_type` to `issue` for bugs, regressions, production problems, failed validations, audit gaps, refactoring requests, or implementation/design defects.
+    - Set `input_type` to `extraction` if the user explicitly requests architecture extraction, targeted reverse-engineering, or mentions the `argo-extract` command.
     - Set `execution_lane` to `fast-track` only when the requested change is clearly localized, low-risk, and non-structural.
     - Typical `fast-track` candidates include UI color or spacing tweaks, copy edits, label or spelling fixes, simple content/config corrections, and narrow bug fixes inside an existing module where no new architecture decision is needed.
     - A request is **not** `fast-track` if it introduces or changes a capability boundary, workflow, public API, schema, persistence contract, security behavior, deployment behavior, package/module ownership, cross-module dependency, or any change that would reasonably require new software-unit decomposition.
     - If the lane is ambiguous, default to `full-model`.
+    - If `input_type=extraction`, you MUST invoke `IncrementalReverseEngineer` directly through the native Task tool with the user's target scope. Do NOT invoke `ProductManager`, `SystemArchitect`, or `ReverseEngineer`.
     - If `input_type=requirement` and `execution_lane=full-model`, invoke `ProductManager` first through the native Task tool.
     - Expect a direct result from `ProductManager` containing at least `status`, `formal_requirement`, and `element_id` for the approved requirement.
     - Treat that approved requirement as the baseline goal for the subsequent architecture and implementation phases.
@@ -146,4 +148,5 @@ Use this skill to manage the full development lifecycle with native OpenCode pri
     - Expect a direct release result that includes the generated release-log path and final summary.
 
 7.  **Phase 7: Conclusion**
+    - **IF** the child session was an `extraction` handled by `IncrementalReverseEngineer`, simply present the final structural extraction report to the user and STOP the workflow. You MUST NOT invoke `ReverseEngineer`, `SystemArchitect`, or any other agent after a targeted extraction completes.
     - Report the final status to the user directly from the child-session results.
