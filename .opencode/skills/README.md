@@ -208,6 +208,30 @@
 
 ---
 
+## 9) `project-assistant-command-support/SKILL.md`
+### 用途
+作为人类指挥官的“作战参谋”，读取项目运行态、图谱态和架构映射，帮助判断当前项目战况，并草拟对 Argo 的下一条高质量指挥命令。
+
+### 输入
+- 运行态：`.opencode/runtime/project-state.json`
+- 图谱更新日志：`.opencode/temp/opencode-graph-updates.jsonl`（若存在）
+- 共享知识图谱：`.opencode/temp/SharedKnowledgeGraph.archimate3.1.json`（若存在）
+- 架构映射：`.opencode/architecture-mapping.yaml`（若存在）
+- 运行时工具：`read_project_status`、`query_graph`
+
+### 输出
+- 当前战况摘要
+- 指挥官应优先处理的关键问题
+- 可直接下发给 Argo 的指挥命令草案
+- 缺失情报与下一步建议
+
+### 适用场景
+- 人类想快速判断当前项目是否卡在架构、实现、验证或审计阶段
+- 人类希望把“聊天式修 bug”改成“基于图谱契约的指挥”
+- 项目进入反复返工、验证失败或需要人工接管后的恢复阶段
+
+---
+
 ## 推荐执行顺序（实战）
 1. `ai4pb-init/SKILL.md`（启动/新迭代）
 2. `ai4pb-audit/SKILL.md`（如需补齐存量认知或做设计审计）
