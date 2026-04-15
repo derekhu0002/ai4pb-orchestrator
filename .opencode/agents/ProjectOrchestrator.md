@@ -14,6 +14,7 @@ permission:
     "QualityAssurance": allow
     "Audit": allow
     "ReleaseAgent": allow
+    "ReverseEngineer": allow
   skill:
     "*": deny
     "orchestrator-main-loop": allow
