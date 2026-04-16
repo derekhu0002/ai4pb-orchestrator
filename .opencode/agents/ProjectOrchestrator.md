@@ -20,6 +20,8 @@ permission:
     "*": deny
     "orchestrator-main-loop": allow
 tools:
+  read: true
+  bash: true
   decompose_goal: true
   read_project_status: true
   query_graph: true
