@@ -764,22 +764,7 @@ function buildPackageNotes(graph) {
 }
 
 function buildConceptNotes(concept, propertyDefinitionMap) {
-  var lines = [];
-  lines.push('Identifier: ' + safeString(concept.identifier));
-  lines.push('Type: ' + safeString(concept.type));
-  appendDocumentationLines(lines, concept.documentation);
-
-  var propertyLines = buildPropertyLines(concept.properties, propertyDefinitionMap);
-  for (var i = 0; i < propertyLines.length; i++) {
-    lines.push(propertyLines[i]);
-  }
-
-  if (concept.extensions) {
-    lines.push('Extensions JSON:');
-    lines.push(stringifyCompact(concept.extensions));
-  }
-
-  return lines.join('\r\n');
+  return joinLangValues(concept.documentation);
 }
 
 function buildPropertyLines(propertiesNode, propertyDefinitionMap) {
@@ -819,12 +804,6 @@ function applyConceptTags(tagCollection, concept, propertyDefinitionMap) {
   putTag(tagCollection, 'kg_identifier', safeString(concept.identifier));
   putTag(tagCollection, 'kg_type', safeString(concept.type));
 
-  // Store raw documentation for lossless round-trip
-  var docText = joinLangValues(concept.documentation);
-  if (docText !== '') {
-    putTag(tagCollection, 'kg_documentation', truncateTagValue(docText));
-  }
-
   if (concept.properties && concept.properties.property) {
     for (var i = 0; i < concept.properties.property.length; i++) {
       var property = concept.properties.property[i];
@@ -847,12 +826,6 @@ function applyRelationshipTags(connector, relation, propertyDefinitionMap) {
   putTag(connector.TaggedValues, 'kg_type', safeString(relation.type));
   putTag(connector.TaggedValues, 'kg_source', safeString(relation.source));
   putTag(connector.TaggedValues, 'kg_target', safeString(relation.target));
-
-  // Store raw documentation for lossless round-trip
-  var docText = joinLangValues(relation.documentation);
-  if (docText !== '') {
-    putTag(connector.TaggedValues, 'kg_documentation', truncateTagValue(docText));
-  }
 
   if (isNonEmptyString(relation.accessType)) {
     putTag(connector.TaggedValues, 'accessType', relation.accessType);

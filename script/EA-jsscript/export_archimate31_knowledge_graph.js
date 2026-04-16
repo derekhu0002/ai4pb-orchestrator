@@ -644,6 +644,10 @@ function extractDocFromNotes(notes) {
     }
   }
 
+  if (!inDoc) {
+    return trimString(text);
+  }
+
   return trimString(docLines.join('\n'));
 }
 
