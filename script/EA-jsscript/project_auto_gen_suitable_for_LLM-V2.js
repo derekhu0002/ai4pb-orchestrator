@@ -8,6 +8,234 @@
  * Date: 2025-07-12 	
  */
 
+if (typeof PROJECT_CONFIG_FILE_PATH == "undefined") {
+	var PROJECT_CONFIG_FILE_PATH = ""; // Optional absolute path. If empty, use <projectPath>\\.aicodingconfig
+}
+
+if (typeof EA_AUTOGEN_CONFIG == "undefined" || EA_AUTOGEN_CONFIG == null) {
+	var EA_AUTOGEN_CONFIG = {
+		projectPath: "",
+		needCode: false,
+		needContent: true,
+		needdoc: true,
+		needallmaintenace: "onlyActive",
+		needbrowserlocation: true,
+		maintenacetype: "forproject" // forllm | forproject
+	};
+}
+
+function trimString(s) {
+	if (s == null) {
+		return "";
+	}
+	return ("" + s).replace(/^\s+|\s+$/g, "");
+}
+
+function getConnectionProperty(connectionString, keyName) {
+	if (connectionString == null || connectionString == "") {
+		return "";
+	}
+	var pattern = new RegExp("(?:^|;)\\s*" + keyName + "\\s*=\\s*([^;]+)", "i");
+	var m = ("" + connectionString).match(pattern);
+	if (m && m.length > 1) {
+		return trimString(m[1]);
+	}
+	return "";
+}
+
+function stripWrappedQuotes(s) {
+	var v = trimString(s);
+	if (v.length >= 2) {
+		var first = v.charAt(0);
+		var last = v.charAt(v.length - 1);
+		if ((first == '"' && last == '"') || (first == "'" && last == "'")) {
+			return v.substring(1, v.length - 1);
+		}
+	}
+	return v;
+}
+
+function resolveModelFilePathFromConnectionString() {
+	var conn = "";
+	try {
+		conn = "" + Repository.ConnectionString;
+	} catch (e) {
+		return "";
+	}
+
+	if (conn == "") {
+		return "";
+	}
+
+	var dataSource = getConnectionProperty(conn, "Data Source");
+	if (dataSource == "") {
+		dataSource = getConnectionProperty(conn, "DataSource");
+	}
+	if (dataSource == "") {
+		dataSource = getConnectionProperty(conn, "DBQ");
+	}
+	if (dataSource != "") {
+		return stripWrappedQuotes(dataSource);
+	}
+
+	var direct = stripWrappedQuotes(conn);
+	if (/^[A-Za-z]:\\/.test(direct) || /^\\\\/.test(direct)) {
+		return direct;
+	}
+
+	return "";
+}
+
+function normalizeProjectPath(pathValue) {
+	if (pathValue == null || pathValue == "") {
+		return "";
+	}
+	var s = "" + pathValue;
+	if (s.charAt(s.length - 1) != "\\" && s.charAt(s.length - 1) != "/") {
+		s += "\\";
+	}
+	return s;
+}
+
+function resolveProjectPathFromCurrentModel() {
+	var modelFilePath = resolveModelFilePathFromConnectionString();
+	if (modelFilePath == "") {
+		return "";
+	}
+	try {
+		var fso = new ActiveXObject("Scripting.FileSystemObject");
+		var parentFolder = fso.GetParentFolderName(modelFilePath);
+		return normalizeProjectPath(parentFolder);
+	} catch (e) {
+		return "";
+	}
+}
+
+function getProjectConfigPath() {
+	if (PROJECT_CONFIG_FILE_PATH != null && PROJECT_CONFIG_FILE_PATH != "") {
+		return PROJECT_CONFIG_FILE_PATH;
+	}
+	var base = normalizeProjectPath(EA_AUTOGEN_CONFIG.projectPath);
+	if (base == "") {
+		return "";
+	}
+	return base + ".aicodingconfig";
+}
+
+function readTextFileUtf8(filePath) {
+	try {
+		var fso = new ActiveXObject("Scripting.FileSystemObject");
+		if (!fso.FileExists(filePath)) {
+			Session.Output("WARN: File not found: " + filePath);
+			return "";
+		}
+
+		var stream = new ActiveXObject("ADODB.Stream");
+		stream.Type = 2;
+		stream.Charset = "utf-8";
+		stream.Open();
+		stream.LoadFromFile(filePath);
+		var text = stream.ReadText();
+		stream.Close();
+		return text;
+	} catch (e) {
+		Session.Output("ERROR: Failed reading config file. " + e.message);
+		return "";
+	}
+}
+
+function parseAiCodingConfig(text) {
+	if (text == null) {
+		return null;
+	}
+
+	var raw = "" + text;
+	raw = raw.replace(/^\uFEFF/, "");
+	raw = raw.replace(/\/\*[\s\S]*?\*\//g, "");
+	raw = raw.replace(/^\s*\/\/.*$/gm, "");
+	raw = raw.replace(/^\s+|\s+$/g, "");
+
+	if (raw == "") {
+		return null;
+	}
+
+	var objectLiteral = raw;
+	var assignedMatch = raw.match(/EA_AUTOGEN_CONFIG\s*=\s*([\s\S]*?)\s*;?\s*$/);
+	if (assignedMatch && assignedMatch.length > 1) {
+		objectLiteral = assignedMatch[1];
+	}
+
+	try {
+		var parsed = eval("(" + objectLiteral + ")");
+		if (parsed == null) {
+			return null;
+		}
+		if (typeof parsed.EA_AUTOGEN_CONFIG != "undefined") {
+			return parsed.EA_AUTOGEN_CONFIG;
+		}
+		if (typeof parsed.eaAutogenConfig != "undefined") {
+			return parsed.eaAutogenConfig;
+		}
+		return parsed;
+	} catch (e) {
+		Session.Output("WARN: .aicodingconfig parse failed. " + e.message);
+		return null;
+	}
+}
+
+function applyExternalConfig(overrides) {
+	if (overrides == null) {
+		return;
+	}
+
+	if (typeof overrides.projectPath != "undefined") EA_AUTOGEN_CONFIG.projectPath = overrides.projectPath;
+	if (typeof overrides.needCode != "undefined") EA_AUTOGEN_CONFIG.needCode = overrides.needCode;
+	if (typeof overrides.needContent != "undefined") EA_AUTOGEN_CONFIG.needContent = overrides.needContent;
+	if (typeof overrides.needdoc != "undefined") EA_AUTOGEN_CONFIG.needdoc = overrides.needdoc;
+	if (typeof overrides.needallmaintenace != "undefined") {
+		if (overrides.needallmaintenace === true) {
+			EA_AUTOGEN_CONFIG.needallmaintenace = "All";
+		} else if (overrides.needallmaintenace === false) {
+			EA_AUTOGEN_CONFIG.needallmaintenace = "onlyActive";
+		} else {
+			EA_AUTOGEN_CONFIG.needallmaintenace = overrides.needallmaintenace;
+		}
+	}
+	if (typeof overrides.needbrowserlocation != "undefined") EA_AUTOGEN_CONFIG.needbrowserlocation = overrides.needbrowserlocation;
+	if (typeof overrides.maintenacetype != "undefined") EA_AUTOGEN_CONFIG.maintenacetype = overrides.maintenacetype;
+
+	EA_AUTOGEN_CONFIG.projectPath = normalizeProjectPath(EA_AUTOGEN_CONFIG.projectPath);
+}
+
+function initializeAutogenConfig() {
+	Repository.EnsureOutputVisible("Script");
+
+	if (EA_AUTOGEN_CONFIG == null) {
+		EA_AUTOGEN_CONFIG = {};
+	}
+
+	EA_AUTOGEN_CONFIG.projectPath = normalizeProjectPath(EA_AUTOGEN_CONFIG.projectPath);
+
+	var autoProjectPath = resolveProjectPathFromCurrentModel();
+	if (EA_AUTOGEN_CONFIG.projectPath == "" && autoProjectPath != "") {
+		EA_AUTOGEN_CONFIG.projectPath = autoProjectPath;
+		Session.Output("Auto projectPath from EA model: " + EA_AUTOGEN_CONFIG.projectPath);
+	}
+
+	var configFilePath = getProjectConfigPath();
+	if (configFilePath != "") {
+		Session.Output("Config path: " + configFilePath);
+		var configText = readTextFileUtf8(configFilePath);
+		if (configText != "") {
+			var fileConfig = parseAiCodingConfig(configText);
+			if (fileConfig != null) {
+				applyExternalConfig(fileConfig);
+				Session.Output("Loaded config from .aicodingconfig");
+			}
+		}
+	}
+}
+
 // Helper function to escape strings for JSON
 function jsonEscape(str) {
     if (str == null || typeof str === "undefined") return "";
@@ -925,7 +1153,7 @@ function main() {
     }
 }
 
-var projectPath = "D:\\projects\\AI4X\\AI4X-Platform\\";
+var projectPath = "";
 var needCode = false;
 var needContent = true;
 var needdoc = true;
@@ -933,7 +1161,11 @@ var needallmaintenace = "onlyActive";
 var needbrowserlocation = true;
 var maintenacetype = "forproject"; // forllm forproject
 
-if (typeof EA_AUTOGEN_CONFIG != "undefined" && EA_AUTOGEN_CONFIG != null) {
+function applyRuntimeConfig() {
+	if (typeof EA_AUTOGEN_CONFIG == "undefined" || EA_AUTOGEN_CONFIG == null) {
+		return;
+	}
+
 	if (typeof EA_AUTOGEN_CONFIG.projectPath != "undefined") {
 		projectPath = EA_AUTOGEN_CONFIG.projectPath;
 	}
@@ -963,10 +1195,16 @@ if (typeof EA_AUTOGEN_CONFIG != "undefined" && EA_AUTOGEN_CONFIG != null) {
 	}
 }
 
-if (projectPath != "" && projectPath.charAt(projectPath.length - 1) != "\\" && projectPath.charAt(projectPath.length - 1) != "/") {
-	projectPath += "\\";
+function initializeRuntimeConfig() {
+	initializeAutogenConfig();
+	applyRuntimeConfig();
+
+	if (projectPath != "" && projectPath.charAt(projectPath.length - 1) != "\\" && projectPath.charAt(projectPath.length - 1) != "/") {
+		projectPath += "\\";
+	}
 }
 
 if (!(typeof EA_AUTOGEN_SKIP_MAIN != "undefined" && EA_AUTOGEN_SKIP_MAIN == true)) {
+	initializeRuntimeConfig();
 	main();
 }

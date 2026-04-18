@@ -15,6 +15,8 @@
    - 可选：`PROJECT_CONFIG_FILE_PATH` 显式指定 `.aicodingconfig` 文件；留空则默认读取 `<projectPath>/.aicodingconfig`
 3. 日常只更新共享文件 `project_auto_gen_suitable_for_LLM-V2.js`，所有模型下次运行 bootstrap 时自动使用最新版本。
 
+现在 `project_auto_gen_suitable_for_LLM-V2.js` 也已经内置了 bootstrap 的项目路径推断与 `.aicodingconfig` 读取逻辑；如果你只想在 EA 里保留一个脚本文件，直接导入并运行它也可以。
+
 > 这样你只需一次性在各模型配置 bootstrap，后续不再需要反复复制完整脚本。
 
 > 若读取失败，请先确认 `SHARED_SCRIPT_PATH` / `SHARED_SCRIPT_LOCAL_FALLBACK_PATH` 指向本机真实存在的脚本文件。
@@ -65,6 +67,7 @@ var EA_AUTOGEN_CONFIG = {
 - 部分脚本仍带有**硬编码路径**，运行前需要手工修改文件路径变量
 - 一旦逻辑升级，你需要在多个 EA 模型之间重复复制脚本，维护成本更高
 - 对 AI4PB 当前工作流而言，优先推荐 `project_auto_gen_suitable_for_LLM-V2-bootstrap.js` + `project_auto_gen_suitable_for_LLM-V2.js` 的组合
+- `project_auto_gen_suitable_for_LLM-V2.js` 现在单文件运行时也会自动推断 `projectPath`，并尝试读取 `<projectPath>/.aicodingconfig`
 
 ## 脚本总览
 
