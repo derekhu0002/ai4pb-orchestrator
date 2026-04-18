@@ -17,9 +17,9 @@ if (typeof EA_AUTOGEN_CONFIG == "undefined" || EA_AUTOGEN_CONFIG == null) {
 		projectPath: "",
 		needCode: false,
 		needContent: true,
-		needdoc: true,
+		needdoc: false,
 		needallmaintenace: "onlyActive",
-		needbrowserlocation: true,
+		needbrowserlocation: false,
 		maintenacetype: "forproject" // forllm | forproject
 	};
 }
@@ -786,6 +786,24 @@ function extractFromDiagram(currentDiagram) {
 			if (subDiagramJsonStrings.length > 0) {
 				finalnodetype += ',"subdiagram_views": [\n' + subDiagramJsonStrings.join(',\n') + '\n]\n';
 			}
+			
+			var testcasesJsonStrings = [];
+			var testcases as EA.Collection;
+			testcases = ele.Tests;
+			for (var j = 0; j < testcases.Count; j++) {
+				var testcase as EA.Test;
+				testcase = testcases.GetAt(j);
+				testcasesJsonStrings.push(
+					'{\n' +
+					'"name": "' + jsonEscape(testcase.Name) + '",\n' +
+					'"description": "' + jsonEscape(testcase.Notes) + '",\n' +
+					'"acceptanceCriteria": "' + jsonEscape(testcase.AcceptanceCriteria) + '"\n' +
+					'}'
+				);
+			}
+			if (testcasesJsonStrings.length > 0) {
+				finalnodetype += ',"testcases": [\n' + testcasesJsonStrings.join(',\n') + '\n]\n';
+			}
 
 			finalnodetype += '}';
 			globalElements[id] = finalnodetype;
@@ -1156,9 +1174,9 @@ function main() {
 var projectPath = "";
 var needCode = false;
 var needContent = true;
-var needdoc = true;
+var needdoc = false;
 var needallmaintenace = "onlyActive";
-var needbrowserlocation = true;
+var needbrowserlocation = false;
 var maintenacetype = "forproject"; // forllm forproject
 
 function applyRuntimeConfig() {
