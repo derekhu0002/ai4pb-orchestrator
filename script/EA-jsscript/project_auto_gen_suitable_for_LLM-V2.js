@@ -797,7 +797,9 @@ function extractFromDiagram(currentDiagram) {
 					'{\n' +
 					'"name": "' + jsonEscape(testcase.Name) + '",\n' +
 					'"description": "' + jsonEscape(testcase.Notes) + '",\n' +
-					'"acceptanceCriteria": "' + jsonEscape(testcase.AcceptanceCriteria) + '"\n' +
+					'"Input": "' + jsonEscape(testcase.Input) + '",\n' +
+					'"acceptanceCriteria": "' + jsonEscape(testcase.AcceptanceCriteria) + '",\n' +
+					'"TestResults": "' + jsonEscape(testcase.TestResults) + '"\n' +
 					'}'
 				);
 			}
